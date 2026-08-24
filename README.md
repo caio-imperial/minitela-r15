@@ -8,14 +8,46 @@ O app que vem no Policop só deixa escolher entre 21 temas prontos. A opção de
 imagem própria existe na interface, mas não funciona no Linux — o compilador de textura
 que ela precisa é um `.exe` de Windows.
 
-## O que dá para fazer
+## Colocando uma imagem sua na minitela
+
+Uma vez só, para montar o ambiente:
 
 ```bash
-./minitela_build.py setup                  # 1x: monta o workspace
-./minitela_build.py build foto.jpg --send  # sua imagem na minitela
+./minitela_build.py setup
 ```
 
-E, sem depender de nada além da stdlib do Python:
+Depois, para cada imagem:
+
+```bash
+./minitela_build.py build ~/minha_foto.jpg --send
+```
+
+Isso corta a imagem no centro para 240x240, compila o `.acf` (~6 s), para o app oficial,
+grava na minitela (~4 s) e devolve o controle. **Reabra o app pelo botão dedicado do
+teclado** e vá até a tela **Imagens** — sua foto está lá.
+
+Se a tela de Imagens não aparecer ao passar pelo botão, ela pode estar desabilitada:
+abra o app e ligue "Imagens" na lista de telas (ou
+`gsettings set org.policorp.minitela saved-screens "[true,true,true,true,true,true,true]"`).
+
+Dá para trocar as três imagens da tela de uma vez — as setas `<` `>` navegam entre elas:
+
+```bash
+./minitela_build.py build foto1.jpg foto2.png foto3.jpg --send
+```
+
+Aceita JPG, PNG, GIF — qualquer formato que o ffmpeg leia. Sem `--send`, ele só gera o
+arquivo e mostra o comando para gravar depois.
+
+Para voltar às imagens de fábrica:
+
+```bash
+./minitela_ctl.py send /usr/share/minitela/resources/ACF/Texture.acf -y
+```
+
+## Controlando a minitela direto
+
+Sem depender de nada além da stdlib do Python:
 
 ```bash
 ./minitela_ctl.py info               # handshake e status (só leitura)
@@ -24,6 +56,19 @@ E, sem depender de nada além da stdlib do Python:
 ./minitela_ctl.py brightness 100
 ./minitela_ctl.py monitor            # dump dos frames do protocolo
 ```
+
+O app oficial segura a porta serial: as ferramentas avisam e pedem `pkill -x minitela`
+antes. Para religá-lo depois, cuidado com duas armadilhas — ele deixa o socket
+`/tmp/minitela_socket` órfão, e detecta instância única com
+`pgrep -f /usr/share/minitela/minitela`, que casa com o seu próprio comando de shell se
+você digitar o caminho inteiro. O que funciona:
+
+```bash
+rm -f /tmp/minitela_socket
+cd /tmp && D=/usr/share/mini"tela" && setsid env DISPLAY=:0 GDK_BACKEND=x11 "$D/minitela" &
+```
+
+(ou simplesmente reabrir pelo botão dedicado do teclado)
 
 ## Requisitos
 
