@@ -1,0 +1,96 @@
+# Minitela do Positivo Vision R15M no Linux
+
+Ferramentas para usar a **minitela** (tela secundária de 1,54", 240x240) do notebook
+Positivo Vision R15M no Linux: enviar imagens suas, trocar de tema, controlar página e
+brilho — e a documentação da engenharia reversa que tornou isso possível.
+
+O app que vem no Policop só deixa escolher entre 21 temas prontos. A opção de carregar
+imagem própria existe na interface, mas não funciona no Linux — o compilador de textura
+que ela precisa é um `.exe` de Windows.
+
+## O que dá para fazer
+
+```bash
+./minitela_build.py setup                  # 1x: monta o workspace
+./minitela_build.py build foto.jpg --send  # sua imagem na minitela
+```
+
+E, sem depender de nada além da stdlib do Python:
+
+```bash
+./minitela_ctl.py info               # handshake e status (só leitura)
+./minitela_ctl.py send Texture7.acf  # grava um tema
+./minitela_ctl.py page 5             # troca a página exibida
+./minitela_ctl.py brightness 100
+./minitela_ctl.py monitor            # dump dos frames do protocolo
+```
+
+## Requisitos
+
+- notebook Positivo Vision R15M com o pacote `minitela` instalado (o Policop já traz);
+- `ffmpeg`;
+- `wine` — **só** para o compilador de textura; todo o resto é nativo:
+
+```bash
+sudo dpkg --add-architecture i386 && sudo apt update
+sudo apt install wine wine32:i386 wine64
+```
+
+`wine64` é obrigatório: num prefixo win32 o compilador procura `zip32\7z.exe`, que não
+existe no pacote (só vem `zip64/`). O `setup` cria o prefixo `~/.wine-mt64` sozinho.
+
+## Os arquivos
+
+| arquivo | o que faz |
+|---|---|
+| `minitela_ctl.py` | protocolo AHMI em stdlib pura (termios, sem pyserial): envio, página, brilho, status |
+| `minitela_build.py` | imagem → GIF 240x240 → projeto → compilador → `.acf` → grava |
+| `minitela_recover.py` | recupera a minitela se uma gravação ruim travar o firmware |
+| `acf_codec.py` | codec nativo do formato de textura (encode/decode) + checksum |
+| `lab_acf.py`, `exp_bloco.py` | bancada de engenharia reversa (imagens sintéticas + diff das saídas) |
+| `patch_acf.py` | troca a imagem dentro de um `.acf` sem recompilar |
+| [`RE-acf.md`](RE-acf.md) | o caderno da engenharia reversa: protocolo, formato, provas |
+
+## Como a coisa funciona
+
+A minitela **não é um monitor** do X/Wayland. É um módulo com firmware próprio
+(**GC9002**, projeto feito no IDE AHMI da GraphiChina) pendurado no USB como porta serial
+(`/dev/ttyACM*`, `0324:0324`). O host manda valores de variáveis; para mudar o visual,
+regrava a textura inteira na flash (`0x08100000`).
+
+O protocolo é `AH` … `MI` com CRC (que o firmware ignora), e o `.acf` é o pacote de
+textura compilada. Detalhes, incluindo o formato de bloco decifrado e o algoritmo do
+checksum, estão em [RE-acf.md](RE-acf.md).
+
+Velocidade real: um tema de 1,5 MB grava em ~4 s — os 115200 baud são fictícios, o
+transporte é USB.
+
+## Se algo der errado
+
+Gravar um `.acf` que o firmware não consegue renderizar trava o render: a tela congela e o
+dispositivo para de responder (o app oficial também deixa de abrir, porque bloqueia
+esperando resposta). É recuperável — só a região de textura é escrita, bootloader e
+calibração não são tocados:
+
+1. arme a recuperação para rodar no login, com um `.desktop` em `~/.config/autostart/`:
+   `Exec=/bin/bash -c "sleep 3; /caminho/minitela_recover.py --timeout 900 > /tmp/minitela-recover.log 2>&1"`
+2. reinicie o notebook (é preciso corte real de energia — `authorized 0/1` no sysfs não
+   basta, o módulo continua alimentado);
+3. o script pega o dispositivo na janela do boot e regrava o tema de fábrica.
+
+Para voltar ao original a qualquer momento:
+`./minitela_ctl.py send /usr/share/minitela/resources/ACF/Texture.acf`
+
+## Créditos
+
+O algoritmo do **checksum** veio do projeto [SideCar](https://github.com/FreyreCorona/SideCar)
+(Go), que ataca a mesma minitela — verificado aqui contra arquivos de fábrica e gerados
+pelo compilador oficial. O resto (protocolo, formato de bloco, fluxo de build) foi
+levantado de forma independente, com uma bancada que compila imagens sintéticas e compara
+as saídas.
+
+## Aviso
+
+Isto mexe na flash de um dispositivo. Funciona no meu R15M com Policop; não há garantia
+nenhuma. As regiões críticas (bootloader, cpu1, calibração, hwconfig) são bloqueadas por
+padrão no `minitela_ctl.py` — não remova essa trava sem saber o que está fazendo.
