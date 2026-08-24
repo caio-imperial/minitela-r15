@@ -45,6 +45,38 @@ Para voltar às imagens de fábrica:
 ./minitela_ctl.py send /usr/share/minitela/resources/ACF/Texture.acf -y
 ```
 
+## Informação em tempo real (relógio, bateria, clima, notificações)
+
+Isto **não mexe na flash**: são *tags* (variáveis) que o firmware já sabe desenhar. Manda
+o valor, a tela atualiza na hora. Risco zero — dá para testar à vontade.
+
+```bash
+./minitela_tags.py list                          # 40 tags mapeadas
+./minitela_tags.py set relogio "23/08 23:54"
+./minitela_tags.py set bateria 87
+./minitela_tags.py set cidade "Linhares"
+./minitela_tags.py notify "Fulano" "oi, tudo bem?"
+./minitela_tags.py daemon                        # relógio + bateria + cpu + wifi, a cada 5s
+```
+
+Há tags para três lembretes, três notificações, cinco dias de previsão, mídia (nome,
+posição, play/pause), CPU, GPU, bateria, wifi e Bluetooth.
+
+**Importante:** o app oficial reescreve todas as tags a cada poucos segundos com os dados
+dele — as suas somem quase na hora. Para valer, pare o app (`pkill -x minitela`); um
+daemon próprio precisa *substituir* o app, não conviver com ele.
+
+Formato dos frames, conferido contra capturas do app oficial:
+
+```
+texto:  AH | ctrl | 0090 | 0xD0 | regId(2,BE) | tamanho(2,BE) | UTF-8 | crc | MI
+número: AH | ctrl | 0090 | 0x8N | [regId(2,BE) valor(4,BE)] x (N+1)  | crc | MI
+```
+
+Os ids de CPU, bateria, wifi, notificações e lembretes vêm do `tagUtils.js` do MiniPanel.
+Os de relógio (2006), cidade (2027) e temperatura (2030–2032) não estão no SDK — foram
+capturados dos frames que o app da Positivo manda de verdade.
+
 ## Controlando a minitela direto
 
 Sem depender de nada além da stdlib do Python:
@@ -89,6 +121,7 @@ existe no pacote (só vem `zip64/`). O `setup` cria o prefixo `~/.wine-mt64` soz
 | arquivo | o que faz |
 |---|---|
 | `minitela_ctl.py` | protocolo AHMI em stdlib pura (termios, sem pyserial): envio, página, brilho, status |
+| `minitela_tags.py` | manda relógio, bateria, cpu, wifi, clima e notificações em tempo real (sem tocar na flash) |
 | `minitela_build.py` | imagem → GIF 240x240 → projeto → compilador → `.acf` → grava |
 | `minitela_recover.py` | recupera a minitela se uma gravação ruim travar o firmware |
 | `acf_codec.py` | codec nativo do formato de textura (encode/decode) + checksum |
