@@ -1,0 +1,3 @@
+# ai-memory scope marker: fixa o project deste repo no workspace pessoal.
+workspace = "pessoal"
+project = "minitela-r15"
