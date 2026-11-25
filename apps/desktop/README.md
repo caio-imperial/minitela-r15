@@ -60,6 +60,16 @@ Fica de fora, de propósito:
 - `lab/` e `tools/` (bancada e Ghidra);
 - qualquer material do fabricante.
 
+## Empacotamento: a glibc do runner vira o mínimo do usuário
+
+O binário carrega a glibc da máquina que compila. Compilado em `ubuntu-latest` (24.04,
+glibc 2.39), o AppImage **não abre** em Debian 12 (glibc 2.36) — o sintoma é
+`GLIBC_2.38 not found`.
+
+Por isso a pipeline usa **`ubuntu-22.04`** (glibc 2.35): o artefato roda em Debian 12,
+Ubuntu 22.04 e mais novos. Se um dia precisar suportar distros mais antigas, é descer o
+runner (ou usar container com glibc antiga), nunca subir.
+
 ## Regra de ouro
 
 Nenhuma linha de Rust é considerada pronta sem passar nos fixtures. O Python é o oráculo:
