@@ -1,0 +1,65 @@
+site_name: Minitela GC9002
+site_description: >-
+  Usar a minitela 240x240 do Positivo Vision R15M no Linux: imagens, GIF animado,
+  tags em tempo real e a engenharia reversa do protocolo e do formato .acf.
+site_url: https://caio-imperial.github.io/minitela-r15/
+repo_url: https://github.com/caio-imperial/minitela-r15
+repo_name: caio-imperial/minitela-r15
+edit_uri: edit/main/docs/
+copyright: Código MIT · textos CC BY-SA 4.0 · sem material proprietário do fabricante
+
+theme:
+  name: material
+  language: pt-BR
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Tema escuro
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Tema claro
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - toc:
+      permalink: true
+
+nav:
+  - Início: index.md
+  - Começar:
+      - Requisitos e instalação: comecar/instalacao.md
+      - Enviar uma imagem: comecar/imagem.md
+      - GIF animado: comecar/gif.md
+      - Tags em tempo real: comecar/tags.md
+      - Painel gráfico: comecar/painel.md
+      - Recuperar a tela: comecar/recuperacao.md
+  - Ferramentas: ferramentas.md
+  - Engenharia reversa:
+      - O formato .acf: RE-acf.md
+      - O firmware e a flash: RE-firmware.md
+      - O .acf pelo código: RE-acf-source.md
+  - Legal: legal.md

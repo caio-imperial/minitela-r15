@@ -8,6 +8,10 @@ O app que vem no Policop só deixa escolher entre 21 temas prontos. A opção de
 imagem própria existe na interface, mas não funciona no Linux — o compilador de textura
 que ela precisa é um `.exe` de Windows.
 
+> 📖 **Documentação completa**: <https://caio-imperial.github.io/minitela-r15/>
+> (guia de uso, referência do protocolo e do formato `.acf`, e os cadernos de engenharia
+> reversa). Fonte em [`docs/`](docs/), gerada com MkDocs.
+
 ## Colocando uma imagem sua na minitela
 
 Uma vez só, para montar o ambiente:

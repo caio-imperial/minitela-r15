@@ -11,3 +11,6 @@ __pycache__/
 # projetos do Ghidra (o Ghidra recusa caminho com componente iniciado por ponto,
 # por isso nao pode ficar em .tools/)
 work/
+
+# saida do mkdocs
+site/

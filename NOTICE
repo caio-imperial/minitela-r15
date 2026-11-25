@@ -1,0 +1,23 @@
+Minitela GC9002 — avisos
+
+Código: MIT (ver LICENSE).
+Textos e diagramas em docs/ e README: CC BY-SA 4.0
+(https://creativecommons.org/licenses/by-sa/4.0/deed.pt-br).
+
+Marcas de terceiros citadas de forma nominativa, sem vínculo ou endosso:
+
+  Positivo, Vision            — Positivo Tecnologia
+  Policop, Minitela           — PoliCorp Tecnologia
+  GraphiChina, AHMI           — fabricante do IDE e do formato de projeto
+  Thorsianway, GC9002, XuanTie — fabricante do chip e do núcleo RISC-V
+
+Este repositório não redistribui SDK, datasheets, binários de firmware nem o
+aplicativo da Policorp. Nada de material proprietário do fabricante é versionado;
+o site apenas linka para as páginas públicas de download.
+
+Créditos:
+  - algoritmo de checksum do .acf: github.com/FreyreCorona/SideCar (MIT);
+  - documentação do IDE AHMI: docs.graphichina.com;
+  - núcleo E902: github.com/XUANTIE-RV/opene902 (Apache-2.0).
+
+Uso por sua conta e risco: gravar na flash pode inutilizar o dispositivo.
