@@ -354,3 +354,25 @@ Consequência: o slot aceita as duas dimensões, e o tamanho de cada fatia é
 `ceil(w/4)*ceil(h/4)*16` — o que o `RE-acf-source.md` §2.1 já tinha derivado. A "região
 crítica" que travava o render no FATO 7 é a config a partir de `StartOfConfigdata`
 (802816 aqui), não a região das imagens.
+
+## FATO 10 — imagem trocada sem o compilador (testado no hardware)
+
+Com a tabela de texturas localizada (FATO 9) e a interpolação correta do codec, dá para
+trocar as três imagens **sem recompilar** e **sem wine**:
+
+```
+./minitela_patch.py --template <acf que funciona> --out novo.acf foto1.jpg foto2.png --send
+```
+
+Por que é seguro: as texturas ficam antes de `StartOfConfigdata`, então nenhum
+`CheckCode` de página muda; só o checksum do header (que o firmware não valida) é
+recalculado. Verificado por diff: um patch das 3 imagens altera **0 bytes** fora das três
+regiões de textura e do campo de checksum.
+
+Codec: a interpolação é `(w + w/8)/16` com saturação (`interpolate()` em
+`CS/AHMI/Simulator/stc.cpp`), não `w/15`. O modo 0 (uma partição) gera qualquer bloco;
+o compilador do ODM usa modo 1 (duas partições) em blocos de cores não colineares, o que
+deixa um resíduo visível nesses blocos — medido em ~1,8/255 de erro médio numa foto.
+
+Testado no hardware em 25/11/2026: imagem "TESTE PATCH" gravada e exibida na tela
+Imagens/GIF 1.

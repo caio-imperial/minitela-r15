@@ -438,8 +438,23 @@ def cmd_send(mt, args):
     res = mt.upload(data, args.type, progress=prog)
     print(f"\n{'já estava gravado' if res == 'ja-gravado' else 'gravado com sucesso'} em {time.monotonic() - t0:.1f}s")
     if args.page is not None:
+        # O firmware reinicia o USB ao terminar o download: o fd antigo morre e o
+        # dispositivo volta com outro /dev/ttyACM*. Reabre antes de trocar a pagina.
         time.sleep(4)
-        mt.show_page(args.page)
+        alvo = mt
+        for _ in range(20):
+            try:
+                alvo.show_page(args.page)
+                break
+            except OSError:
+                alvo.close()
+                porta = find_port()
+                if not porta:
+                    time.sleep(0.5)
+                    continue
+                alvo = Minitela(porta, args.baud, args.verbose)
+        else:
+            print("aviso: não consegui reabrir a porta para trocar a página")
         print(f"página {args.page} exibida")
 
 

@@ -39,6 +39,23 @@ Dá para trocar as três imagens da tela de uma vez — as setas `<` `>` navegam
 Aceita JPG, PNG, GIF — qualquer formato que o ffmpeg leia. Sem `--send`, ele só gera o
 arquivo e mostra o comando para gravar depois.
 
+### Sem wine (depois de ter um template)
+
+O `build` compila o `.acf` com o compilador do ODM sob wine. Mas, uma vez que exista um
+`.acf` que o firmware aceita (o "template"), trocar as imagens não precisa de compilador
+nenhum: as texturas ficam antes da config e não entram nos checksums de página.
+
+```bash
+./minitela_patch.py --template ~/.local/share/minitela-custom/out/minitela.acf \
+                    --out novo.acf foto1.jpg foto2.png --send
+```
+
+Ele converte cada imagem para o formato de bloco do chip (STC, 4x4), escreve nos offsets
+da tabela de texturas, recalcula o checksum do header e valida com `acf_inspect.py`
+antes de gravar. Testado no hardware: a imagem aparece na tela.
+
+O template continua sendo um artefato de build (um por versão de firmware/screen).
+
 Para voltar às imagens de fábrica:
 
 ```bash
