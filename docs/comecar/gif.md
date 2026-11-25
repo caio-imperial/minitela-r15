@@ -37,6 +37,8 @@ O tema de fábrica também serve de base (slots de 192×192, sem precisar de win
                     --out ~/animado.acf ~/meu.gif --send
 ```
 
+Com `--tela-cheia` os quadros vão a 240×240 (o slot de fábrica é 192×192).
+
 ## Limites
 
 | limite | valor |
