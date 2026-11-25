@@ -64,6 +64,8 @@ pub fn tipo_de_attr(attr: u32) -> u8 {
 
 #[derive(Debug, Clone, Default)]
 pub struct Textura {
+    /// offset absoluto do registro no arquivo (para reescrever campos)
+    pub off: usize,
     pub slice: u32,
     pub addr: u32,
     pub flags: u32,
@@ -240,6 +242,7 @@ pub fn parse(data: &[u8]) -> Result<Resumo, Erro> {
             for t in 0..ntex as usize {
                 let p = ini + off + t * TEXTURE;
                 texturas.push(Textura {
+                    off: p,
                     slice: u32le(data, p).unwrap_or(0),
                     addr: u32le(data, p + 4).unwrap_or(0),
                     flags: u32le(data, p + 8).unwrap_or(0),
