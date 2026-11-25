@@ -2,6 +2,8 @@
   import { invoke } from "@tauri-apps/api/core";
   import { open } from "@tauri-apps/plugin-dialog";
   import { onMount } from "svelte";
+  import Recorte from "$lib/Recorte.svelte";
+  import type { Edicao, Enquadramento, Slot } from "$lib/tipos";
 
   type Item = { nome: string; estado: string; detalhe: string };
   type Achado = { nivel: number; mensagem: string; dica: string };
@@ -22,6 +24,7 @@
     tela: [number, number];
     mudou_tamanho: boolean;
     problemas: string[];
+    paginas: number[];
   };
 
   let itens: Item[] = $state([]);
@@ -30,17 +33,30 @@
 
   let acf = $state("");
   let diag: Diagnostico | null = $state(null);
-  let imagem = $state("");
-  let telaCheia = $state(true);
+  let slots: Slot[] = $state([]);
+  let edicoes = $state<Record<number, Edicao>>({});
+  let ativo = $state(0);
   let gerando = $state(false);
   let gerado: Patch | null = $state(null);
+  let previasNovas = $state<Record<number, string>>({});
   let gravando = $state(false);
   let gravado = $state("");
   let parou = $state("");
-  let previa = $state("");
-  let previaNova = $state("");
   let tags = $state("");
   let daemon = $state(false);
+
+  const kb = (n: number) => `${Math.round(n / 1024)} KB`;
+  const base = (p: string) => p.split("/").pop() ?? p;
+
+  const edicaoAtiva = $derived(edicoes[ativo] as Edicao | undefined);
+  const slotAtivo = $derived(slots.find((s) => s.indice === ativo));
+  const alvoAtivo = $derived(
+    (edicaoAtiva?.telaCheia === false && slotAtivo
+      ? [slotAtivo.w, slotAtivo.h]
+      : [240, 240]) as [number, number],
+  );
+  const quantos = $derived(Object.keys(edicoes).length);
+  const podeGerar = $derived(quantos > 0 && acf.length > 0);
 
   async function atualizar() {
     carregando = true;
@@ -61,6 +77,9 @@
     });
     if (typeof p === "string") {
       acf = p;
+      edicoes = {};
+      previasNovas = {};
+      gerado = null;
       await analisar();
     }
   }
@@ -68,13 +87,16 @@
   async function analisar() {
     erro = "";
     gerado = null;
-    previaNova = "";
+    previasNovas = {};
     try {
       diag = await invoke<Diagnostico>("diagnostico", { caminho: acf });
-      previa = await invoke<string>("preview", { caminho: acf });
+      slots = await invoke<Slot[]>("slots", { caminho: acf });
+      if (slots.length && !slots.some((s) => s.indice === ativo)) {
+        ativo = slots[0].indice;
+      }
     } catch (e) {
       diag = null;
-      previa = "";
+      slots = [];
       erro = String(e);
     }
   }
@@ -86,21 +108,70 @@
         { name: "Imagens", extensions: ["jpg", "jpeg", "png", "gif", "bmp", "webp"] },
       ],
     });
-    if (typeof p === "string") imagem = p;
+    if (typeof p !== "string") return;
+    erro = "";
+    try {
+      const fonte = await invoke<string>("abrir_imagem", { imagem: p });
+      edicoes[ativo] = {
+        imagem: p,
+        fonte,
+        telaCheia: true,
+        ajuste: "cobrir",
+        zoom: 1,
+        px: 0.5,
+        py: 0.5,
+      };
+      gerado = null;
+    } catch (e) {
+      erro = String(e);
+    }
+  }
+
+  function mudarEnquadramento(novo: Enquadramento) {
+    const atual = edicoes[ativo];
+    if (atual) edicoes[ativo] = { ...atual, ...novo };
+  }
+
+  function mudarEdicao(patch: Partial<Edicao>) {
+    const atual = edicoes[ativo];
+    if (atual) edicoes[ativo] = { ...atual, ...patch };
+  }
+
+  function removerSlot(indice: number) {
+    delete edicoes[indice];
+    delete previasNovas[indice];
+    gerado = null;
   }
 
   async function gerar() {
-    if (!acf || !imagem) return;
+    if (!podeGerar) return;
     gerando = true;
     erro = "";
     gerado = null;
     try {
-      gerado = await invoke<Patch>("patch_imagem", {
-        caminhoAcf: acf,
-        imagem,
-        telaCheia,
-      });
-      previaNova = await invoke<string>("preview", { caminho: gerado.saida });
+      const pedacos = Object.entries(edicoes).map(([k, e]) => ({
+        slot: Number(k),
+        imagem: e.imagem,
+        telaCheia: e.telaCheia,
+        ajuste: e.ajuste,
+        zoom: e.zoom,
+        px: e.px,
+        py: e.py,
+      }));
+      const novo = await invoke<Patch>("patch_imagens", { caminhoAcf: acf, pedacos });
+      const novas: Record<number, string> = {};
+      for (const chave of Object.keys(edicoes)) {
+        try {
+          novas[Number(chave)] = await invoke<string>("preview", {
+            caminho: novo.saida,
+            slot: Number(chave),
+          });
+        } catch {
+          /* a prévia pode falhar em textura oficial antiga; o patch já validou */
+        }
+      }
+      previasNovas = novas;
+      gerado = novo;
     } catch (e) {
       erro = String(e);
     } finally {
@@ -119,7 +190,7 @@
   }
 
   async function gravarNaTela() {
-    const alvo = gerado?.saida ?? acf;
+    const alvo = gerado?.saida ?? "";
     if (!alvo) return;
     gravando = true;
     erro = "";
@@ -127,9 +198,13 @@
     try {
       const r = await invoke<{ porta: string; tamanho: number; bytes: number }>("gravar", {
         caminho: alvo,
-        pagina: 5,
+        pagina: gerado?.paginas[0] ?? null,
       });
-      gravado = `gravado em ${r.porta} (${Math.round(r.bytes / 100) / 10}s)`;
+      const segundos = Math.round(r.bytes / 100) / 10;
+      gravado = `gravado em ${r.porta} (${segundos}s)`;
+      if (gerado?.paginas.length) {
+        gravado += ` · exibindo a página ${gerado.paginas[0]}`;
+      }
     } catch (e) {
       erro = String(e);
     } finally {
@@ -147,8 +222,10 @@
         wifi: string | null;
         enviadas: number;
       }>("tags_uma_vez");
-      tags = `${t.relogio} · bateria ${t.bateria ?? "?"}% · cpu ${t.cpu ?? "?"}%` +
-        (t.wifi ? ` · ${t.wifi}` : "") + ` · ${t.enviadas} tags`;
+      tags =
+        `${t.relogio} · bateria ${t.bateria ?? "?"}% · cpu ${t.cpu ?? "?"}%` +
+        (t.wifi ? ` · ${t.wifi}` : "") +
+        ` · ${t.enviadas} tags`;
       await atualizar();
     } catch (e) {
       erro = String(e);
@@ -163,9 +240,6 @@
       erro = String(e);
     }
   }
-
-  const kb = (n: number) => `${Math.round(n / 1024)} KB`;
-  const base = (p: string) => p.split("/").pop() ?? p;
 
   async function carregar() {
     await atualizar();
@@ -219,12 +293,6 @@
     {#if acf}
       <p class="caminho">{acf}</p>
     {/if}
-    {#if previa}
-      <figure class="previa">
-        <img src={previa} alt="textura do slot" />
-        <figcaption>slot atual (240×240)</figcaption>
-      </figure>
-    {/if}
     {#if diag}
       <div class="resumo" class:ruim={!diag.ok}>
         <span>{kb(diag.tamanho)}</span>
@@ -245,32 +313,77 @@
 
   <section>
     <div class="topo">
-      <h2>Trocar imagem</h2>
+      <h2>Trocar imagens</h2>
       <div class="acoes">
-        <button onclick={escolherImagem}>imagem…</button>
-        <button onclick={gerar} disabled={!imagem || gerando}>
-          {gerando ? "gerando…" : "gerar .acf"}
+        <button onclick={escolherImagem} disabled={!slots.length}>
+          imagem para o slot {ativo + 1}…
+        </button>
+        <button onclick={gerar} disabled={!podeGerar || gerando}>
+          {gerando ? "gerando…" : `gerar .acf${quantos > 1 ? ` (${quantos})` : ""}`}
         </button>
       </div>
     </div>
-    {#if imagem}
-      <p class="caminho">imagem: {base(imagem)}</p>
-    {:else}
-      <p class="dica">escolha uma imagem para gerar o .acf</p>
-    {/if}
+
     {#if !acf}
-      <p class="dica">nenhuma base: escolha um .acf na seção acima</p>
+      <p class="dica">escolha um .acf acima para listar os três slots</p>
+    {:else if !slots.length}
+      <p class="dica">não achei imagens (páginas 4/5/6) neste .acf</p>
+    {:else}
+      <div class="slots">
+        {#each slots as s (s.indice)}
+          {@const mini = previasNovas[s.indice] ?? s.previa}
+          <figure class="slot" class:ativo={s.indice === ativo}>
+            <button
+              class="painel"
+              onclick={() => (ativo = s.indice)}
+              aria-pressed={s.indice === ativo}
+              title="editar o slot {s.indice + 1}"
+            >
+              {#if mini}
+                <img src={mini} alt="conteúdo do slot {s.indice + 1}" />
+              {:else}
+                <span class="vazio">—</span>
+              {/if}
+            </button>
+            <figcaption>
+              <span class="nome">slot {s.indice + 1}</span>
+              <small>{s.w}×{s.h}</small>
+              {#if edicoes[s.indice]}
+                <span class="marca-nova">nova</span>
+                <button
+                  class="remover"
+                  onclick={() => removerSlot(s.indice)}
+                  title="desfazer esta troca"
+                >
+                  ×
+                </button>
+              {/if}
+            </figcaption>
+          </figure>
+        {/each}
+      </div>
     {/if}
-    <label class="check">
-      <input type="checkbox" bind:checked={telaCheia} />
-      tela cheia (240×240; sem isso usa o tamanho do slot)
-    </label>
-    {#if previaNova}
-      <figure class="previa">
-        <img src={previaNova} alt="prévia do novo .acf" />
-        <figcaption>como vai ficar</figcaption>
-      </figure>
+
+    {#if edicaoAtiva}
+      <Recorte
+        fonte={edicaoAtiva.fonte}
+        alvo={alvoAtivo}
+        estado={edicaoAtiva}
+        onmudar={mudarEnquadramento}
+      />
+      <label class="check">
+        <input
+          type="checkbox"
+          checked={edicaoAtiva.telaCheia}
+          onchange={(e) => mudarEdicao({ telaCheia: e.currentTarget.checked })}
+        />
+        tela cheia (240×240) — desligado mantém o tamanho original do slot
+      </label>
+      <p class="caminho">imagem: {base(edicaoAtiva.imagem)}</p>
+    {:else if slots.length}
+      <p class="dica">escolha uma imagem para o slot {ativo + 1}</p>
     {/if}
+
     {#if gerado}
       <div class="resumo bom">
         <span>{base(gerado.saida)}</span>
@@ -279,7 +392,10 @@
         <span>{gerado.quadros} quadro(s)</span>
         {#if gerado.mudou_tamanho}<strong>tamanho ajustado</strong>{/if}
       </div>
-      <p class="dica">validado antes de escrever.</p>
+      <p class="dica">
+        validado antes de escrever · página{gerado.paginas.length > 1 ? "s" : ""}
+        {gerado.paginas.join(", ")}
+      </p>
     {/if}
 
     <div class="acoes">
@@ -358,6 +474,7 @@
   .acoes {
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
   }
 
   button {
@@ -469,24 +586,75 @@
     color: #3ddc84;
   }
 
-  .previa {
+  .slots {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .slot {
     margin: 0;
     display: flex;
-    align-items: center;
-    gap: 12px;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
   }
 
-  .previa img {
-    width: 120px;
-    height: 120px;
-    image-rendering: pixelated;
-    border-radius: 8px;
+  .slot .painel {
+    padding: 0;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 9px;
     border: 1px solid #2b3442;
     background: #000;
+    display: grid;
+    place-items: center;
   }
 
-  .previa figcaption {
-    font-size: 11.5px;
+  .slot.ativo .painel {
+    border-color: #3ddc84;
+    box-shadow: 0 0 0 1px #3ddc84 inset;
+  }
+
+  .slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+  }
+
+  .vazio {
+    color: #53607a;
+    font-size: 18px;
+  }
+
+  .slot figcaption {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #aab3c2;
+    min-width: 0;
+  }
+
+  .slot small {
+    color: #6b7482;
+    font-family: ui-monospace, monospace;
+  }
+
+  .marca-nova {
+    color: #3ddc84;
+    border: 1px solid #2b5c43;
+    border-radius: 5px;
+    padding: 0 4px;
+    font-size: 10.5px;
+  }
+
+  .remover {
+    margin-left: auto;
+    padding: 0 6px;
+    line-height: 1.4;
+    font-size: 12px;
     color: #8b94a3;
   }
 

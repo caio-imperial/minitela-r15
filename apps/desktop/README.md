@@ -24,8 +24,10 @@ Hoje o app faz três coisas:
 
 2. **leitura/validação de `.acf`** — abre um arquivo e mostra tamanho, tela, páginas,
    texturas e o diagnóstico campo a campo (`CheckCode` por página, magic, versão);
-3. **troca de imagem** — escolhe a base, a imagem e gera o `.acf` novo (estático ou GIF,
-   em tamanho de slot ou tela cheia), validando antes de escrever;
+3. **troca de imagem** — lista os três slots do `.acf` (páginas 4/5/6) com miniatura,
+   deixa escolher imagem e **enquadramento por slot** (arrastar para recortar, zoom de
+   1× a 3×, ou "conter" com barras), e gera um `.acf` novo com todas as trocas de uma vez,
+   validando antes de escrever; a gravação já exibe a página do primeiro slot editado;
 4. **tags em tempo real** — relógio, bateria, CPU e wifi, um round avulso ou um daemon de
    5 s (`sysinfo.rs` lê `/sys`, `/proc` e `iwgetid`; envio sem exigir ACK, como o Python);
 5. **prévia da textura** — decodifica o slot e devolve PNG para a interface (antes e

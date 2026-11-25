@@ -151,9 +151,11 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             ambiente,
             commands::sugestao_base,
+            commands::slots,
             commands::preview,
+            commands::abrir_imagem,
             commands::diagnostico,
-            commands::patch_imagem,
+            commands::patch_imagens,
             commands::gravar,
             commands::parar_app,
             commands::tags_uma_vez,
