@@ -19,7 +19,7 @@ do repositório.
 
 | ferramenta | o que faz |
 |---|---|
-| **`acf_inspect.py`** | lê e valida um `.acf`: magic, versão, `CheckCode` por página, tabela de texturas |
+| **`acf_inspect.py`** | lê e valida um `.acf`: magic, versão, `CheckCode` por página, tabela de texturas; `--diagnostico` explica o que quebrou |
 | **`acf_anim.py`** | monta N quadros como fatias de uma textura (usado pelo patch) |
 | **`acf_codec.py`** | codec STC: decodifica/encodifica blocos 4×4 e calcula o checksum |
 | `lab/lab_acf.py`, `lab/exp_bloco.py` | bancada de engenharia reversa (imagens sintéticas + diff das saídas) |
@@ -34,6 +34,17 @@ do repositório.
 Um arquivo bom imprime `OK` e nenhum problema. É exatamente o que o firmware valida:
 `StartOfConfigdata % 16384`, magic `0x494d4841`, versão e o `CheckCode` de cada página
 (`0xA55A5AA5 ^ XOR(words)`).
+
+Quando algo falha, `--diagnostico` diz **o quê** e **por quê**:
+
+```bash
+./acf_inspect.py --diagnostico meu.acf
+# [ERRO ] pg3: CheckCode do bloco nao bate
+#         -> o firmware entra no laco de AHMIInterface e nao termina: ...
+```
+
+Ele confere ainda `SingleSliceSize` contra `TexWidth/TexHeight`, texturas fora da área,
+sobreposição, `GifSliceNum` contra o bitmap do trailer e o alinhamento do tamanho.
 
 ## Toolchain de engenharia reversa
 

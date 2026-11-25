@@ -48,6 +48,64 @@ Exec=/bin/bash -c "sleep 3; /caminho/minitela_recover.py --timeout 900 > /tmp/mi
 Reinicie o notebook. O script fica tentando até conseguir e grava o tema de fábrica assim
 que o dispositivo responder na janela do boot. O log fica em `/tmp/minitela-recover.log`.
 
+## Quando o USB não enumera mais
+
+Se o dispositivo sumiu como USB (`device descriptor read/64, error -110`,
+`unable to enumerate USB device`), o caminho acima **não alcança**: o USB pertence ao
+firmware de aplicação — justamente o que travou. Nesse estado, o `minitela_recover.py`
+não tem onde conectar.
+
+A recuperação, nesse caso, é **por UART**, antes de o app rodar:
+
+1. **ROM de boot (2 KB, fixa).** Depois do reset, o chip executa um código em ROM que
+   espera, por um tempo determinado, um comando de upgrade pela serial. Se não recebe,
+   salta para a flash (`RM201`, ~p. 32 — "hard BOOT").
+2. **Bootloader da flash.** Repete a lógica tentando `SD → CAN → UART`, com espera padrão
+   de **500 ms** (`upg_cfg.bin` em `0x080F7000` pode mudar isso).
+3. **Aplicação.** Só depois disso a UI sobe — e é ela que implementa o protocolo USB
+   `AH…MI` que usamos no dia a dia.
+
+!!! warning "Não é a porta USB"
+    Não existe janela USB antes do login. Ficar tentando capturar `/dev/ttyACM*` no boot
+    não vai funcionar quando o app está travado.
+
+### O que você precisa
+
+- acesso físico a **RX, TX e GND** do módulo (a tela fica atrás do bezel, com flat cable
+  curto — é a parte delicada);
+- um adaptador USB-serial em **3,3 V** (confira o nível lógico antes de ligar);
+- a ferramenta de upgrade do fabricante (`GC9002串口升级协议及工具`, com `uartTool.exe`) e
+  os arquivos de firmware.
+
+### Pinos
+
+As fontes divergem, e **quem manda é o `upg_cfg.bin` daquela placa**:
+
+| fonte | pino |
+|---|---|
+| texto do fabricante (placa de desenvolvimento) | **UART0**, TX `PB14`, RX `PB15`, 115200 |
+| default do fonte do bootloader (SDK) | **UART2**, `PB9`/`PB8`, 115200 |
+
+Nenhuma das duas foi confirmada no módulo da minitela. Sem o `upg_cfg.bin` da sua unidade
+(que não dá para ler sem acesso), é tentativa e erro — e é por isso que este procedimento
+está documentado como **não validado**.
+
+### Como seria a tentativa
+
+1. conecte o adaptador (RX↔TX, GND↔GND; **não** ligue VCC);
+2. abra a ferramenta já escutando em 115200;
+3. provoque um **corte real de energia** no módulo (desligar o notebook) para cair na
+   janela de boot;
+4. a ferramenta deve receber o handshake e oferecer os arquivos.
+
+Se o handshake não vier, troque de par de pinos e repita. A janela é curta: a ferramenta
+precisa estar rodando **antes** do reset.
+
+!!! danger "O que não fazer"
+    Se a janela abrir, grave **só** `Texture.acf` — a menos que você tenha os binários
+    originais da sua unidade e um plano para `product`/`calibration`. `cpu1` errado, sem
+    backup, é o mesmo estado de novo.
+
 ## Cuidado que evita o problema
 
 - deixar **"limpar resíduo da flash antes"** marcado no painel;

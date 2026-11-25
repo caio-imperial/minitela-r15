@@ -133,6 +133,7 @@ def parse_bytes(data, nome="<mem>", show_textures=False):
         o = base + i * PAGE_CFG_SIZE
         store, size, check = u32(cfg, o), u32(cfg, o + 4), u32(cfg, o + 8)
         ntex = u16(cfg, o + 14)
+        gif = u16(cfg, o + 26)
         touch = u16(cfg, o + 24)
         block = data[start + store: start + store + size]
         calc = (PAGE_XOR_SEED ^ xor_words(block)) if len(block) == size else None
@@ -141,6 +142,7 @@ def parse_bytes(data, nome="<mem>", show_textures=False):
             problems.append(f"pagina {i}: CheckCode {check:#010x} != {calc if calc is None else hex(calc)}")
 
         texs = []
+        coerentes = 0
         # A tabela fica no fim do bloco, antes de ate 4 arrays variaveis. Em vez de
         # modelar os arrays, procura-se o offset que faz TODOS os registros coerentes
         # (w/h plausiveis, slice == ceil(w/4)*ceil(h/4)*16, addr dentro do arquivo).
@@ -168,7 +170,8 @@ def parse_bytes(data, nome="<mem>", show_textures=False):
                     })
 
         pages.append({"i": i, "store": store, "size": size, "check": check,
-                      "ok": ok, "ntex": ntex, "texs": texs})
+                      "ok": ok, "ntex": ntex, "texs": texs, "gif": gif,
+                      "coerentes": coerentes})
 
     info = {
         "path": nome, "tamanho": len(data), "start": start, "unk": unk,
@@ -179,10 +182,124 @@ def parse_bytes(data, nome="<mem>", show_textures=False):
     return info, problems
 
 
+def diagnostico(data, nome="<mem>"):
+    """Explica POR QUE um .acf seria rejeitado pelo firmware, com a invariante quebrada.
+
+    Devolve lista de (nivel, mensagem, dica). Nivel 0 = ok, 1 = aviso, 2 = erro fatal
+    (o firmware trava ou recusa).
+    """
+    achados = []
+    try:
+        info, problems = parse_bytes(data, nome)
+    except struct.error:
+        return [(2, "arquivo truncado: a leitura passou do fim", 
+                 "o arquivo foi cortado ou uma gravacao ficou incompleta")]
+    except Exception as e:
+        return [(2, f"nao consegui interpretar: {e}", "nao parece um .acf?")]
+    if "erro" in info:
+        return [(2, info["erro"], "arquivo truncado ou nao e um .acf?")]
+
+    def erro(msg, dica):
+        achados.append((2, msg, dica))
+
+    def aviso(msg, dica):
+        achados.append((1, msg, dica))
+
+    # ---- estrutura geral
+    if info["start"] % 0x4000:
+        erro(f"StartOfConfigdata = {info['start']:#x} nao e multiplo de 16 KB",
+             "header corrompido ou deslocado; o firmware recusa")
+    if (len(data) - 8) % 0x4000:
+        erro(f"tamanho {len(data)} nao segue 8 + k*16384",
+             "arquivo truncado ou padding nao refeito apos edicao")
+
+    # So confiamos na tabela das paginas onde TODOS os registros sao coerentes; nas
+    # outras o localizador e best-effort e os enderecos podem ser lixo.
+    confiaveis = [pg for pg in info["pages"] if pg["coerentes"] == pg["ntex"]]
+    for pg in info["pages"]:
+        if pg["coerentes"] < pg["ntex"]:
+            aviso(f"pg{pg['i']}: tabela de texturas parcial ({pg['coerentes']}/{pg['ntex']} coerentes)",
+                  "checagens de textura desta pagina foram ignoradas")
+            # nao inferimos registros individuais aqui: sem a tabela coerente, um
+            # deslocamento de 4 bytes ja muda o que se le
+
+    # ---- texturas: tamanho, limites e sobreposicao
+    ocupados = []
+    for pg in confiaveis:
+        for t in pg["texs"]:
+            if t["tipo"] == "PURECOLOR":
+                continue
+            if t["tipo"] in ("STCRGB888", "STCRGBA888") and t["slice"] != t["esperado"]:
+                erro(f"pg{pg['i']} #{t['i']}: slice {t['slice']} != {t['esperado']} "
+                     f"para {t['w']}x{t['h']}",
+                     "TexWidth/TexHeight foram alterados sem atualizar SingleSliceSize")
+            if t["addr"] + t["slice"] > info["start"]:
+                erro(f"pg{pg['i']} #{t['i']}: textura passa da area ({t['addr']:#x}"
+                     f"+{t['slice']} > {info['start']:#x})",
+                     "endereco nao foi relocado depois de mudar o tamanho do arquivo")
+            ocupados.append((t["addr"], t["addr"] + t["slice"], pg["i"], t["i"]))
+    # a mesma textura pode ser referenciada por mais de uma pagina: deduplica antes
+    vistos = {}
+    for a, b, pi, ti in ocupados:
+        vistos.setdefault((a, b), (pi, ti))
+    ocupados = sorted((a, b, pi, ti) for (a, b), (pi, ti) in vistos.items())
+    for a, b in zip(ocupados, ocupados[1:]):
+        if a[1] > b[0]:
+            erro(f"pg{a[2]} #{a[3]} e pg{b[2]} #{b[3]} se sobrepoem "
+                 f"({a[1]:#x} > {b[0]:#x})",
+                 "relocacao deixou duas texturas no mesmo lugar")
+
+    # ---- GIF: GifSliceNum x trailer x espaco ocupado
+    for pg in confiaveis:
+        if not pg.get("gif"):
+            continue
+        blk = info["start"] + pg["store"]
+        if blk + 0x180 > len(data):
+            continue
+        n = u16(data, blk + 0x17E)
+        if not n:
+            continue
+        gif_tex = [t for t in pg["texs"] if t["tipo"].startswith("STC")]
+        if not gif_tex:
+            continue
+        t = gif_tex[0]
+        flags = u32(data, t["off"] + 8)
+        fim = t["addr"] + n * t["slice"]
+        if flags == 0:
+            if n > 1:
+                erro(f"pg{pg['i']}: GifSliceNum={n} mas a textura nao tem trailer",
+                     "faltou gravar SliceFlagsHeaderAddr / o trailer de fatias")
+        else:
+            if flags + 8 > len(data):
+                erro("trailer de fatias fora do arquivo", "SliceFlagsHeaderAddr invalido")
+            else:
+                bitmap = [u16(data, flags + 8 + 2 * k) for k in range((n + 15) // 16)]
+                bits = sum(bin(w).count("1") for w in bitmap)
+                if bits != n:
+                    aviso(f"pg{pg['i']}: GifSliceNum={n} mas o bitmap tem {bits} fatias",
+                          "trailer e contagem de quadros nao batem")
+            if fim + 16 > info["start"]:
+                erro(f"pg{pg['i']}: {n} quadros passam da area de textura",
+                     "numero de quadros grande demais para o arquivo")
+
+    # ---- paginas: CheckCode (o que faz o firmware entrar em laco infinito)
+    for pg in info["pages"]:
+        if not pg["ok"]:
+            erro(f"pg{pg['i']}: CheckCode do bloco nao bate",
+                 "o firmware entra no laco de AHMIInterface e nao termina: "
+                 "recalcule o CheckCode depois de qualquer edicao no bloco")
+
+    if not achados:
+        achados.append((0, "todas as invariantes que o firmware checa estao OK", ""))
+    return achados
+
+
 def main():
     ap = argparse.ArgumentParser(description="Le e valida um Texture.acf pelo mapa do firmware")
     ap.add_argument("acf", nargs="+")
     ap.add_argument("--textures", action="store_true", help="lista cada textura")
+    ap.add_argument("--diagnostico", action="store_true",
+                    help="explica por que um arquivo seria rejeitado (campo a campo)")
     a = ap.parse_args()
 
     files = []
@@ -191,6 +308,15 @@ def main():
 
     ruins = 0
     for f in files:
+        if a.diagnostico:
+            print(f)
+            ruins += sum(1 for nivel, _, _ in diagnostico(open(f, "rb").read(), f) if nivel == 2)
+            for nivel, msg, dica in diagnostico(open(f, "rb").read(), f):
+                marca = {0: "OK  ", 1: "AVISO", 2: "ERRO "}[nivel]
+                print(f"  [{marca}] {msg}")
+                if dica:
+                    print(f"          -> {dica}")
+            continue
         try:
             info, problems = parse(f, a.textures)
         except Exception as e:

@@ -56,7 +56,8 @@ gsettings set org.policorp.minitela saved-screens "[true,true,true,true,true,tru
 ## Conferir sem gravar
 
 ```bash
-./acf_inspect.py --textures ~/minha.acf | head -20
+./acf_inspect.py --textures ~/minha.acf | head -20   # lista as texturas
+./acf_inspect.py --diagnostico ~/minha.acf           # explica o que quebrou, se quebrou
 ```
 
 Você vê as páginas, o número de texturas e, com `--textures`, cada textura com tipo,

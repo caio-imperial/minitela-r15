@@ -56,15 +56,41 @@ O gerador usa `0x00`/`0x10` para as imagens; fundos chapados aparecem como `0x30
 Fidelidade medida numa foto real: erro médio **1,8/255**, p99 25. Os piores casos são
 blocos de cores não colineares — onde o fabricante usa o **modo 1**.
 
-## Limitação conhecida: modo 1
+## O bit de modo não é binário: são cinco sub-formatos
 
-O modo 1 (duas partições) tem cabeçalho de 5 bits, alfa de 6 bits com correção
-(`a += a/64`), pesos de 2 bits por canal mapeados por uma tabela
-(`{0,1,2,3} → {0,4,11,15}`) e um bit de tipo escolhendo qual canal usa qual peso.
+Os bits baixos do bloco escolhem o decodificador (`stc_rgba_dec`, em `stc.cpp:706`).
+Não é "modo 0 ou 1" — é o número de bits 1 no começo:
 
-- **decodificar** arquivos oficiais exige o modo 1;
-- **gerar** não: o modo 0 representa qualquer bloco, com menos fidelidade nos casos acima.
+| bits iniciais | sub-formato | implementado aqui |
+|---|---|---|
+| `0` | uma partição (o que geramos) | **sim** |
+| `01` | duas partições | não |
+| `011` | duas partições, dois planos | não |
+| `0111` | uma partição, dois planos | não |
+| `01111…` | três partições | não |
 
-Implementar o modo 1 é a próxima melhoria óbvia do codec.
+Os sub-formatos de duas/três partições têm mais cabeçalho, um `seed` de 10 bits que escolhe
+a partição de cada pixel (`select_partition`), alfa de 6 bits e uma segunda tabela de pesos.
+
+Distribuição medida numa textura real de foto (240×240, 3600 blocos):
+
+| sub-formato | blocos |
+|---|---|
+| uma partição | 217 |
+| uma partição, dois planos | **3197** |
+| duas partições | 142 |
+| duas partições, dois planos | 16 |
+| três partições | 28 |
+
+Consequências:
+
+- **gerar** não precisa de nada disso: o sub-formato de uma partição representa qualquer
+  bloco, com menos fidelidade nas cores não colineares;
+- **decodificar** arquivos oficiais exige os outros quatro — é a limitação conhecida do
+  `acf_codec.py`, e a próxima melhoria do codec.
+
+Um detalhe que ajuda quem for implementar: o deslocamento dos campos é relativo ao **bit 0
+do bloco**, enquanto o nosso stream começa no bit 1 — por isso todo offset do `stc.cpp`
+entra com `-1` no código.
 
 Prova bit a bit contra o simulador do SDK: [`RE-acf-source.md`](../RE-acf-source.md) §2.
