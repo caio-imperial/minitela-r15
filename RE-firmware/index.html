@@ -1,0 +1,3611 @@
+
+<!doctype html>
+<html lang="pt" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Usar a minitela 240x240 do Positivo Vision R15M no Linux: imagens, GIF animado, tags em tempo real e a engenharia reversa do protocolo e do formato .acf.">
+      
+      
+      
+        <link rel="canonical" href="https://caio-imperial.github.io/minitela-r15/RE-firmware/">
+      
+      
+        <link rel="prev" href="../RE-acf/">
+      
+      
+        <link rel="next" href="../RE-acf-source/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
+    
+    
+      
+        <title>O firmware e a flash - Minitela GC9002</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#engenharia-reversa-do-primeiro-firmware-gc9002-real-flash_downloadelf" class="md-skip">
+          Pular para conteúdo
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Cabeçalho">
+    <a href=".." title="Minitela GC9002" class="md-header__button md-logo" aria-label="Minitela GC9002" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Minitela GC9002
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              O firmware e a flash
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Tema escuro"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Tema escuro" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Tema claro"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Tema claro" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Buscar" placeholder="Buscar" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Pesquisar">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Limpar" aria-label="Limpar" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Inicializando busca
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/caio-imperial/minitela-r15" title="Ir para repositório" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    caio-imperial/minitela-r15
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navegação" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Minitela GC9002" class="md-nav__button md-logo" aria-label="Minitela GC9002" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Minitela GC9002
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/caio-imperial/minitela-r15" title="Ir para repositório" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    caio-imperial/minitela-r15
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Início
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Começar
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Começar
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comecar/instalacao/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Requisitos e instalação
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comecar/imagem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Enviar uma imagem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comecar/gif/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GIF animado
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comecar/tags/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tags em tempo real
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comecar/painel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Painel gráfico
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comecar/recuperacao/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recuperar a tela
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Referência
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Referência
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../referencia/protocolo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Protocolo AHMI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../referencia/flash/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mapa da flash
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../referencia/acf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formato .acf
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../referencia/codec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Codec STC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../referencia/gif/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GIF (fatias e trailer)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../referencia/tags/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tags e IDs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hardware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ferramentas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ferramentas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Engenharia reversa
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Engenharia reversa
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RE-acf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    O formato .acf
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    O firmware e a flash
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    O firmware e a flash
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Índice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-o-que-e-o-binario" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. O que é o binário
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-mapa-de-perifericos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Mapa de periféricos
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Mapa de periféricos">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-usado-de-fato-pelo-binario" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Usado de fato pelo binário
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-so-declarado-macroirq-sem-nenhum-acesso-no-codigo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Só declarado (macro/IRQ), sem nenhum acesso no código
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-sequencia-de-erasewrite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Sequência de erase/write
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Sequência de erase/write">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-protocolo-do-cdk-entry-funcoes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Protocolo do CDK (entry → funções)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-erase-a-cadeia-real" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 ERASE — a cadeia real
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-program-a-cadeia-real" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 PROGRAM — a cadeia real
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-comandos-jedec-de-onde-vem-cada-opcode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 Comandos JEDEC — de onde vem cada opcode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-alinhamento-e-tamanho-de-setor-resumo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 Alinhamento e tamanho de setor — resumo
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-tabela-de-flash-suportada-flash_id_is_" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Tabela de flash suportada (FLASH_ID_IS_*)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-crc32-em-0x40108000" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. CRC32 em 0x40108000
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-o-que-isso-explica-sobre-a-minitela" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. O que isso explica sobre a minitela
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. O que isso explica sobre a minitela">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#o-que-continua-em-aberto" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        O que continua em aberto
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-o-protocolo-no-codigo-fonte-do-sdk-v11020" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. O protocolo no código-fonte do SDK (v1.10.20)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. O protocolo no código-fonte do SDK (v1.10.20)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91-onde-o-ahmi-esta-e-onde-nao-esta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.1 Onde o AH…MI está — e onde não está
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#92-formato-do-frame-direto-da-fonte" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.2 Formato do frame, direto da fonte
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#93-o-dispatcher" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.3 O dispatcher
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#94-como-o-byte-vira-flash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.4 Como o byte vira flash
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-comandos-implementados-minitela_ctlpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Comandos implementados × minitela_ctl.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Comandos implementados × minitela_ctl.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101-diferencas-finas-entre-o-minitela_ctlpy-e-o-sdk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.1 Diferenças finas entre o minitela_ctl.py e o SDK
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-entrada-no-bootloader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Entrada no bootloader
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Entrada no bootloader">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#111-por-que-o-bootloader-sempre-roda" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.1 Por que o bootloader sempre roda
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#112-a-janela-de-espera-o-unico-mecanismo-que-existe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.2 A janela de espera (o único mecanismo que existe)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#113-o-que-nao-existe-procurei-e-nao-ha" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.3 O que NÃO existe (procurei e não há)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#114-procedimento-valido-se-o-bootloader-da-minitela-for-este" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.4 Procedimento (válido se o bootloader da minitela for este)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#115-risco" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.5 Risco
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-leitura-de-flash-veredito" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Leitura de flash: veredito
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="12. Leitura de flash: veredito">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#121-nao-existe-comando-de-leitura-no-sdk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.1 Não existe comando de leitura no SDK
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#122-upg_cmd_upload-confirmado-morto" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.2 UPG_CMD_UPLOAD — confirmado morto
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#123-o-que-existe-de-leitura-interna-nao-exposta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.3 O que existe de leitura (interna, não exposta)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#124-veredito" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.4 Veredito
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#apendice-como-reproduzir" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Apêndice — como reproduzir
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RE-acf-source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    O .acf pelo código
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comunidade/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Comunidade
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contribuir/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribuir
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../legal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Legal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Índice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-o-que-e-o-binario" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. O que é o binário
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-mapa-de-perifericos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Mapa de periféricos
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Mapa de periféricos">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-usado-de-fato-pelo-binario" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Usado de fato pelo binário
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-so-declarado-macroirq-sem-nenhum-acesso-no-codigo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Só declarado (macro/IRQ), sem nenhum acesso no código
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-sequencia-de-erasewrite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Sequência de erase/write
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Sequência de erase/write">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-protocolo-do-cdk-entry-funcoes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Protocolo do CDK (entry → funções)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-erase-a-cadeia-real" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 ERASE — a cadeia real
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-program-a-cadeia-real" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 PROGRAM — a cadeia real
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-comandos-jedec-de-onde-vem-cada-opcode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 Comandos JEDEC — de onde vem cada opcode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-alinhamento-e-tamanho-de-setor-resumo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 Alinhamento e tamanho de setor — resumo
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-tabela-de-flash-suportada-flash_id_is_" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Tabela de flash suportada (FLASH_ID_IS_*)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-crc32-em-0x40108000" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. CRC32 em 0x40108000
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-o-que-isso-explica-sobre-a-minitela" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. O que isso explica sobre a minitela
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. O que isso explica sobre a minitela">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#o-que-continua-em-aberto" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        O que continua em aberto
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-o-protocolo-no-codigo-fonte-do-sdk-v11020" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. O protocolo no código-fonte do SDK (v1.10.20)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. O protocolo no código-fonte do SDK (v1.10.20)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91-onde-o-ahmi-esta-e-onde-nao-esta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.1 Onde o AH…MI está — e onde não está
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#92-formato-do-frame-direto-da-fonte" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.2 Formato do frame, direto da fonte
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#93-o-dispatcher" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.3 O dispatcher
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#94-como-o-byte-vira-flash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.4 Como o byte vira flash
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-comandos-implementados-minitela_ctlpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Comandos implementados × minitela_ctl.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Comandos implementados × minitela_ctl.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101-diferencas-finas-entre-o-minitela_ctlpy-e-o-sdk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.1 Diferenças finas entre o minitela_ctl.py e o SDK
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-entrada-no-bootloader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Entrada no bootloader
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Entrada no bootloader">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#111-por-que-o-bootloader-sempre-roda" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.1 Por que o bootloader sempre roda
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#112-a-janela-de-espera-o-unico-mecanismo-que-existe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.2 A janela de espera (o único mecanismo que existe)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#113-o-que-nao-existe-procurei-e-nao-ha" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.3 O que NÃO existe (procurei e não há)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#114-procedimento-valido-se-o-bootloader-da-minitela-for-este" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.4 Procedimento (válido se o bootloader da minitela for este)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#115-risco" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.5 Risco
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-leitura-de-flash-veredito" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Leitura de flash: veredito
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="12. Leitura de flash: veredito">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#121-nao-existe-comando-de-leitura-no-sdk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.1 Não existe comando de leitura no SDK
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#122-upg_cmd_upload-confirmado-morto" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.2 UPG_CMD_UPLOAD — confirmado morto
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#123-o-que-existe-de-leitura-interna-nao-exposta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.3 O que existe de leitura (interna, não exposta)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#124-veredito" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.4 Veredito
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#apendice-como-reproduzir" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Apêndice — como reproduzir
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/caio-imperial/minitela-r15/edit/main/docs/RE-firmware.md" title="Editar esta página" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="engenharia-reversa-do-primeiro-firmware-gc9002-real-flash_downloadelf">Engenharia reversa do primeiro firmware GC9002 real — <code>flash_download.elf</code><a class="headerlink" href="#engenharia-reversa-do-primeiro-firmware-gc9002-real-flash_downloadelf" title="Permanent link">&para;</a></h1>
+<p>Companheiro do <code>RE-acf.md</code>. Aqui o alvo não é o container <code>.acf</code>, é <strong>o outro lado</strong>:
+o firmware que o fabricante usa para gravar a flash QSPI NOR que mapeia em <code>0x08000000</code>
+— o mesmo barramento onde mora o <code>Texture.acf</code> (<code>0x08100000</code>).</p>
+<p>Método: 100% estático. O <code>.elf</code> <strong>não foi executado</strong>, nada foi gravado na minitela.
+Ferramentas: <code>llvm-readelf</code>/<code>llvm-dwarfdump</code>, Capstone 5 (<code>rv32</code> + RVC) e Ghidra 12.2
+(projeto <code>work/fw142</code>, ignorado pelo git). Decompilado completo em
+<code>/tmp/opencode/fw/decompiled.c</code> (efêmero); os endereços citados bastam para refazer.</p>
+<p>Regra deste documento: <strong>todo achado tem coordenada</strong>. O que é leitura de código aparece
+como <code>símbolo @ 0xADDR</code>; o que é inferência está marcado <strong>HIPÓTESE</strong>; o que não dá para
+saber por este binário está marcado <strong>NÃO DOCUMENTADO</strong>.</p>
+<hr />
+<h2 id="1-o-que-e-o-binario">1. O que é o binário<a class="headerlink" href="#1-o-que-e-o-binario" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>propriedade</th>
+<th>valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>caminho</td>
+<td><code>.tools/vendor/ext/GC9002芯片支持包/GC9002芯片支持包/flash_download.elf</code></td>
+</tr>
+<tr>
+<td>sha256</td>
+<td><code>9d8ba8618cf6ed3074faf767088faff1d07496f1600c09672bc3237f58e5d3eb</code></td>
+</tr>
+<tr>
+<td>tamanho</td>
+<td>690384 bytes (0xA88D0)</td>
+</tr>
+<tr>
+<td>formato</td>
+<td>ELF32 LSB, <code>EXEC</code>, RISC-V, <strong>RVC + RVE</strong>, soft-float ABI, static, <code>not stripped</code>, <code>with debug_info</code></td>
+</tr>
+<tr>
+<td>entry</td>
+<td><code>0x02000000</code> (<code>Reset_Handler</code>, símbolo em <code>0x02000000</code>, 114 bytes)</td>
+</tr>
+<tr>
+<td>header</td>
+<td><code>e_flags = 0x9</code> (RVC | RVE), 1 program header, 23 seções, 242 símbolos</td>
+</tr>
+<tr>
+<td>segmento</td>
+<td>1× <code>LOAD</code> file <code>0x0400</code> → vaddr <code>0x02000000</code>, filesz=memsz <code>0x7660</code>, flags <code>RWE</code>, align <code>0x400</code></td>
+</tr>
+<tr>
+<td>ISA (atributo)</td>
+<td><code>rv32e1p9_m2p0_c2p0_xtheadse2p0</code>, <code>stack_align=4</code>, priv 1.11</td>
+</tr>
+<tr>
+<td>toolchain</td>
+<td><code>GCC: (Xuantie-900 elf newlib gcc Toolchain V2.6.1 B-20220906) 10.2.0</code> (.comment)</td>
+</tr>
+<tr>
+<td>flags de compilação</td>
+<td><code>-mabi=ilp32e -mtune=e902 -march=rv32emc_xtheadse -g3 -Os -ffunction-sections -fdata-sections</code> (DWARF <code>DW_AT_producer</code>, ex. em <code>0x00003c57</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Seções (VMA / tamanho / offset no arquivo):</p>
+<table>
+<thead>
+<tr>
+<th>seção</th>
+<th>VMA</th>
+<th>tam</th>
+<th>off</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.text</code></td>
+<td><code>0x02000000</code></td>
+<td><code>0x2c50</code> (11.344 B)</td>
+<td><code>0x0400</code></td>
+</tr>
+<tr>
+<td><code>.rodata</code></td>
+<td><code>0x02002c50</code></td>
+<td><code>0x190</code></td>
+<td><code>0x3050</code></td>
+</tr>
+<tr>
+<td><code>.data</code></td>
+<td><code>0x02002de0</code></td>
+<td><code>0x20</code></td>
+<td><code>0x31e0</code></td>
+</tr>
+<tr>
+<td><code>.vectors</code></td>
+<td><code>0x02002e00</code></td>
+<td><code>0xbc</code> (47 words)</td>
+<td><code>0x3200</code></td>
+</tr>
+<tr>
+<td><code>.bss</code></td>
+<td><code>0x02002ec0</code></td>
+<td><code>0x45a0</code></td>
+<td>NOBITS</td>
+</tr>
+<tr>
+<td><code>._user_heap</code></td>
+<td><code>0x02007460</code></td>
+<td><code>0x200</code></td>
+<td>NOBITS</td>
+</tr>
+<tr>
+<td><code>DevDscr</code></td>
+<td><code>0x0</code> (não alocado)</td>
+<td><code>0x734</code></td>
+<td><code>0x7a60</code></td>
+</tr>
+<tr>
+<td>debug</td>
+<td><code>.debug_info</code> <code>0x16e9c</code>, <code>.debug_str</code> <code>0x4d331</code>, <code>.debug_macro</code> <code>0xef1b</code>, ...</td>
+<td></td>
+<td><code>0x8210</code>+</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Não é o firmware da minitela.</strong> É o <em>flash algorithm</em> no formato do C-Sky CDK
+(<code>FlashDev.c</code> + <code>driver.c</code>, ver <code>DW_AT_decl_file</code> de <code>FlashDevices</code> e das funções
+<code>flash*</code>), que a IDE carrega em SRAM, executa e comanda por uma struct em memória.
+É o código que o fabricante usa quando grava a placa na fábrica/upgrade.</p>
+<p>O binário é linkado para uma <strong>SRAM de 32 KB em <code>0x02000000</code></strong> (<code>__ram_end = 0x02008000</code>,
+<code>.bss</code> termina em <code>0x02007460</code>, heap <code>0x02007460</code>–<code>0x02008000</code>). O HyperRAM
+(<code>HYPER_DATA_BASE 0x20000000</code>) é inicializado em <code>SystemInit</code> (<code>0x02002ac8</code> →
+<code>HAL_HYPER_Init @ 0x02001d1a</code>) mas <strong>não é usado como memória</strong> por este algoritmo —
+só os registradores dele são tocados.</p>
+<p>Não há sistema operacional de verdade em uso: <code>pxReadyTasksLists</code>/<code>vTaskSwitchContext</code>
+existem porque o FreeRTOS é linkado (port RISC-V), mas o <code>main</code> (<code>0x02000630</code>) é um
+laço <code>while(1) { __bkpt_label(); switch(g_func) ... }</code>.</p>
+<hr />
+<h2 id="2-mapa-de-perifericos">2. Mapa de periféricos<a class="headerlink" href="#2-mapa-de-perifericos" title="Permanent link">&para;</a></h2>
+<p>Duas colunas: o que o <strong>código realmente toca</strong> e o que só existe como macro nos headers
+(que ficou preservado em <code>.debug_str</code>, porque <code>-g3</code> grava o dump de macros).</p>
+<h3 id="21-usado-de-fato-pelo-binario">2.1 Usado de fato pelo binário<a class="headerlink" href="#21-usado-de-fato-pelo-binario" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>periférico</th>
+<th>base</th>
+<th>onde aparece</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CQSPI</strong> (QSPI controller)</td>
+<td><code>0x40100000</code></td>
+<td><code>csi_qspi_init @ 0x02000bc6</code> grava <code>qspi-&gt;dev.reg_base = 0x40100000</code>, <code>irq_num = 0x21</code>; <code>QSPI_MspInit @ 0x02000b8e</code> compara com ele</td>
+</tr>
+<tr>
+<td><strong>CQSPI janela de dados</strong></td>
+<td><code>0x08000000</code></td>
+<td><code>cqspi_dev_cfg</code> em <code>.data</code> <code>0x02002dec</code> = <code>{0x40100000, 0x08000000, ...}</code> (dump: <code>0x02002dec: 40100000</code>, <code>0x02002df0: 08000000</code>); macro <code>CQSPI_DATA_BASE (0x08000000UL)</code></td>
+</tr>
+<tr>
+<td><strong>RCC</strong></td>
+<td><code>0x40200000</code></td>
+<td><code>0x40200014</code> (prescaler CQSPI), <code>0x40200018</code> (DQSPI), <code>0x40200030</code> (cache), <code>0x4020003c</code>; <code>HAL_RCC_SYSCLKConfig(RCC_PLL_480M, RCC_AHB_Pres_4)</code> em <code>SystemInit</code></td>
+</tr>
+<tr>
+<td><strong>HYPER</strong> (HyperRAM/PSRAM ctrl)</td>
+<td><code>0x40101000</code>, janela <code>0x20000000</code></td>
+<td><code>HAL_HYPER_Init @ 0x02001d1a</code> (assert em <code>Instance != 0x40101000</code>, <code>MapAHBAddrBase = 0x20000000</code>, <code>WDATA=0x8F04</code>, <code>OP=0x109</code>, procura ID <code>0x5F</code>)</td>
+</tr>
+<tr>
+<td>— leitura em <code>0x40101034</code></td>
+<td></td>
+<td><code>main @ 0x02000630</code>: <code>lui a5,0x40101; lw a0,0x34(a5)</code> → só formata em string de debug (<code>uint32_to_str @ 0x020005d2</code>), resultado descartado</td>
+</tr>
+<tr>
+<td><strong>DCACHE/CCM</strong></td>
+<td><code>0x40102000</code></td>
+<td><code>ccm_EnableDCache @ 0x02001ca0</code>: <code>*(0x40200030) |= 1; *(0x40102000) = 0</code></td>
+</tr>
+<tr>
+<td><strong>CLIC</strong></td>
+<td><code>0xE0800000</code></td>
+<td><code>SystemInit</code>: escreve <code>0xE0800000</code>, <code>0xE0800004</code>, <code>0xE080100E</code>, <code>0xE080100D</code></td>
+</tr>
+<tr>
+<td><strong>CORET / MTIME</strong></td>
+<td><code>0xE0004000</code> (mtimecmp), <code>0xE000BFF8</code> (mtime)</td>
+<td><code>csi_tick_config @ 0x02001a48</code> (tick de 1 ms: <code>AHB/1000</code>), IRQ CLIC nível 7 → <code>CSI_CORET_IRQHandler @ 0x02001ab2</code>; e o timeout de <code>qspi_send_cmd @ 0x02002578</code> lê <code>0xE000BFF8</code> (<code>lw t1,-8(0xE000C000)</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Registradores do CQSPI usados pelo driver (base <code>0x40100000</code>), extraídos do código:</p>
+<table>
+<thead>
+<tr>
+<th>off</th>
+<th>uso</th>
+<th>coordenada</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0x00</code></td>
+<td>enable (bit0), remap-enable (bit16), baud div (bits 19–22), <strong>idle (bit31)</strong></td>
+<td><code>qspi_enable @ 0x02002212</code>, <code>qspi_is_idle @ 0x02002196</code>, <code>qspi_set_baud_rate_div @ 0x02002248</code></td>
+</tr>
+<tr>
+<td><code>0x04</code></td>
+<td>opcode de leitura (bits 0–7), modo da instrução (8–9), modo do endereço na leitura (12–13), modo dos dados na leitura (16–17), mode-bit enable (20)</td>
+<td><code>qspi_cfg_reads_writes @ 0x020021a0</code>, <code>qspi_set_spi_mode_base @ 0x020022f2</code></td>
+</tr>
+<tr>
+<td><code>0x08</code></td>
+<td>opcode/dummy/modos do <strong>write</strong></td>
+<td>idem</td>
+</tr>
+<tr>
+<td><code>0x10</code></td>
+<td>captura de leitura (delay tx/rx, borda de amostragem)</td>
+<td><code>qspi_cfg_read_capture @ 0x020024cc</code></td>
+</tr>
+<tr>
+<td><code>0x14</code></td>
+<td>nº de bytes de endereço (0–3), <strong>page size (4–15)</strong>, log2(block) (16–20)</td>
+<td><code>qspi_cfg_addr_bytes @ 0x02002454</code>, <code>qspi_cfg_page_size @ 0x0200241e</code>, <code>qspi_cfg_block_bytes @ 0x020023e8</code></td>
+</tr>
+<tr>
+<td><code>0x24</code></td>
+<td>offset de remap</td>
+<td><code>qspi_remap_addr @ 0x0200248c</code></td>
+</tr>
+<tr>
+<td><code>0x28</code></td>
+<td>valor do mode-bit</td>
+<td><code>qspi_set_mode_bit @ 0x020022ac</code></td>
+</tr>
+<tr>
+<td><code>0x50/0x54/0x58</code></td>
+<td>lower/upper/<code>write protect</code> (bit1)</td>
+<td><code>qspi_write_protection_config @ 0x02002512</code>, <code>qspi_write_protection_ctrl @ 0x0200252a</code></td>
+</tr>
+<tr>
+<td><code>0x90</code></td>
+<td>FLASH_CMD_CTRL: opcode, tamanhos, start (bit0), busy (bit1)</td>
+<td><code>qspi_send_cmd @ 0x02002578</code></td>
+</tr>
+<tr>
+<td><code>0x94</code></td>
+<td>FLASH_ADDR (endereço da transação)</td>
+<td>idem</td>
+</tr>
+<tr>
+<td><code>0xA0/0xA4</code></td>
+<td>FIFO de RX (até 8 bytes)</td>
+<td><code>csi_spiflash_read_reg @ 0x02001606</code> usa 1 byte</td>
+</tr>
+<tr>
+<td><code>0xA8/0xAC</code></td>
+<td>FIFO de TX</td>
+<td><code>csi_spiflash_write_reg @ 0x02001892</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="22-so-declarado-macroirq-sem-nenhum-acesso-no-codigo">2.2 Só declarado (macro/IRQ), <strong>sem nenhum acesso no código</strong><a class="headerlink" href="#22-so-declarado-macroirq-sem-nenhum-acesso-no-codigo" title="Permanent link">&para;</a></h3>
+<p>Estes endereços vêm de <code>.debug_str</code> (dump de macros do <code>-g3</code>) e não aparecem em
+nenhum <code>lui</code> do <code>.text</code>. Servem como mapa do SoC, não como uso:</p>
+<table>
+<thead>
+<tr>
+<th>periférico</th>
+<th>endereço</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DQSPI_BASE</code> / <code>DQSPI_DATA_BASE</code></td>
+<td><code>0x4010C000</code> / <code>0x31000000</code> (só o clock em <code>QSPI_MspInit</code>)</td>
+</tr>
+<tr>
+<td><code>CRC32_BASE</code></td>
+<td><code>0x40108000</code> ← ver §5</td>
+</tr>
+<tr>
+<td><code>DCACHE_BASE</code></td>
+<td><code>0x40102000</code></td>
+</tr>
+<tr>
+<td><code>UART_BASE</code> (UART0/1/2)</td>
+<td><code>0x40001000</code>, <code>+0x1000</code>, <code>0x4000E000</code></td>
+</tr>
+<tr>
+<td><code>GPIOA_BASE</code> / <code>GPIOB_BASE</code></td>
+<td><code>0x4000A000</code> / <code>0x4000B000</code></td>
+</tr>
+<tr>
+<td><code>WDT_BASE</code> / <code>RTC_BASE</code> / <code>VIDEOCAP_BASE</code></td>
+<td><code>0x40106000</code> / <code>0x40105000</code> / <code>0x4010B000</code></td>
+</tr>
+<tr>
+<td><code>SPI0/1/2</code>, <code>I2C0/1</code>, <code>I2S</code></td>
+<td><code>0x40007000</code>, <code>0x4000C000</code>, <code>0x4000D000</code>, <code>0x40005000</code>, <code>0x40006000</code>, <code>0x40008000</code></td>
+</tr>
+<tr>
+<td><code>CANFD_BASE</code> / <code>DMA_BASE</code> / <code>ETH_BASE</code></td>
+<td><code>0x40000000</code> / <code>0x50200000</code> / <code>0x50400000</code></td>
+</tr>
+<tr>
+<td><code>CLIC_BASE</code></td>
+<td><code>0xE0800000</code></td>
+</tr>
+<tr>
+<td><code>SYSMAP_BASE</code> / <code>TCIP_BASE</code> / <code>DCC_BASE</code></td>
+<td><code>0xEFFFF000</code> / <code>0xE000E000</code> / <code>0xE4010000</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Sem UART de verdade:</strong> <code>putchar @ 0x02001b34</code>, <code>fputc @ 0x02001b0c</code> e
+<code>printf @ 0x02001b38</code> são stubs que retornam 0; <code>puts @ 0x02001b10</code> só chama <code>fputc</code>.
+As strings de erro (<code>csi_spiflash_program ERROR.</code> em <code>0x02002c80</code> etc.) existem e são
+referenciadas, mas <strong>nunca saem do chip</strong>. Nenhum GPIO é configurado para a flash:
+<code>QSPI_MspInit @ 0x02000b8e</code> só habilita clock no RCC (nada de GPIOA/B) — o que sugere
+pinos dedicados no pacote (<strong>HIPÓTESE</strong>, não há muxing no código).</p>
+<p><strong>Tabela de vetores</strong> (<code>__Vectors @ 0x02002e00</code>, 47 words, <code>.vectors</code> off <code>0x3200</code>):</p>
+<ul>
+<li><code>[0]</code> <code>0x020001c0</code> (<code>Default_Handler</code>, que é <code>c.j trap</code> → <code>trap @ 0x02000080</code>)</li>
+<li><code>[1..2]</code> idem, <code>[3]</code> <code>tspend_handler @ 0x02000300</code>, <code>[7]</code> <code>CORET_IRQHandler @ 0x02000ab4</code></li>
+<li><code>[16..43]</code> handlers por periférico, na ordem:
+  <code>16 CANFD, 17 UART0, 18 UART1, 19 UART2, 20 TIM0, 21 TIM1, 22 SPI0, 23 I2C0,
+  24 I2C1, 25 SPI1, 26 I2S, 27 GPIOA, 28 GPIOB, 29 SPI2, 30 ADC, 31 WDG, 32 RTC,
+  33 CQDPI, 34 VIDEO_CAP, 35 DMA, 36 OTG, **37 AHMI**, 38 DISPLAY, **39 CRC32**,
+  40 MOTOR, 41 MAC, 42 EXTENSION, 43 DQSPI</code></li>
+<li>Todos os handlers fracos (<code>WEAK</code>) são 4 bytes = <code>mret</code> (<code>0x30200073</code>), ex.:
+  <code>UART0_IRQHandler @ 0x02000b1e</code>, <code>AHMI_IRQHandler @ 0x02000b6e</code>,
+  <code>CRC32_IRQHandler @ 0x02000b76</code>, <code>DQSPI_IRQHandler @ 0x02000b86</code>.</li>
+</ul>
+<p>Coordenada interessante para o projeto: <strong>existe um vetor de IRQ chamado <code>AHMI</code></strong>
+(<code>0x02000b6e</code>, índice 37). O SoC tem um bloco AHMI. <strong>NÃO DOCUMENTADO</strong> o que ele faz —
+o handler neste binário é <code>mret</code>. (Registro: <code>irq_num = 0x21</code> em <code>csi_qspi_init</code> aponta
+para o índice 33, que a tabela nomeia <code>CQDPI</code>; a numeração IRQ do CQSPI não bate com a
+ordem nominal da tabela — <strong>não documentado</strong>, possivelmente CLIC source ≠ índice.)</p>
+<hr />
+<h2 id="3-sequencia-de-erasewrite">3. Sequência de erase/write<a class="headerlink" href="#3-sequencia-de-erasewrite" title="Permanent link">&para;</a></h2>
+<h3 id="31-protocolo-do-cdk-entry-funcoes">3.1 Protocolo do CDK (entry → funções)<a class="headerlink" href="#31-protocolo-do-cdk-entry-funcoes" title="Permanent link">&para;</a></h3>
+<p>O <code>main</code> (<code>0x02000630</code>) lê uma struct de comando em SRAM e despacha por <code>g_func</code>:</p>
+<table>
+<thead>
+<tr>
+<th>símbolo</th>
+<th>endereço</th>
+<th>papel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>g_checksum</code></td>
+<td><code>0x020040c4</code></td>
+<td>argumento de <code>flashChecksum</code></td>
+</tr>
+<tr>
+<td><code>g_dstAddress</code></td>
+<td><code>0x020040c8</code></td>
+<td><strong>endereço na flash</strong> (ex. <code>0x08100000</code>)</td>
+</tr>
+<tr>
+<td><code>g_error</code></td>
+<td><code>0x020040cc</code></td>
+<td>retorno</td>
+</tr>
+<tr>
+<td><code>g_flashID</code></td>
+<td><code>0x020040d0</code></td>
+<td>saída do comando 0</td>
+</tr>
+<tr>
+<td><code>g_func</code></td>
+<td><code>0x020040d4</code></td>
+<td>comando 0..6</td>
+</tr>
+<tr>
+<td><code>g_length</code></td>
+<td><code>0x020040d8</code></td>
+<td>tamanho</td>
+</tr>
+<tr>
+<td><code>g_rwBuffer</code></td>
+<td><code>0x020040dc</code></td>
+<td>buffer de <strong>8192 bytes</strong> (a transferência é em blocos ≤ 8 KB)</td>
+</tr>
+</tbody>
+</table>
+<p>Comandos: <code>0</code> ID, <code>1</code> program, <code>2</code> read, <code>3</code> erase, <code>4</code> chip-erase,
+<code>5</code> uninit, <code>6</code> checksum (<code>main</code>, casos em <code>0x02000676</code>..<code>0x02000742</code>).</p>
+<p>Wrapper do CDK, <code>driver.c</code> (todas com <code>tDst = dst - (16 &lt;&lt; 23)</code> = <code>dst - 0x08000000</code>,
+confirmado pelo <code>DW_AT_GNU_call_site_value</code> em <code>0x00003878</code>):</p>
+<table>
+<thead>
+<tr>
+<th>função</th>
+<th>addr</th>
+<th>observação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>flashInit</code></td>
+<td><code>0x0200075e</code></td>
+<td>chama <code>csi_spiflash_qspi_init(&amp;spiflash, 0, NULL)</code>; erro = <code>-200</code></td>
+</tr>
+<tr>
+<td><code>flashProgram</code></td>
+<td><code>0x0200078a</code></td>
+<td>se <code>dst - 0x08000000 &gt; 0x1000000</code> → <strong><code>memcpy</code> puro</strong> e retorna 0 (endereço fora da flash = "grava" em SRAM/HyperRAM); senão <code>csi_spiflash_program</code></td>
+</tr>
+<tr>
+<td><code>flashRead</code></td>
+<td><code>0x020007ea</code></td>
+<td>mesma guarda; <code>flashRead(dst, src, len)</code> com <code>src</code> = flash</td>
+</tr>
+<tr>
+<td><code>flashErase</code></td>
+<td><code>0x0200084e</code></td>
+<td>mesma guarda — fora da janela <strong>retorna 0 sem fazer nada</strong>; erro <code>-1</code></td>
+</tr>
+<tr>
+<td><code>flashChipErase</code></td>
+<td><code>0x0200088a</code></td>
+<td><code>-1</code></td>
+</tr>
+<tr>
+<td><code>flashChecksum</code></td>
+<td><code>0x020008b0</code></td>
+<td><strong>stub: <code>return 0</code></strong></td>
+</tr>
+<tr>
+<td><code>flashID</code></td>
+<td><code>0x02000786</code></td>
+<td><strong>stub: <code>return 0</code></strong></td>
+</tr>
+<tr>
+<td><code>flashTest</code></td>
+<td><code>0x020008b4</code></td>
+<td>stub</td>
+</tr>
+<tr>
+<td><code>spiflash</code></td>
+<td><code>0x020060dc</code></td>
+<td><code>csi_spiflash_t</code> de 204 bytes (<code>.bss</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Nota para o <code>RE-acf.md</code>: <code>flashChecksum</code> devolver 0 sempre significa que <strong>nem o caminho
+de gravação do fabricante valida checksum algum</strong> — corrobora o FATO 7 ("o firmware não
+valida checksum"). O checksum do <code>.acf</code> é calculado/validado em outro lugar (ou em
+lugar nenhum).</p>
+<h3 id="32-erase-a-cadeia-real">3.2 ERASE — a cadeia real<a class="headerlink" href="#32-erase-a-cadeia-real" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>flashErase(0x0200084e)
+ └─ csi_spiflash_erase(0x02001856)            ; só aceita bus QSPI; SPI → CSI_UNSUPPORTED
+     └─ qspiflash_erase(0x020016e8, SECTOR_ERASE)
+</code></pre></div>
+<p><code>qspiflash_erase</code> (decompilado com nomes do DWARF: <code>erase_addr</code>, <code>erase_end_addr</code>,
+<code>erase_sectors</code>, <code>erase_size</code>, <code>erase_opcode</code>):</p>
+<ol>
+<li><code>csi_qspi_write_protection_ctrl(qspi, false)</code> → limpa bit1 de <code>0x40100000+0x58</code>
+   (<code>qspi_write_protection_ctrl @ 0x0200252a</code>).</li>
+<li><code>erase_size</code> e <code>erase_opcode</code> saem da tabela SFDP lida na init
+   (por tipo: <code>SECTOR_ERASE</code>→<code>sector_size</code>+<code>opcode.erase_sector</code>;
+   <code>HALF_BLOCK_ERASE</code>→<code>block_size/2</code>+<code>erase_half_block</code>;
+   <code>BLOCK_ERASE</code>→<code>block_size</code>+<code>erase_full_block</code>;
+   <code>CHIP_ERASE</code>→<code>capacity</code>+<code>erase_chip</code>).</li>
+<li><code>erase_sectors = ceil(size / erase_size)</code>.</li>
+<li>Laço <code>while (i &lt; erase_sectors &amp;&amp; (addr &amp; 0xFFFFF000) &lt;= offset + size)</code>:</li>
+<li><code>qspiflash_send_opcode(spiflash, opcode.write_enable)</code> → <strong>WREN 0x06</strong>
+     (<code>qspiflash_send_opcode @ 0x02000ff6</code>: <code>csi_qspi_command_t</code> só com instrução,
+     sem endereço/dados → <code>csi_qspi_send</code>);</li>
+<li><code>command.address.size = addr &amp; 0xFFFFF000</code> (o campo se chama <code>size</code> na union, mas
+     carrega o <strong>valor do endereço</strong>)
+     ⚠️ <strong>o endereço é truncado em 4 KB, sempre</strong>, mesmo que <code>erase_size</code> seja 64 KB
+     (<code>qspiflash_erase</code>, <code>0x02001780</code>–<code>0x0200178c</code>: <code>lui a3,0xfffff; and a3,a5</code>);</li>
+<li><code>csi_qspi_send(qspi, &amp;cmd, NULL, 0, -1)</code> → <code>qspi_send_cmd @ 0x02002578</code>
+     (programa <code>0x90</code>/<code>0x94</code>, <code>0x90 |= 1</code> para disparar, espera <code>0x90 &amp; 2</code> limpar);</li>
+<li>faz <strong>polling do status</strong>: <code>csi_spiflash_read_reg(spiflash, opcode.read_sr1, &amp;SR, 1)</code>
+     em laço enquanto <code>SR.SR1 &amp; 1</code> (WIP) ≠ 0;</li>
+<li><code>addr += erase_size</code>, <code>i++</code>.</li>
+<li><code>csi_qspi_write_protection_ctrl(qspi, true)</code>.</li>
+</ol>
+<p><code>csi_spiflash_chip_erase</code> (<code>0x02001872</code>) é o mesmo caminho com <code>type = CHIP_ERASE</code>,
+<code>offset = 0</code>, <code>size = 0</code>: WREN + opcode <code>erase_chip</code> (= <code>0x60</code> fixo, ver §3.4) + poll.</p>
+<h3 id="33-program-a-cadeia-real">3.3 PROGRAM — a cadeia real<a class="headerlink" href="#33-program-a-cadeia-real" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>flashProgram(0x0200078a)
+ └─ csi_spiflash_program(0x02001654)
+     ├─ csi_qspi_write_protection_ctrl(qspi, false)
+     ├─ csi_qspi_direct_send(0x02000dec)        ; "direct" = modo write-through da janela
+     │   ├─ csi_qspi_direct_mode_config(0x02000d2e, QSPI_WRITE)
+     │   │    → qspi_set_spi_mode_base(0x020022f2)  (0x04/0x08)
+     │   │    → qspi_cfg_reads/writes(0x020021a0)   (opcode de write no 0x08)
+     │   │    → qspi_cfg_addr_bytes / page_size / block_bytes (0x14)
+     │   └─ qspi_direct_access_write(0x02002828)
+     │        → **stores de 32 bits em `0x08000000 + offset`**
+     ├─ loop: csi_spiflash_read_reg(opcode.read_sr1) até WIP=0
+     ├─ csi_qspi_write_protection_ctrl(qspi, true)
+     └─ csi_qspi_direct_mode_config(qspi, cfg, QSPI_READ)   ; volta pro modo XIP
+</code></pre></div>
+<p>Detalhes que importam:</p>
+<ul>
+<li><strong>Escrita não usa comando explícito</strong>: <code>qspi_direct_access_write</code> faz
+  <code>*(uint32_t*)(remap_bus_base + offset + i) = *(uint32_t*)(src + i)</code> e o
+  <code>remap_bus_base</code> é <code>0x08000000</code> (<code>cqspi_dev_cfg @ 0x02002df0</code>). Quem traduz store em
+  página de flash é o controlador, configurado com o opcode de page program.</li>
+<li><strong>WREN explícito não aparece no caminho de program</strong> (só no de erase).
+  <strong>HIPÓTESE</strong>: o CQSPI emite <code>0x06</code> automaticamente antes de cada página; o que o
+  código faz é só habilitar/desabilitar a proteção de escrita do controlador
+  (<code>0x58</code> bit1). <strong>NÃO DOCUMENTADO</strong> — o <code>.elf</code> não mostra o WREN da página.</li>
+<li>O baud rate é <strong>rebaixado para <code>div = 8</code></strong> durante a escrita e restaurado no fim
+  (<code>qspi_get_baud_rate_div</code>/<code>qspi_set_baud_rate_div</code>, <code>0x02002238</code>/<code>0x02002248</code>).
+  Com PLL 480 MHz (<code>SystemInit</code>), leitura roda a 120 MHz (<code>get_qspi_freq_max @ 0x02000eda</code>
+  devolve 120 MHz com PLL 480 MHz, 108 MHz com 432 MHz, 72 MHz com 288 MHz) e a escrita
+  a ~60 MHz (480/8) — valor derivado, não constante no binário.</li>
+<li>O <code>page_size</code> da SFDP é programado <strong>no hardware</strong> (<code>0x14</code> bits 4–15); é o
+  controlador que quebra a escrita em páginas. O software não alinha nada.</li>
+<li><strong>Bug/limitação do laço de erase</strong>: a condição de parada usa
+  <code>(addr &amp; 0xFFFFF000) &lt;= offset + size</code>; um range que termina no meio de um setor
+  apaga o setor inteiro. Some com o truncamento de endereço e o resultado é:
+  <strong>erase de 1 byte pode apagar 4 KB.</strong></li>
+</ul>
+<h3 id="34-comandos-jedec-de-onde-vem-cada-opcode">3.4 Comandos JEDEC — de onde vem cada opcode<a class="headerlink" href="#34-comandos-jedec-de-onde-vem-cada-opcode" title="Permanent link">&para;</a></h3>
+<p>Tudo isso é montado em <code>SFDP_flash_read_parameter @ 0x0200107c</code>
+(é a função que enche <code>flash_prv_info</code> e <code>spiflash-&gt;opcode</code>, structs descritas em
+<code>0x000033c3</code> e <code>0x0000353e</code> do DWARF).</p>
+<p><strong>Fixos no código:</strong></p>
+<table>
+<thead>
+<tr>
+<th>comando</th>
+<th>opcode</th>
+<th>coordenada</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Write Enable</td>
+<td><code>0x06</code></td>
+<td><code>(spiflash-&gt;opcode).write_enable = 6</code></td>
+</tr>
+<tr>
+<td>Write Enable VSR</td>
+<td><code>0x06</code> ou <code>0x50</code></td>
+<td>depende de SFDP DWORD0 bit <code>0x10</code></td>
+</tr>
+<tr>
+<td>Read SR1 / SR2 / SR3</td>
+<td><code>0x05</code> / <code>0x35</code> / <code>0x15</code></td>
+<td>idem</td>
+</tr>
+<tr>
+<td>Write SR1 / SR2 / SR3</td>
+<td><code>0x01</code> / <code>0x31</code> / <code>0x11</code></td>
+<td>idem</td>
+</tr>
+<tr>
+<td>Chip Erase</td>
+<td><strong><code>0x60</code></strong></td>
+<td><code>(spiflash-&gt;opcode).erase_chip = 0x60</code></td>
+</tr>
+<tr>
+<td>Enable Reset / Reset</td>
+<td><code>0x66</code> / <code>0x99</code></td>
+<td><code>csi_spiflash_qspi_init @ 0x020018de</code></td>
+</tr>
+<tr>
+<td>SFDP Read</td>
+<td><code>0x5A</code></td>
+<td><code>qspiflash_get_SFDP_by_addr @ 0x02001036</code></td>
+</tr>
+<tr>
+<td>Enter 4-byte address</td>
+<td><code>0xB7</code></td>
+<td>só se SFDP+0x3C bit24 <strong>e</strong> <code>addr_4_byte</code> → &gt;128 MB</td>
+</tr>
+<tr>
+<td>Mode-444 disable / enable</td>
+<td><code>0xFF</code>/<code>0xF5</code> e <code>0x38</code>/<code>0x35</code></td>
+<td>SFDP+0x38</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Lidos da SFDP (tabela JEDEC Basic Flash Parameter, ponteiro em SFDP+0x0C):</strong></p>
+<table>
+<thead>
+<tr>
+<th>campo</th>
+<th>origem</th>
+<th>valor típico (inferência da norma SFDP)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4 KB erase opcode</td>
+<td>byte1 do DWORD em <code>+0x00</code>, se <code>(dword &amp; 3) == 1</code></td>
+<td><code>0x20</code></td>
+</tr>
+<tr>
+<td><code>sector_size</code></td>
+<td><code>1 &lt;&lt; (byte0(+0x1C) &amp; 0x1F)</code></td>
+<td>4096</td>
+</tr>
+<tr>
+<td><code>erase_sector</code> opcode</td>
+<td>byte1 de <code>+0x1C</code></td>
+<td><code>0x20</code></td>
+</tr>
+<tr>
+<td><code>erase_half_block</code> opcode</td>
+<td>byte3 de <code>+0x1C</code></td>
+<td><code>0x52</code> (32 KB)</td>
+</tr>
+<tr>
+<td><code>block_size</code></td>
+<td><code>1 &lt;&lt; (byte0(+0x20) &amp; 0x1F)</code></td>
+<td>65536</td>
+</tr>
+<tr>
+<td><code>erase_full_block</code> opcode</td>
+<td>byte1 de <code>+0x20</code></td>
+<td><code>0xD8</code> (64 KB)</td>
+</tr>
+<tr>
+<td><code>page_size</code></td>
+<td><code>1 &lt;&lt; ((byte(+0x28) &gt;&gt; 4) &amp; 0xF)</code></td>
+<td>256</td>
+</tr>
+<tr>
+<td><code>capacity</code></td>
+<td>DWORD em <code>+0x04</code> (densidade em bits; MSB→<code>1&lt;&lt;(n-3)</code>)</td>
+<td>16 MB</td>
+</tr>
+<tr>
+<td>opcode/dummy de leitura</td>
+<td>DWORD em <code>+0x00</code> (1-4-4 / 1-1-4 / 1-1-2)</td>
+<td><code>0xEB</code> / <code>0x6B</code> / <code>0xBB</code></td>
+</tr>
+<tr>
+<td>opcode de page program</td>
+<td>derivado do modo de escrita: <code>0x02</code> (1-1-1), <code>0x32</code> (1-1-4), <code>0x3E</code> (1-4-4)</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>Validado na init: <code>SFDP</code> magic <code>0x50444653</code> em <code>0x0</code> e revisão menor ≤ 1 em <code>0x4</code>;
+o ponteiro da tabela JEDEC precisa ser <code>&lt; 0xFF</code> (macro <code>CSI_IS_SFDP_PTP_BASE_ADDR(ADDR)</code>
+<code>((ADDR) &lt; 0xFF)</code>, presente em <code>.debug_str</code>).</p>
+<p>Fluxo de clock da init: <strong>reset (<code>0x66</code>,<code>0x99</code>) e leitura da SFDP a 2.5 MHz</strong>
+(<code>get_qspi_freq_min</code> = PLL/0xC0), depois sobe para <strong>120 MHz</strong> e roda
+<code>qspi_adapted_capture @ 0x020028fc</code>, que varre delays de amostragem com o comando
+<strong><code>0x9F</code> (Read JEDEC ID)</strong> — é a única leitura de ID de flash no binário inteiro.
+No fim a init lê 8 bytes do endereço 0 e exige que a leitura funcione
+(<code>csi_spiflash_read(spiflash, 0, buf, 8)</code>).</p>
+<h3 id="35-alinhamento-e-tamanho-de-setor-resumo">3.5 Alinhamento e tamanho de setor — resumo<a class="headerlink" href="#35-alinhamento-e-tamanho-de-setor-resumo" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>item</th>
+<th>valor</th>
+<th>base</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>setor de erase</td>
+<td>vem da SFDP; <strong>4 KB</strong> é a premissa do código</td>
+<td><code>local_58 &amp; 0xFFFFF000</code> em <code>qspiflash_erase</code></td>
+</tr>
+<tr>
+<td>bloco</td>
+<td>vem da SFDP (64 KB típico)</td>
+<td><code>flash_info-&gt;block_size</code></td>
+</tr>
+<tr>
+<td>página</td>
+<td>vem da SFDP (256 B típico), aplicada no HW</td>
+<td><code>0x14</code> bits 4–15</td>
+</tr>
+<tr>
+<td>alinhamento exigido pelo software</td>
+<td><strong>4 KB</strong> (por causa da máscara)</td>
+<td><code>0x02001784</code></td>
+</tr>
+<tr>
+<td>alinhamento do <code>.acf</code></td>
+<td><strong>16 KB</strong> = exatamente 4 setores de 4 KB</td>
+<td><code>RE-acf.md</code> FATO 2</td>
+</tr>
+<tr>
+<td>chunk do CDK</td>
+<td>≤ 8 KB</td>
+<td><code>g_rwBuffer</code> = 8192 B em <code>0x020040dc</code></td>
+</tr>
+<tr>
+<td>janela de flash</td>
+<td><code>0x08000000</code> .. <code>0x08FFFFFF</code> (16 MB)</td>
+<td>guarda <code>dst - 0x08000000 &gt; 0x1000000</code> em <code>flashProgram</code>/<code>flashErase</code></td>
+</tr>
+</tbody>
+</table>
+<p>O <code>0x1000000</code> (16 MB) na guarda é o <strong>limite da janela de endereçamento</strong> do driver,
+não o tamanho da flash. Um endereço fora dela cai no <code>memcpy</code> (o algoritmo "grava" em
+RAM — é assim que o CDK carrega o próprio algoritmo, inclusive).</p>
+<hr />
+<h2 id="4-tabela-de-flash-suportada-flash_id_is_">4. Tabela de flash suportada (<code>FLASH_ID_IS_*</code>)<a class="headerlink" href="#4-tabela-de-flash-suportada-flash_id_is_" title="Permanent link">&para;</a></h2>
+<p>Recuperada de <code>.debug_str</code> (macro dump do <code>-g3</code>; as definições estão preservadas como
+texto, ex. <code>FLASH_ID_IS_NOR_16MB(_ID_) (((_ID_) == 0x001840EF) || ...)</code>):</p>
+<table>
+<thead>
+<tr>
+<th>macro</th>
+<th>IDs (u32, como lido LE de 4 bytes)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FLASH_ID_IS_NOR_4MB</code></td>
+<td><code>0x20164020</code>, <code>0x5E16405E</code></td>
+</tr>
+<tr>
+<td><code>FLASH_ID_IS_NOR_8MB</code></td>
+<td><code>0x001740EF</code>, <code>0x001770EF</code>, <code>0xC81740C8</code>, <code>0x68174068</code>, <code>0x20177020</code></td>
+</tr>
+<tr>
+<td><code>FLASH_ID_IS_NOR_16MB</code></td>
+<td><code>0x001840EF</code>, <code>0x001870EF</code>, <code>0xC81840C8</code>, <code>0x68184068</code>, <code>0x20187020</code>, <code>0x5E18405E</code></td>
+</tr>
+<tr>
+<td><code>FLASH_ID_IS_NOR256_32MB</code></td>
+<td><code>0x001940EF</code>, <code>GD25Q257D</code> = <code>0x001940C8</code></td>
+</tr>
+<tr>
+<td><code>FLASH_ID_IS_GD_NAND_Q4_125MB</code></td>
+<td><code>0xC848B1C8</code></td>
+</tr>
+<tr>
+<td><code>FLASH_ID_IS_GD_NAND_Q5_125MB</code></td>
+<td><code>0xC841C8FF</code>, <code>0xC851C8FF</code></td>
+</tr>
+<tr>
+<td><code>FLASH_ID_IS_DS_NAND_125MB</code></td>
+<td><code>0xE571E5FF</code></td>
+</tr>
+<tr>
+<td><code>FLASH_ID_IS_WB_NAND_125MB</code></td>
+<td><code>0x21AAEFFF</code></td>
+</tr>
+</tbody>
+</table>
+<p>Decodificação (LE, 4 bytes do comando <code>0x9F</code>): <code>[fabricante, tipo, capacidade, ...]</code>.
+O byte de capacidade é a potência de dois em bytes: <code>0x16</code>=4 MB, <code>0x17</code>=8 MB,
+<code>0x18</code>=16 MB, <code>0x19</code>=32 MB. Fabricantes: <code>0xEF</code> Winbond, <code>0xC8</code> GigaDevice,
+<code>0x68</code> Boya, <code>0x20</code> Micron/XTX, <code>0x5E</code> Zbit, <code>0xFF</code>/<code>0x21</code> (NAND).
+Ex.: <code>0xC81840C8</code> → bytes <code>C8 40 18 C8</code> = GigaDevice, <code>0x18</code> = <strong>16 MB</strong> (GD25Q128).</p>
+<p><strong>O que isso NÃO prova:</strong> estes macros são <strong>definições de header, não código</strong>. Nenhum
+<code>lui/addi</code> do <code>.text</code> constrói <code>0x001840EF</code>/<code>0xC81840C8</code>/etc., e nenhuma função compara
+<code>flash_id</code> com eles (busca negativa em todo o <code>.text</code>). Ou seja: <strong>este build não usa a
+tabela de IDs</strong> — ele é 100% SFDP. A tabela só documenta os parts que o SDK conhece.</p>
+<p>Prova de que o descritor é template, não a peça real: <code>FlashDevices</code> (<code>DevDscr</code>
+off <code>0x7a60</code>, tipo <code>const FlashDevice</code> com 0x734 bytes, <code>0x00003b67</code> no DWARF):</p>
+<div class="highlight"><pre><span></span><code>Ver         = 6
+DevName     = "9002flash"
+CPU         = "9002"
+FlashID     = 0x00123456      ← placeholder óbvio
+FlashType   = "NorFlash"
+TotalSize   = 0x00080000      (512 KB)
+IsAccDirect = 1
+rangeNumbers= 1
+Devs[0]     = { Start=0x08000000, Length=0x30000000, PageSize=0x1000 }
+</code></pre></div>
+<p><code>TotalSize</code> (512 KB) e <code>Length</code> (768 MB) são incompatíveis entre si e com a placa —
+são campos que o CDK sobrescreve/preenche em runtime (<strong>NÃO DOCUMENTADO</strong> o que o CDK faz
+com eles; o <code>0x30000000</code> não fecha com nenhuma geometria plausível).</p>
+<p><strong>Sobre o tamanho da flash da minitela:</strong> o mapa que o app oficial usa
+(<code>minitela_ctl.py</code>, linhas 74–80, copiado do <code>electron.js</code> do MiniPanel) tem
+<code>bootloader 0x08000000</code>, <code>texture 0x08100000</code>, <code>texture_gif 0x08500000</code>. Para caber o
+<code>texture_gif</code> em <code>0x08500000</code> a flash precisa de <strong>≥ ~6 MB</strong>, então entre os NOR
+suportados só sobra <strong>8 MB ou 16 MB</strong>. 16 MB é o mais provável: é o único com <strong>6</strong>
+IDs listados (cobertura de 5 fabricantes) e é o único cujo byte de capacidade (<code>0x18</code>)
+deixa o <code>.acf</code> de 6,4 MB (<code>MAX_FILE_BYTES = 6436*1024</code>) caber a partir de
+<code>0x08100000</code> sem colidir com o bloco de config em <code>0x080F7000</code>. <strong>HIPÓTESE</strong> — a
+confirmação é ler o JEDEC ID (<code>0x9F</code>) no aparelho, operação humana.</p>
+<hr />
+<h2 id="5-crc32-em-0x40108000">5. CRC32 em <code>0x40108000</code><a class="headerlink" href="#5-crc32-em-0x40108000" title="Permanent link">&para;</a></h2>
+<p>Fatos, todos verificáveis:</p>
+<table>
+<thead>
+<tr>
+<th>fato</th>
+<th>coordenada</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CRC32_BASE (0x40108000UL)</code> existe</td>
+<td>macro em <code>.debug_str</code></td>
+</tr>
+<tr>
+<td><code>CRC32_Typedef</code>/<code>CRC32</code> são referenciados como tipo/macro</td>
+<td><code>.debug_str</code> (<code>CRC32 (CRC32_Typedef *)CRC32_BASE</code>)</td>
+</tr>
+<tr>
+<td><code>CRC32_IRQn</code> e <code>CRC32_IRQHandler</code> existem</td>
+<td><code>.debug_str</code>; handler em <code>0x02000b76</code> = <strong><code>mret</code></strong> (4 bytes)</td>
+</tr>
+<tr>
+<td>o vetor 39 aponta para ele</td>
+<td><code>__Vectors[39] = 0x02000b76</code> em <code>0x02002e9c</code></td>
+</tr>
+<tr>
+<td><strong>nenhum acesso a <code>0x40108000</code> no código</strong></td>
+<td>todos os <code>lui</code> do <code>.text</code> dão <code>0x2004/0x2006/0x2007/0x1000/0x40200/0xe0800/0xf8000/0xe4e2/0xe000c/0x40100/0x40101/0x40102/0x4010c/...</code> — não existe <code>0x40108</code></td>
+</tr>
+</tbody>
+</table>
+<p>Portanto:</p>
+<ul>
+<li><strong>O polinômio não é observável neste binário. NÃO DOCUMENTADO.</strong> Não há rotina de
+  CRC, nem escrita de <code>init</code>/<code>poly</code>/<code>xorout</code>. Só dá para dizer que o bloco de hardware
+  existe no SoC e que o <code>flash_download.elf</code> o ignora completamente.</li>
+<li><strong>Não é o checksum do <code>.acf</code>.</strong> O <code>.acf</code> usa XOR de words de 32 bits LE, pulando o
+  próprio campo e o footer <code>0xA55A5AA5</code> (<code>RE-acf.md</code> FATO 6). Isso não é CRC32 sob
+  nenhum polinômio: não tem polinômio, não tem <code>init</code>/<code>xorout</code>, não tem reflexão de
+  bits, e o invariante medido ("XOR de todas as words == <code>0xA55A5AA5</code>") é uma
+  propriedade de XOR (comutativo, ordem-independente), não de CRC (onde o resíduo é
+  fixo e <strong>não</strong> depende do dado — e aqui o resíduo é o magic do rodapé).</li>
+<li>Corroboração independente: <code>flashChecksum @ 0x020008b0</code> é <code>li a0,0; jr ra</code>. O caminho
+  de gravação do fabricante <strong>não valida checksum nenhum</strong>. Se o CRC32 de hardware é
+  usado em algum lugar, é no firmware AHMI (que não temos), não aqui.</li>
+</ul>
+<hr />
+<h2 id="6-o-que-isso-explica-sobre-a-minitela">6. O que isso explica sobre a minitela<a class="headerlink" href="#6-o-que-isso-explica-sobre-a-minitela" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong><code>0x08000000</code> é literalmente <code>CQSPI_DATA_BASE</code>.</strong> O <code>Texture.acf</code> em <code>0x08100000</code>
+   é o offset <code>0x100000</code> da mesma NOR, na mesma janela que o CPU lê como memória
+   normal. Leitura de textura é <strong>XIP</strong>: <code>csi_spiflash_read</code> só faz
+   <code>qspi_remap_addr(dev,0)</code> e lê <code>0x08000000 + offset</code>
+   (<code>qspi_direct_access_read @ 0x02002762</code>). Não existe comando de leitura por chunk
+   no caminho quente.</li>
+<li><strong>Gravar é sempre erase-de-setor + page program.</strong> Não há escrita parcial em NOR.
+   Qualquer alteração, mesmo de 1 byte, obriga a apagar 4 KB e reescrever. Isso explica
+   mecanicamente o dano colateral do FATO 7 do <code>RE-acf.md</code>: patch em <code>753192</code> cai no
+   meio de um setor e o setor inteiro vai junto.</li>
+<li><strong>Pior ainda: o driver trunca o endereço de erase em 4 KB</strong>
+   (<code>addr &amp; 0xFFFFF000</code>) e o laço continua enquanto <code>(addr &amp; 0xFFFFF000) &lt;= offset+size</code>.
+   Se o firmware AHMI usar esta mesma HAL (mesmo SDK, strings
+   <code>../../../csi_driver/csi_spiflash.c</code> em <code>.debug_str</code>), um "erase de N bytes" apaga
+   <code>ceil(N/4096)</code> setores a partir do setor que contém o primeiro byte.
+   <strong>HIPÓTESE</strong> para o firmware da tela; <strong>FATO</strong> para este binário.</li>
+<li><strong>16 KB do container = 4 setores exatos.</strong> O alinhamento do <code>.acf</code> não é exigência
+   da flash; é decisão do container que, por coincidência (ou não), casa com 4 setores.</li>
+<li><strong>A transferência do app é em blocos ≤ 8 KB</strong> (o <code>g_rwBuffer</code> do CDK tem 8192 bytes).
+   Isso é consistente com o <code>UPLOAD_DATA</code> fatiado do AHMI observado no <code>minitela_ctl.py</code>.</li>
+<li><strong>A geometria é lida da SFDP em runtime</strong>, não de tabela de IDs. Consequência
+   prática: o mesmo firmware serve 4/8/16/32 MB; não dá para inferir o part pelo
+   firmware, só pelo SFDP/JEDEC ID do aparelho.</li>
+<li><strong>O caminho de gravação do fabricante não verifica checksum</strong> (<code>flashChecksum</code> stub).
+   Bate com o teste do <code>RE-acf.md</code> em que um <code>.acf</code> com checksum antigo continuou
+   bootando.</li>
+</ol>
+<h3 id="o-que-continua-em-aberto">O que continua em aberto<a class="headerlink" href="#o-que-continua-em-aberto" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Qual é a flash</strong> (fabricante/capacidade). Precisa de <code>0x9F</code> no device — operação
+  humana, com recuperação armada. Este <code>.elf</code> não responde.</li>
+<li><strong>O firmware AHMI usa esta HAL?</strong> As strings de build (<code>csi_driver/csi_spiflash.c</code>,
+  <code>gc9002_ll_qspi.c</code>, <code>gc9002_hal_hyper.c</code>) mostram que o SDK é o mesmo; a prova
+  exigiria o dump do firmware da tela.</li>
+<li><strong>Polinômio do CRC32 de hardware</strong> (<code>0x40108000</code>): não está em nenhum artefato que
+  temos. Se o firmware AHMI usar, aparece no dump dele.</li>
+<li><strong><code>AHMI_IRQHandler</code> (vetor 37)</strong>: o SoC tem um bloco AHMI com interrupção própria.
+  Saber o que ele faz ajudaria a mapear o protocolo, mas neste binário o handler é
+  <code>mret</code>.</li>
+<li><strong><code>Devs[0].Length = 0x30000000</code> e <code>TotalSize = 0x80000</code></strong>: campos inconsistentes do
+  descritor; não documentado como o CDK os usa.</li>
+<li><strong>WREN no page program</strong>: o <code>.elf</code> não emite; presumo que o controlador emita
+  (HIPÓTESE). Um teste no hardware (escrever e ler o SR1 antes/depois) resolve, mas é
+  operação humana.</li>
+</ul>
+<hr />
+<h2 id="9-o-protocolo-no-codigo-fonte-do-sdk-v11020">9. O protocolo no código-fonte do SDK (v1.10.20)<a class="headerlink" href="#9-o-protocolo-no-codigo-fonte-do-sdk-v11020" title="Permanent link">&para;</a></h2>
+<p>A partir daqui a fonte é o SDK com código: <code>.tools/vendor/sdk120/v1.10.20_2025.07.02_GC9002/</code>.
+Para encurtar as citações:</p>
+<ul>
+<li><code>$SDK</code> = <code>.../GC9002/GC9002/GC9002LIB</code></li>
+<li><code>$CS</code>  = <code>.../GC9002/GC9002/CommonSource</code></li>
+</ul>
+<p>Tudo abaixo é leitura de código/binário. Nada foi executado.</p>
+<h3 id="91-onde-o-ahmi-esta-e-onde-nao-esta">9.1 Onde o <code>AH</code>…<code>MI</code> está — e onde <strong>não</strong> está<a class="headerlink" href="#91-onde-o-ahmi-esta-e-onde-nao-esta" title="Permanent link">&para;</a></h3>
+<p>O protocolo com <code>'A','H'</code> / <code>'M','I'</code> e os comandos <code>0x0080</code>…<code>0x008F</code> existe em <strong>um único
+lugar</strong> neste SDK: o <strong>bootloader</strong>, em
+<code>$SDK/projects/Bootloader/Source/Upgrade/core/upgrade_uart_platform.c</code>, com transporte
+<strong>UART</strong> (<code>HAL_UART_Receive_IT</code>/<code>HAL_UART_Transmit_IT</code>).</p>
+<p>No firmware de <strong>aplicação</strong> (<code>projects/AHMI_SW</code>) ele <strong>não existe</strong>. Evidências:</p>
+<table>
+<thead>
+<tr>
+<th>verificação</th>
+<th>resultado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>grep -rn "UPG_CMD" $SDK/projects/AHMI_SW</code></td>
+<td>zero ocorrências</td>
+</tr>
+<tr>
+<td><code>grep -rn "0x0080\|0x0081\|…\|0x008F" $SDK/projects/AHMI_SW $CS --include=*.c,*.cpp,*.h</code></td>
+<td>nenhum hit de comando (só <code>ActionProcessor.h:122-148</code>, que são códigos de animação, e o CRC do protocolo 0xA5/0x5A)</td>
+</tr>
+<tr>
+<td>mapa de link do app <code>$SDK/projects/AHMI_SW/Lst/GC9002AHMI.map</code></td>
+<td>só 7 linhas casam <code>upgrade|UPG</code>, todas de <strong>gzip</strong> (<code>upgrade_block</code>, <code>upgrade_InterGzip_block</code>) ou <code>UpgradeProductPara</code> — nenhum <code>UPG_UART_vParseCmd</code>, nenhum <code>UPG_PAS_*</code></td>
+</tr>
+<tr>
+<td>varredura do <code>.text</code> do app (<code>Obj/GC9002AHMI.elf</code>, 0xA4D30 bytes, entry <code>0x08040060</code>)</td>
+<td>nenhuma comparação com <code>0x4148</code>/<code>0x494D</code>, nenhum <code>li …,65/72</code> seguido de <code>li …,73/77</code> que forme parser. Os hits de <code>li a0,65/72/73/77</code> em <code>0x080907xx</code> são o init do sensor <strong>OV7670</strong> (<code>OV7670_Init @ 0x0809029c</code>, writes I²C)</td>
+</tr>
+<tr>
+<td>hook do cliente</td>
+<td><code>$SDK/projects/AHMI_SW/CustomerApp/CustomerAppMain.c:11-20</code> — <code>CustApp_vInitEnterance()</code> <strong>vazio</strong>; chamado por <code>main.cpp:107-109</code></td>
+</tr>
+</tbody>
+</table>
+<p>O que o app <strong>tem</strong> de link com host:</p>
+<ol>
+<li><strong>Protocolo de registradores 0xA5/0x5A</strong> (UART), documentado em
+   <code>$SDK/projects/AHMI_SW/Source/ahmi/ahmi_com_protocol/ahmi_com_prot.md:3-20</code>:
+   frame <code>0xA5|0x5A</code> + versão + flags + função + nº de registros + dados + CRC16-MODBUS</li>
+<li><code>0xC3</code>. Nada a ver com o nosso (<code>0xA5</code> = 底板→módulo, <code>0x5A</code> = módulo→底板).</li>
+<li><strong>USB CDC de demonstração</strong>: <code>$SDK/libs/GC9002_HAL_Driver/Src/gc9002_hal_usbd.c</code>.
+   O callback de recepção <strong>descarta os dados</strong>:
+   <code>usbd_cdc_acm_bulk_out()</code> (<code>:121-129</code>) só rearma <code>usbd_ep_start_read(CDC_OUT_EP,
+   read_buffer, 128)</code>; <code>read_buffer</code> (<code>:99</code>) nunca é interpretado. VID/PID são
+   <code>0xFFFF/0xFFFF</code> (<code>:24-25</code>), não <code>0324:0324</code>. E <code>cdc_acm_init()</code> (<code>:156-165</code>) <strong>não é
+   chamada em lugar nenhum</strong> da árvore do bootloader nem do app (grep) — está linkada e
+   morta.</li>
+</ol>
+<p><strong>Conclusão (com etiqueta):</strong> neste SDK o protocolo <code>AH</code>…<code>MI</code> é o protocolo de
+<strong>upgrade do bootloader sobre UART</strong>. O firmware que responde em <code>0324:0324</code> (CDC-ACM) com
+o conjunto <code>0x0070/0x0071/0x0080/0x0081/0x0082/0x0083/0x0085/0x0086/0x008F/0x0090</code> <strong>não é
+este</strong> — é um build do ODM que este SDK não contém (<strong>HIPÓTESE</strong>, mas o conjunto de
+evidências acima é fechado para o que está no pacote).</p>
+<h3 id="92-formato-do-frame-direto-da-fonte">9.2 Formato do frame, direto da fonte<a class="headerlink" href="#92-formato-do-frame-direto-da-fonte" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>campo</th>
+<th>tamanho</th>
+<th>detalhe</th>
+<th>coordenada</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>head</td>
+<td>2</td>
+<td><code>'A'</code> no offset 0, <code>'H'</code> no offset 1</td>
+<td><code>upgrade_uart_platform.h:19-32</code>, <code>.c:309</code>, <code>.c:323</code></td>
+</tr>
+<tr>
+<td>ctrl</td>
+<td>2</td>
+<td><code>len:11</code> (inclui cmd+content), <code>res:4</code>, <code>crcEn:1</code> (bit 15); transportado <strong>big-endian</strong></td>
+<td><code>.h:115-124</code>, <code>.h:72-80</code>, <code>.c:338-342</code></td>
+</tr>
+<tr>
+<td>cmd</td>
+<td>2</td>
+<td>big-endian</td>
+<td><code>.h:35</code>, <code>.c:371-372</code></td>
+</tr>
+<tr>
+<td>content</td>
+<td><code>len-2</code></td>
+<td></td>
+<td><code>.h:36-39</code></td>
+</tr>
+<tr>
+<td>tail</td>
+<td>2</td>
+<td><code>'M'</code>,<code>'I'</code> em <code>TAIL_OFFSET(len)</code> = <code>CMD_OFFSET + len</code></td>
+<td><code>.h:39</code>, <code>.c:357-364</code></td>
+</tr>
+<tr>
+<td>reply</td>
+<td>—</td>
+<td>mesmo frame, com <code>cmd = cmd + 0x40</code> e <strong>4 bytes</strong> de conteúdo (u32 BE)</td>
+<td><code>.h:69</code>, <code>.c:405-437</code></td>
+</tr>
+</tbody>
+</table>
+<p>O bit <code>crcEn</code> é <strong>ignorado na recepção</strong> (<code>.c:341-342</code>: "Ignore the CRC Enable bit") e
+nunca é setado na resposta (<code>.c:421</code>: "CRC not used"). É exatamente o que o
+<code>minitela_ctl.py:12-15</code> já dizia (<code>crc = 0x0000</code>).</p>
+<p>Limite de dados por frame de download: <strong>64 B</strong> de dados (<code>UPG_UART_DOWNLOAD_MAX_DATA_LEN</code>,
+<code>.h:49</code>), com <code>len ≤ 70</code> no parser (<code>UPG_UART_DOWNLOAD_MAX_CONTENT_LEN = 2 + 4 + 64</code>,
+<code>.h:57-60</code>, <code>.c:344</code>). É por isso que o <code>g_rwBuffer</code> de 8 KB do flash algorithm (§3.1)
+nunca é usado inteiro por este caminho.</p>
+<h3 id="93-o-dispatcher">9.3 O dispatcher<a class="headerlink" href="#93-o-dispatcher" title="Permanent link">&para;</a></h3>
+<p><code>UPG_UART_vParseCmd()</code> — <code>upgrade_uart_platform.c:453</code>, <code>switch</code> em <code>:464</code>.</p>
+<table>
+<thead>
+<tr>
+<th>cmd</th>
+<th>handler</th>
+<th>semântica</th>
+<th>linha</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0x0080</code></td>
+<td><code>UPG_SUBSM_PAS_vUartWork()</code> + reply</td>
+<td>marca <code>bFlagUartWork = TRUE</code> (a SM passiva sai de "FirstIn"); responde <code>u32 maxPackageSize = 64</code> (BE)</td>
+<td><code>.c:466-474</code>, <code>upgrade_subsm_passive.c:220-223</code></td>
+</tr>
+<tr>
+<td><code>0x0081</code></td>
+<td><code>UPG_PAS_i32SetUpgFileAndSize(addr, size)</code></td>
+<td><code>addr</code> e <code>size</code> BE→LE; <strong><code>addr</code> tem que ser exatamente um dos destinos da tabela</strong>; <strong>apaga a região inteira</strong> antes de responder; resposta = <code>res</code></td>
+<td><code>.c:476-492</code>; <code>upgrade_passive.c:269-341</code></td>
+</tr>
+<tr>
+<td><code>0x0082</code></td>
+<td><code>UPG_PAS_i32GetData(payload, len-6)</code></td>
+<td>conteúdo = <code>u32 offset</code> (BE) + dados (máx. 64 B); o <strong>offset é ignorado</strong> ("Currently no use of offset", <code>.c:497</code>) e só serve para dedup por <code>u16LastOffset</code> (<code>:501-516</code>); resposta = <code>res</code></td>
+<td><code>.c:494-525</code></td>
+</tr>
+<tr>
+<td><code>0x008F</code></td>
+<td>reply <code>0</code> + <code>UPG_SUBSM_PAS_vCanUartRunQuit()</code></td>
+<td>encerra: a SM passiva vai para <code>CanUart_Quit</code> → <code>JumpToApp</code></td>
+<td><code>.c:527-535</code>; <code>upgrade_subsm_passive.c:202-208</code></td>
+</tr>
+<tr>
+<td>outro</td>
+<td>—</td>
+<td>silêncio (sem NAK)</td>
+<td><code>.c:536-538</code></td>
+</tr>
+</tbody>
+</table>
+<p>Se a escrita/erase demorar, um timer de serviço responde <code>0xFFFFFFFF</code> (<code>UPG_REPLY_DELAY_FLAG</code>)
+para o cmd corrente a cada 30 s (<code>upgrade_uart_platform.h:70,82-85</code>; <code>.c:442-450</code>).</p>
+<h3 id="94-como-o-byte-vira-flash">9.4 Como o byte vira flash<a class="headerlink" href="#94-como-o-byte-vira-flash" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>0x0081</code> → <code>UPG_PAS__i32SetUpgFileAndSize()</code> percorre a tabela <code>UPG_astPrebuildConfig</code>
+   (<code>upgrade_ci.h:148-159</code>, gerada de <code>UPG_PRECONFIG</code>) comparando o <code>addr</code> recebido com
+   <code>pstPbConfig[i].pu8UpgFlashStartAdress</code>. <strong>Não bate = <code>EM_enErrInAddrInvalid</code>, nada é
+   escrito</strong> (<code>upgrade_passive.c:274-330</code>).</li>
+<li>Ainda dentro do <code>0x0081</code>, <code>UPG_PAS__i32EraseFlash()</code> <strong>apaga o arquivo inteiro</strong> antes
+   do primeiro byte de dados (<code>upgrade_passive.c:334-335</code>).</li>
+<li>Cada <code>0x0082</code> acumula em <code>myUpgradebuffer</code> (2048 B, <code>upgrade_c1.h:45</code>) e descarrega
+   quando enche; a escrita escolhe a HAL pelo endereço (<code>upgrade_passive.c:422-446</code>):
+   <code>[0x08040000,0x08100000)</code> → <code>csi_hal_internal_flash_write</code>; <code>[0x08100000, +maxTexture)</code>
+   → <code>csi_hal_extern_flash_write</code>. No GC9002 <strong>as duas são a mesma função</strong>
+   (<code>csi_hal_driver_flash.c:440-456</code>) — um só chip QSPI.</li>
+<li><code>0x008F</code> responde 0 e manda o bootloader saltar para o app.</li>
+</ol>
+<p>Destinos graváveis (tabela compilada, <code>upgrade_ci.h:148-159</code>):</p>
+<table>
+<thead>
+<tr>
+<th>arquivo</th>
+<th>endereço</th>
+<th>observação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bootloader.bin</code></td>
+<td><code>BOOTLOADER_SAVE_ADDR</code> = <code>0x083C0000</code> (ou <code>0x08000000+TextureFlashSize-0x40000</code>)</td>
+<td><strong>self-upgrade</strong>: só é copiado para <code>0x08000000</code> no <code>JumpToApp</code></td>
+</tr>
+<tr>
+<td><code>Texture.acf</code></td>
+<td><code>TEXTURE_START_ADDRESS</code> = <strong><code>0x08100000</code></strong></td>
+<td><code>upgrade_ci.h:109-110</code> — igual ao nosso <code>minitela_ctl.py:74</code></td>
+</tr>
+<tr>
+<td><code>VectorFont.acf</code></td>
+<td><code>0x80000000</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>CmpGIF_N.acf</code></td>
+<td><code>0x80000000 + N*2 MB</code> (64 slots)</td>
+<td><code>upgrade_sm.c:137-156</code></td>
+</tr>
+<tr>
+<td><code>cpu1.bin</code></td>
+<td><code>0x08040000</code></td>
+<td>o app</td>
+</tr>
+<tr>
+<td><code>product.bin</code> / <code>hwconfig.bin</code></td>
+<td><code>0x080FF008</code> / <code>0x080FE008</code> (<code>BANK_WRITE_START_ADDR_* + 8</code>, <code>ParsePara.h:20,25</code>)</td>
+<td>iguais ao mapa do <code>minitela_ctl.py:72-73</code></td>
+</tr>
+<tr>
+<td><code>calibration.bin</code>, <code>EraseStoreSpace.bin</code></td>
+<td><code>0x080FB000</code> / <code>0x080FC000</code> (<code>ParsePara.h:16</code>, <code>upgrade_ci.h:120</code>)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>cpu0_config.bin</code></td>
+<td><code>0x080F8000</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>upg_cfg.bin</code></td>
+<td><strong><code>0x080F7000</code></strong></td>
+<td><code>upgrade_ci.h:116</code></td>
+</tr>
+</tbody>
+</table>
+<p>O limite de tamanho do <code>.acf</code> no <strong>bootloader</strong> é <code>TextureFlashSize - 0x100000</code>
+(<code>upgrade_c1.c:74-86</code>), e não os <code>MAX_FILE_BYTES = 6436 KB</code> do app: num part de 16 MB isso
+dá 15 MB; se o bootloader não reconhecer o ID (ver §12.3) cai para 3 MB
+(<code>TextureFlashSize</code> default <code>0x400000</code> em <code>csi_hal_driver_flash.c:9</code>).</p>
+<hr />
+<h2 id="10-comandos-implementados-minitela_ctlpy">10. Comandos implementados × <code>minitela_ctl.py</code><a class="headerlink" href="#10-comandos-implementados-minitela_ctlpy" title="Permanent link">&para;</a></h2>
+<p><code>minitela_ctl.py:39-63</code> define 10 comandos (+ respostas). O que o SDK implementa:</p>
+<table>
+<thead>
+<tr>
+<th>cmd</th>
+<th>nome no python</th>
+<th>SDK (bootloader UART)</th>
+<th>resposta</th>
+<th>veredito</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0x0080</code></td>
+<td>HANDSHAKE</td>
+<td>✅ <code>.c:466</code></td>
+<td><code>0x00C0</code></td>
+<td><strong>bate</strong> (mas o payload é <code>u32=64</code>, não um "status")</td>
+</tr>
+<tr>
+<td><code>0x0081</code></td>
+<td>REQUEST_DOWNLOAD</td>
+<td>✅ <code>.c:476</code></td>
+<td><code>0x00C1</code></td>
+<td><strong>bate</strong></td>
+</tr>
+<tr>
+<td><code>0x0082</code></td>
+<td>DOWNLOAD_DATA</td>
+<td>✅ <code>.c:494</code></td>
+<td><code>0x00C2</code></td>
+<td><strong>bate</strong> (máx. 64 B/frame)</td>
+</tr>
+<tr>
+<td><code>0x008F</code></td>
+<td>DOWNLOAD_COMPLETE</td>
+<td>✅ <code>.c:527</code></td>
+<td><code>0x00CF</code></td>
+<td><strong>bate</strong> — e <strong>derruba</strong> o bootloader para o app</td>
+</tr>
+<tr>
+<td><code>0x0083</code></td>
+<td>UPLOAD_DATA</td>
+<td>❌ só o <code>#define</code> (<code>.h:66</code>), sem <code>case</code></td>
+<td>—</td>
+<td><strong>sobra no SDK</strong> (§12)</td>
+</tr>
+<tr>
+<td><code>0x0085</code></td>
+<td>GET_DOWNLOAD_STATUS</td>
+<td>❌ não existe</td>
+<td>—</td>
+<td><strong>sobra</strong></td>
+</tr>
+<tr>
+<td><code>0x0086</code></td>
+<td>GET_OFFSET</td>
+<td>❌ não existe</td>
+<td>—</td>
+<td><strong>sobra</strong></td>
+</tr>
+<tr>
+<td><code>0x0070</code></td>
+<td>REBOOT</td>
+<td>❌ não existe</td>
+<td>—</td>
+<td><strong>sobra</strong></td>
+</tr>
+<tr>
+<td><code>0x0071</code></td>
+<td>SWITCH_STATE</td>
+<td>❌ não existe</td>
+<td>—</td>
+<td><strong>sobra</strong></td>
+</tr>
+<tr>
+<td><code>0x0090</code></td>
+<td>SET_REGISTER</td>
+<td>❌ não existe</td>
+<td>—</td>
+<td><strong>sobra</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Observações que fecham o quadro:</p>
+<ul>
+<li>Todas as respostas do python seguem <code>cmd + 0x40</code> (<code>0x0080→0x00C0</code>, <code>0x0090→0x00D0</code>,
+  <code>0x0070→0x00B0</code>, <code>0x0071→0x00B1</code>), que é exatamente a regra do SDK
+  (<code>upgrade_uart_platform.h:69</code>). Ou seja: <strong>o python e o SDK são a mesma família de
+  protocolo</strong>, e o firmware da minitela é um <strong>superconjunto</strong> do bootloader do SDK.</li>
+<li>Os 6 comandos que sobram são justamente os de <strong>runtime</strong> (<code>0x0071</code> troca de página,
+  <code>0x0090</code> seta registro, <code>0x0070</code> reboot, <code>0x0085</code>/<code>0x0086</code> acompanham o download) e o
+  <code>0x0083</code> de leitura. Nenhum deles tem implementação neste SDK, nem no app nem no
+  bootloader.</li>
+<li>O SDK tem, no app, o equivalente <strong>funcional</strong> de <code>0x0090</code>/<code>0x0071</code> — mas por outro
+  protocolo (0xA5/0x5A, registradores <code>IDE_SYSTEM_REG_*</code>, <code>GeneralCom_Moduleinfo.h:17-31</code>
+  e <code>MODULE_INFO_REG_*:53-104</code>), e não pelo frame <code>AH</code>…<code>MI</code>.</li>
+</ul>
+<h3 id="101-diferencas-finas-entre-o-minitela_ctlpy-e-o-sdk">10.1 Diferenças finas entre o <code>minitela_ctl.py</code> e o SDK<a class="headerlink" href="#101-diferencas-finas-entre-o-minitela_ctlpy-e-o-sdk" title="Permanent link">&para;</a></h3>
+<p>O python é mais novo que o bootloader deste SDK. Onde os dois divergem:</p>
+<table>
+<thead>
+<tr>
+<th>detalhe</th>
+<th>SDK (<code>upgrade_uart_platform.c</code>)</th>
+<th><code>minitela_ctl.py</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>conteúdo do <code>0x0081</code></td>
+<td><strong>8 B</strong>: <code>u32 addr</code>, <code>u32 size</code> (<code>upgrade_uart_platform.h:140-144</code>)</td>
+<td><strong>20 B</strong>: <code>&gt;II</code> addr+size <strong>+ 16 B de <code>file_id</code> (md5)</strong>, <code>minitela_ctl.py:321</code>. O SDK copia até 68 B para a union e simplesmente <strong>ignora</strong> o md5</td>
+</tr>
+<tr>
+<td>resposta do <code>0x0081</code></td>
+<td><strong>4 B</strong>: <code>u32 res</code> (<code>UPG_tunUartRplContent</code>, <code>.h:170-174</code>)</td>
+<td><strong>8 B</strong>: <code>&gt;II</code> <code>maxPageSize</code> + <code>code</code> (<code>minitela_ctl.py:323</code>)</td>
+</tr>
+<tr>
+<td>"ocupado"</td>
+<td>timer de 30 s responde <code>0xFFFFFFFF</code> (<code>UPG_REPLY_DELAY_FLAG</code>, <code>.h:70</code>)</td>
+<td><strong>mesma convenção</strong>: <code>code == 0xFFFFFFFF</code> → espera o próximo frame com <code>code == 0</code> (<code>minitela_ctl.py:324-336,347-357</code>)</td>
+</tr>
+<tr>
+<td>tamanho de página</td>
+<td>fixo em 64 B (<code>UPG_UART_DOWNLOAD_MAX_DATA_LEN</code>, <code>.h:49</code>)</td>
+<td>vem do <code>maxPageSize</code> da resposta do <code>0x0081</code></td>
+</tr>
+<tr>
+<td><code>0x0082</code></td>
+<td><code>u32 offset</code> + dados, offset ignorado (só dedup)</td>
+<td>idêntico (<code>minitela_ctl.py:344</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Ou seja: o <code>0xFFFFFFFF</code> de "apagando/gravando, espere" é a <strong>impressão digital</strong> que liga o
+python ao SDK — mas o resto (md5, <code>maxPageSize</code>, <code>0x0085</code>, <code>0x0086</code>, <code>0x0070</code>, <code>0x0071</code>,
+<code>0x0090</code>) é firmware de produção, não este.</p>
+<p>O que o python revela da <strong>semântica</strong> dos comandos que faltam (e que o SDK não documenta
+em lugar nenhum):</p>
+<ul>
+<li><code>0x0085</code> devolve <strong>21 bytes</strong>: <code>status</code> (1) + <code>file_id</code>/md5 (16) + <code>offset</code> (u32 BE)
+  (<code>minitela_ctl.py:223-228</code>). <code>status</code> <code>0x20</code> = UI rodando; <code>0x10</code>/<code>0x11</code> = em download
+  (<code>:305-318</code>).</li>
+<li><code>0x0071</code> (<code>SWITCH_STATE</code>) com payload <code>0x10</code> pede para <strong>sair da UI e entrar em modo
+  download</strong> sem reset (<code>:314</code>).</li>
+<li><code>0x0086</code> é o <code>offset</code> "solto" (o mesmo que já vem no <code>0x0085</code>).</li>
+<li><code>0x0070</code> (<code>REBOOT</code>) reinicia o módulo → cai no bootloader (§11).</li>
+</ul>
+<hr />
+<h2 id="11-entrada-no-bootloader">11. Entrada no bootloader<a class="headerlink" href="#11-entrada-no-bootloader" title="Permanent link">&para;</a></h2>
+<p><strong>Resposta curta.</strong> Neste SDK a entrada no bootloader é uma <strong>janela de tempo no boot</strong>,
+não um flag: o bootloader sempre roda primeiro, espera um handshake <code>0x0080</code> por
+<code>can_uart_wait_ms</code> (default 500 ms) e, se ninguém falar, salta para o app. Não há GPIO,
+flag em RAM no-init, campo em <code>upg_cfg.bin</code> nem comando que mude isso (§11.3). O firmware
+de produção tem um caminho extra — <code>0x0071</code> põe o <strong>app</strong> em modo download sem reset —,
+mas isso não está neste SDK. E, mesmo entrando no bootloader, <strong>não há dump</strong>: o
+<code>0x0083</code> não tem handler (§12).</p>
+<h3 id="111-por-que-o-bootloader-sempre-roda">11.1 Por que o bootloader sempre roda<a class="headerlink" href="#111-por-que-o-bootloader-sempre-roda" title="Permanent link">&para;</a></h3>
+<p>O bootloader é a imagem em <code>0x08000000</code> (<code>Bootloader.elf</code>: entry <code>0x08000000</code>, <code>.text</code>
+<code>0x08000000+0x2FC54</code>). O <code>.bin</code> de produção tem um header de 16 B gerado por
+<code>boot_headInfo_add.sh</code>:</p>
+<div class="highlight"><pre><span></span><code>0x00 u32 size     0x04 u32 CRC32(code)
+0x08 u32 magic 0x48494948    0x0C u32 0
+0x10 code
+</code></pre></div>
+<p>O app fica em <code>0x08040000</code> e o seu primeiro setor é o "cartão de visita" lido pelo
+bootloader (<code>od</code> do <code>GC9002AHMI.elf</code>, VMA <code>0x08040000</code> = offset <code>0x400</code>):</p>
+<div class="highlight"><pre><span></span><code>0x08040000  "1.10.20_build_2025.07.02.10.45"   &lt;- CPU1_VERSION_ADDRESS
+0x08040020  "Jul 22 2025"                      &lt;- compile date
+0x08040030  "16:54:23"                         &lt;- compile time
+0x08040040  "GC9002"                           &lt;- CPU1_APP_COMPILE_ADDR_STORE_ADDR
+0x08040060  entry (APP_FUNCTION_START_ADDR)
+</code></pre></div>
+<p><code>main()</code> do bootloader: <code>CFG_vInit()</code> → <code>HardwareInit()</code> → <code>SoftwareInit()</code>
+(<code>UPG_Main_vInit</code>) → scheduler (<code>main.c:89-101</code>). A primeira coisa que a task de upgrade
+faz é <code>UPG_SUBSM__vGetComMode()</code> (<code>upgrade_subsm.c:951</code>).</p>
+<h3 id="112-a-janela-de-espera-o-unico-mecanismo-que-existe">11.2 A janela de espera (o único mecanismo que existe)<a class="headerlink" href="#112-a-janela-de-espera-o-unico-mecanismo-que-existe" title="Permanent link">&para;</a></h3>
+<p><code>UPG_SUBSM__vGetComMode()</code>:</p>
+<ol>
+<li>se <code>cfg_sd</code> → probe de SD/SPI (<code>:960-982</code>);</li>
+<li>se <code>cfg_can</code> → init CAN (<code>:988-996</code>);</li>
+<li>se <code>cfg_uart</code> → <code>UPG_UART_vInit()</code> (UART + task de RX) (<code>:997-1005</code>);</li>
+<li>laço de <code>CFG_Get_can_uart_wait_ms()</code> iterações com <code>vTaskDelay(1)</code> esperando
+   <code>bFlagCanWork</code>/<code>bFlagUartWork</code> (<code>:1007-1033</code>);</li>
+<li>se nada e <code>cfg_usb</code> → <code>usbh_initialize()</code> + <code>checkMSDDevice()</code> + mount <code>"2:"</code>
+   (USB <strong>host</strong>, pen drive) (<code>:1038-1066</code>);</li>
+<li>esgotou <code>UPG_GET_MODE_TRY_TIMES</code> (=1, <code>upgrade_ci.h:62</code>) e <code>UPG_bIfCpu1HasCode()</code>
+   → <code>enMainSM = JumpToApp</code> (<code>:1068-1080</code>).</li>
+</ol>
+<p><code>bFlagUartWork</code> só é setado quando chega um frame <code>0x0080</code> <strong>válido</strong> (parser completo,
+<code>.c:466-468</code> → <code>upgrade_subsm_passive.c:220-223</code>). Ou seja: a entrada no bootloader é
+"<strong>reset + handshake dentro da janela</strong>", não um flag.</p>
+<p>Defaults do blob compilado (<code>cfg_autogen_ca.c:8-21</code>, usado quando <code>0x080F7000</code> é inválido):</p>
+<table>
+<thead>
+<tr>
+<th>campo</th>
+<th>valor</th>
+<th>significado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>magic/version</td>
+<td><code>0x41484D49</code> / <code>0x0102</code></td>
+<td><code>cfg_ci.h:30-31</code></td>
+</tr>
+<tr>
+<td><code>cfg_uart</code></td>
+<td><strong>1</strong></td>
+<td>upgrade UART ligado</td>
+</tr>
+<tr>
+<td><code>cfg_can</code></td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td><code>cfg_sd</code></td>
+<td>1</td>
+<td></td>
+</tr>
+<tr>
+<td><code>cfg_usb</code></td>
+<td>1</td>
+<td>(USB <strong>host</strong>/MSC)</td>
+</tr>
+<tr>
+<td><code>can_uart_wait_ms</code></td>
+<td><strong>500</strong></td>
+<td>janela de 500 ms</td>
+</tr>
+<tr>
+<td><code>UartCfg</code></td>
+<td>ch=2, tx=PB9, rx=PB8, baud=3</td>
+<td><strong>UART2 @ 115200</strong>, <code>cfg_ca.c:203-226,294-313</code>, <code>upgrade_uart_platform.c:134-139</code></td>
+</tr>
+</tbody>
+</table>
+<p>Validação do <code>upg_cfg</code>: magic + version + soma de 16 bits dos bytes após o header
+(<code>cfg_c1.c:47-73</code>); se o bloco em <code>0x080F7000</code> falhar, o bootloader usa o blob compilado
+(<code>cfg_c1.c:20-35</code>) — <strong>nunca fica sem config</strong>.</p>
+<h3 id="113-o-que-nao-existe-procurei-e-nao-ha">11.3 O que NÃO existe (procurei e não há)<a class="headerlink" href="#113-o-que-nao-existe-procurei-e-nao-ha" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>mecanismo</th>
+<th>situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>flag em RAM no-init</td>
+<td><code>UPG_u32CanUartUpgFlag</code> foi <strong>desativado</strong>: <code>static uint32_t</code> e o <code>__attribute__((at(...)))</code> está comentado (<code>upgrade_subsm_passive.c:24-25</code>). Não sobrevive a reset</td>
+</tr>
+<tr>
+<td>GPIO / boot pin</td>
+<td><code>HardwareInit()</code> não lê pino nenhum (<code>main.c:20-81</code>); <code>UsbCfg</code> tem <code>usb_ctrl_enable_port/pin</code> e <code>insert_check</code> (<code>cfg_autogen_ct.h:65-74</code>) mas os getters (<code>cfg_autogen_ca.c:252-290</code>) não são usados pelo upgrade</td>
+</tr>
+<tr>
+<td>comando "reboot to upgrade"</td>
+<td>o app tem <code>MODULE_INFO_REG_SYSTEM_RESET = 10056</code>, mas o handler está com o corpo <strong>comentado</strong> (<code>GeneralCom_Moduleinfo.c:74-80</code>) → não reseta</td>
+</tr>
+<tr>
+<td>flag em <code>upg_cfg.bin</code></td>
+<td>os campos são só <code>cfg_uart/cfg_can/cfg_sd/cfg_usb/can_uart_wait_ms</code> (<code>cfg_autogen_ct.h:17-25</code>). Não há one-shot de boot</td>
+</tr>
+<tr>
+<td>comando do app p/ modo download</td>
+<td><strong>não existe no SDK</strong>. No firmware de produção é o <code>0x0071</code> com payload <code>0x10</code> (<code>minitela_ctl.py:314</code>), que troca o estado de <code>0x20</code> (UI) para <code>0x10/0x11</code> (download) <strong>sem reset</strong> — ou seja, o app de produção tem um modo de recepção embutido, que este SDK não tem</td>
+</tr>
+<tr>
+<td>watchdog / reset reason</td>
+<td>nada no caminho do bootloader</td>
+</tr>
+<tr>
+<td><code>upg_cfg</code> gravável por comando</td>
+<td>sim: <code>upg_cfg.bin</code> é destino válido (<code>upgrade_ci.h:159</code>) — mas isso muda o <strong>futuro</strong>, não entra em modo upgrade</td>
+</tr>
+</tbody>
+</table>
+<h3 id="114-procedimento-valido-se-o-bootloader-da-minitela-for-este">11.4 Procedimento (válido <strong>se</strong> o bootloader da minitela for este)<a class="headerlink" href="#114-procedimento-valido-se-o-bootloader-da-minitela-for-este" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Reset (power cycle; um reboot por software também serve, porque o bootloader é quem
+   roda primeiro).</li>
+<li>Em <strong>≤ 500 ms</strong> (<code>can_uart_wait_ms</code>), enviar <code>0x0080</code> no canal configurado —
+   por default <strong>UART2, PB9=TX/PB8=RX, 115200 8N1</strong> (não é o CDC-ACM).</li>
+<li>Receber <code>0x00C0</code> + <code>u32 64</code>. A partir daí a SM passiva fica em <code>CanUart_Run</code>
+   (<code>upgrade_subsm_passive.c:126-152</code>) e <strong>não</strong> salta mais.</li>
+<li><code>0x0081 {addr, size}</code> com <code>addr</code> <strong>idêntico</strong> a um destino da tabela (§9.4);
+   <code>0x0082</code> em blocos de ≤ 64 B; <code>0x008F</code> no fim.</li>
+<li><code>0x008F</code> <strong>derruba</strong> o bootloader para o app — não existe "ficar no bootloader".</li>
+</ol>
+<h3 id="115-risco">11.5 Risco<a class="headerlink" href="#115-risco" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Não dá para dumpar</strong> por aqui: não há comando de leitura (§12). O melhor que o
+  protocolo faz é responder 4 bytes de resultado.</li>
+<li><code>0x0081</code> <strong>apaga antes de receber</strong> (<code>upgrade_passive.c:335</code>). Um <code>0x0081</code> para
+  <code>Texture.acf</code> abortado deixa <code>0x08100000</code> apagado → tela sem textura (recuperável
+  repetindo o download). Um <code>0x0081</code> para <code>cpu1.bin</code> abortado apaga o app; o bootloader
+  então não acha <code>"1."</code> em <code>0x08040000</code> (<code>upgrade_c1.c:1384-1399</code>) e vai para
+  <code>UPG_enMainSM_Error</code> (<code>upgrade_subsm.c:1076-1087</code>), que <strong>não salta</strong> — só volta a
+  funcionar pelo próprio bootloader (UART). É o cenário de "tijolo recuperável".</li>
+<li><code>bootloader.bin</code> é destino válido e escreve em <code>BOOTLOADER_SAVE_ADDR</code>; com
+  <code>bFlagUpgWithSelfUpg = TRUE</code> (<code>upgrade_ci.h:149</code>) o bootloader <strong>se sobrescreve em
+  <code>0x08000000</code></strong> no <code>JumpToApp</code> (<code>upgrade_sm.c:296-307</code>). Aqui o tijolo é real.</li>
+<li><code>upg_cfg.bin</code> também é gravável: um <code>cfg_uart=0</code> + reset <strong>fecha a porta de
+  recuperação</strong> (sobra só SD/USB-host).</li>
+<li>O <code>addr</code> do backup do bootloader depende de <code>TextureFlashSize</code>
+  (<code>upgrade_sm.c:161-168</code>), que depende do JEDEC ID lido no boot (§12.3) — em part não
+  reconhecido ele usa o default de 4 MB.</li>
+</ul>
+<hr />
+<h2 id="12-leitura-de-flash-veredito">12. Leitura de flash: veredito<a class="headerlink" href="#12-leitura-de-flash-veredito" title="Permanent link">&para;</a></h2>
+<h3 id="121-nao-existe-comando-de-leitura-no-sdk">12.1 Não existe comando de leitura no SDK<a class="headerlink" href="#121-nao-existe-comando-de-leitura-no-sdk" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>caminho</th>
+<th>comandos</th>
+<th>leitura de flash/memória?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bootloader, <code>AH</code>…<code>MI</code></td>
+<td><code>0x0080/0x0081/0x0082/0x008F</code></td>
+<td><strong>não</strong></td>
+</tr>
+<tr>
+<td>bootloader, CAN/UDS</td>
+<td>SID <code>0x10</code>, <code>0x11</code>, <code>0x28</code>, <code>0x64/0x66/0x67</code> (<code>$SDK/projects/Bootloader/Source/CAN_Diag/SRV/SIDSource/</code>)</td>
+<td><strong>não</strong> (nem <code>0x22</code> ReadDataByIdentifier, nem <code>0x23</code>/<code>0x34</code>/<code>0x36</code>/<code>0x37</code>)</td>
+</tr>
+<tr>
+<td>app, <code>0xA5/0x5A</code></td>
+<td>set/get de <strong>registrador AHMI</strong> (<code>GeneralComExe.c:267,428,509,551</code>)</td>
+<td><strong>não</strong> — IDs 10000…11000 são estado/versão/backlight/RTC (<code>GeneralCom_Moduleinfo.h:53-104</code>); nenhum mapeia flash</td>
+</tr>
+<tr>
+<td>app, USB CDC</td>
+<td>nenhum (callback descarta, §9.1)</td>
+<td><strong>não</strong></td>
+</tr>
+</tbody>
+</table>
+<p>O único dado "de leitura" que o protocolo devolve são os 4 bytes de resultado
+(<code>UPG_tunUartRplContent</code>, <code>upgrade_uart_platform.h:170-174</code>): tamanho de pacote no
+handshake e código de retorno nos demais.</p>
+<h3 id="122-upg_cmd_upload-confirmado-morto">12.2 <code>UPG_CMD_UPLOAD</code> — confirmado morto<a class="headerlink" href="#122-upg_cmd_upload-confirmado-morto" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Definição:</strong> <code>upgrade_uart_platform.h:66</code> — <code>#define UPG_CMD_UPLOAD (0x0083)</code>.</li>
+<li><strong>Uso:</strong> zero. O <code>switch</code> de <code>UPG_UART_vParseCmd</code> (<code>upgrade_uart_platform.c:464-540</code>)
+  tem só 4 <code>case</code> e um <code>default</code> mudo.</li>
+<li><strong>Confirmação no objeto:</strong> no <code>projects/Bootloader/Obj/core_upgrade_uart_platform.o</code>,
+  a seção <code>.text.UPG_UART_vParseCmd</code> (<code>llvm-readelf -S</code>: seção 129) desmonta para
+  <code>li a4,130</code> / <code>bltu a4,a5,…</code> / <code>li a4,128</code> / <code>li a4,129</code> — os casos <code>0x82</code>, <code>&gt;0x82</code>
+  (<code>0x8F</code>), <code>0x80</code> e <code>0x81</code>. <strong>Não existe comparação com <code>0x83</code>.</strong></li>
+<li><strong>Nenhum handler em outro lugar:</strong> <code>nm</code> em todos os <code>Obj/*.o</code> do bootloader não devolve
+  nenhum símbolo com "upload"; <code>grep -rl UPG_CMD_UPLOAD</code> só encontra o header e arquivos
+  <code>.o</code>/<code>.elf</code> onde a string aparece no <strong>dump de macros do <code>-g3</code></strong> (<code>.debug_macro</code>),
+  não como código. O mesmo vale para o app (<code>Obj/*.o</code>): nada.</li>
+<li><strong>Sem handler em <code>.a</code>:</strong> o <code>Bootloader.map</code> só puxa <code>libm.a</code>/<code>libc</code> (<code>Bootloader.map:77-88</code>);
+  nenhum arquivo de biblioteca implementa upgrade.</li>
+</ul>
+<h3 id="123-o-que-existe-de-leitura-interna-nao-exposta">12.3 O que existe de leitura (interna, não exposta)<a class="headerlink" href="#123-o-que-existe-de-leitura-interna-nao-exposta" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>função</th>
+<th>coordenada</th>
+<th>para que serve</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>csi_hal_extern_flash_read</code></td>
+<td><code>Source/csi_hal_driver/csi_hal_driver_flash.c:440</code></td>
+<td>verify-after-write e self-upgrade do bootloader</td>
+</tr>
+<tr>
+<td><code>csi_hal_internal_flash_read</code></td>
+<td>idem (<code>#if CHIP_GC9002</code> → mesma função)</td>
+<td>idem</td>
+</tr>
+<tr>
+<td><code>ext_flash_read</code> / <code>qspi2_nor_read</code> / <code>qspi_nand_read</code></td>
+<td><code>Source/ahmi/GClib/src/texture_flash.c:461</code>, <code>:1632</code>, <code>:1523</code> (e <code>qspi_gd_nand_read</code> <code>:1427</code>)</td>
+<td>o app lendo textura/tags do flash</td>
+</tr>
+<tr>
+<td><code>UPG_u32ReadTextureFlash</code></td>
+<td><code>Source/Upgrade/core/upgrade_c1.h:84</code></td>
+<td>verificação do <code>.acf</code> depois de gravar</td>
+</tr>
+<tr>
+<td><code>qspi2_CheckTextureFlashType</code></td>
+<td><code>texture_flash.c:482-560</code></td>
+<td><strong>lê o JEDEC ID (0x9F)</strong> e define <code>TextureFlashType</code>/<code>TextureFlashSize</code> (4/8/16/32 MB NOR; 125 MB NAND)</td>
+</tr>
+<tr>
+<td><code>gc9002_hal_flash_init</code></td>
+<td><code>Source/csi_hal_driver/csi_hal_driver_flash.c:90-160</code></td>
+<td>o mesmo no bootloader: <code>FCCR=0x9FB00001</code>, lê <code>FCRLDR</code>, <strong>mascara com <code>0x00FFFFFF</code></strong> e reconhece só <code>0x1940C8</code> (32 MB), <code>0x17405E</code>/<code>0x174020</code> (8 MB), <code>0x164020</code> (4 MB), <code>0x184020</code>/<code>0x18405E</code> (16 MB)</td>
+</tr>
+</tbody>
+</table>
+<p>Nota que corrige a §4/§6 deste documento: <code>qspi2_CheckTextureFlashType</code>
+(<code>texture_flash.c:496-560</code>) é a <strong>tabela de IDs do firmware de aplicação</strong> — a mesma
+família <code>FLASH_ID_IS_*</code> do flash algorithm, agora com nome de part no comentário
+(<code>W25Q128/GD25Q127/BY25Q128/XM25QH128/ZB25VQ128</code>, <code>W25Q64/...</code>, <code>W25Q256/GD25Q257</code>,
+<code>XM25QH32/ZB25VQ32</code>, NAND WB/GD/DS). E o bootloader (<code>csi_hal_driver_flash.c:90-160</code>)
+usa uma lista <strong>mais estreita</strong> e mascara o 4º byte: um <strong>Winbond <code>0x1840EF</code> não está na
+lista do bootloader</strong> (só <code>0x184020</code> e <code>0x18405E</code>) → <code>TextureFlashSize</code> fica no default de
+4 MB e o <code>DRIR</code> (fast read) não é programado. <strong>HIPÓTESE</strong>: o part da minitela é um dos
+reconhecidos pelo app (senão a textura não renderizaria), e o bootloader de produção pode
+ter uma lista diferente desta do SDK.</p>
+<h3 id="124-veredito">12.4 Veredito<a class="headerlink" href="#124-veredito" title="Permanent link">&para;</a></h3>
+<p><strong>Não há caminho de software, neste SDK, para ler a flash pelo protocolo.</strong> O
+<code>AH</code>…<code>MI</code> é <em>write-only</em> (handshake + download + fim), o <code>UPG_CMD_UPLOAD</code> é uma constante
+órfã, e o USB CDC do SDK descarta o que chega. Para dumpar a flash sobram dois caminhos,
+ambos fora do escopo deste repositório: (a) <strong>SWD/JTAG com o CDK</strong> — o mesmo caminho que
+o <code>flash_download.elf</code> da §1-§8 usa, com o algoritmo de flash em RAM; (b) um firmware
+próprio rodando no chip. Se algum dia aparecer o dump do <strong>firmware de produção</strong>
+(o que responde em <code>0324:0324</code>), aí sim vale procurar um <code>case 0x0083</code> nele: o <code>python</code>
+já assume que ele existe (<code>minitela_ctl.py:52-56</code>) mas <strong>nada neste SDK confirma</strong>.</p>
+<hr />
+<h2 id="apendice-como-reproduzir">Apêndice — como reproduzir<a class="headerlink" href="#apendice-como-reproduzir" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="nb">source</span><span class="w"> </span>tools/re-env.sh
+
+<span class="nv">F</span><span class="o">=</span><span class="s2">".tools/vendor/ext/GC9002芯片支持包/GC9002芯片支持包/flash_download.elf"</span>
+sha256sum<span class="w"> </span><span class="s2">"</span><span class="nv">$F</span><span class="s2">"</span>
+
+<span class="c1"># cabeçalho, seções, símbolos, vetores</span>
+llvm-readelf<span class="w"> </span>-h<span class="w"> </span>-S<span class="w"> </span>-sW<span class="w"> </span>-l<span class="w"> </span><span class="s2">"</span><span class="nv">$F</span><span class="s2">"</span>
+llvm-objcopy<span class="w"> </span>--dump-section<span class="w"> </span>.debug_str<span class="o">=</span>/tmp/ds.bin<span class="w"> </span><span class="s2">"</span><span class="nv">$F</span><span class="s2">"</span><span class="w"> </span>/dev/null
+strings<span class="w"> </span>-a<span class="w"> </span>/tmp/ds.bin<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"FLASH_ID_IS|0x40[0-9A-F]{6}"</span>
+
+<span class="c1"># structs e assinaturas (DWARF)</span>
+llvm-dwarfdump<span class="w"> </span>--name<span class="o">=</span>csi_spiflash_t<span class="w"> </span>--name<span class="o">=</span>FlashDevice<span class="w"> </span>--name<span class="o">=</span>Device<span class="w"> </span><span class="s2">"</span><span class="nv">$F</span><span class="s2">"</span>
+llvm-dwarfdump<span class="w"> </span>--debug-info<span class="w"> </span>--show-children<span class="w"> </span><span class="s2">"</span><span class="nv">$F</span><span class="s2">"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>less
+
+<span class="c1"># descompilado (projeto fica em work/, ignorado pelo git)</span>
+analyzeHeadless<span class="w"> </span><span class="s2">"</span><span class="nv">$GHIDRA_PROJ</span><span class="s2">"</span><span class="w"> </span>fw142<span class="w"> </span>-import<span class="w"> </span><span class="s2">"</span><span class="nv">$F</span><span class="s2">"</span><span class="w"> </span>-processor<span class="w"> </span>RISCV:LE:32:default<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-scriptPath<span class="w"> </span>/tmp/opencode/fw/scripts<span class="w"> </span>-postScript<span class="w"> </span>DumpAll.java
+</code></pre></div>
+<p>O script <code>DumpAll.java</code> (decompila todas as funções para um <code>.c</code> único) está em
+<code>/tmp/opencode/fw/scripts/</code> — é efêmero; são ~30 linhas de API do Ghidra
+(<code>DecompInterface</code> + <code>FunctionManager</code>), trivial de recriar. O Capstone usado para o
+disassembly anotado: <code>CS_ARCH_RISCV, CS_MODE_RISCV32|CS_MODE_RISCVC</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Voltar para o topo
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Rodapé" >
+        
+          
+          <a href="../RE-acf/" class="md-footer__link md-footer__link--prev" aria-label="Anterior: O formato .acf">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Anterior
+              </span>
+              <div class="md-ellipsis">
+                O formato .acf
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../RE-acf-source/" class="md-footer__link md-footer__link--next" aria-label="Próximo: O .acf pelo código">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Próximo
+              </span>
+              <div class="md-ellipsis">
+                O .acf pelo código
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Código MIT · textos CC BY-SA 4.0 · sem material proprietário do fabricante
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copiado para \u00e1rea de transfer\u00eancia", "clipboard.copy": "Copiar para \u00e1rea de transfer\u00eancia", "search.result.more.one": "mais 1 nesta p\u00e1gina", "search.result.more.other": "# mais nesta p\u00e1gina", "search.result.none": "Nenhum documento encontrado", "search.result.one": "1 documento encontrado", "search.result.other": "# documentos encontrados", "search.result.placeholder": "Digite para iniciar a busca", "search.result.term.missing": "Ausente", "select.version": "Selecione a vers\u00e3o"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,2193 @@
+
+<!doctype html>
+<html lang="pt" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Usar a minitela 240x240 do Positivo Vision R15M no Linux: imagens, GIF animado, tags em tempo real e a engenharia reversa do protocolo e do formato .acf.">
+      
+      
+      
+        <link rel="canonical" href="https://caio-imperial.github.io/minitela-r15/RE-acf/">
+      
+      
+        <link rel="prev" href="../ferramentas/">
+      
+      
+        <link rel="next" href="../RE-firmware/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
+    
+    
+      
+        <title>O formato .acf - Minitela GC9002</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#engenharia-reversa-do-formato-textureacf-gc9002-ahmi" class="md-skip">
+          Pular para conteúdo
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Cabeçalho">
+    <a href=".." title="Minitela GC9002" class="md-header__button md-logo" aria-label="Minitela GC9002" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Minitela GC9002
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              O formato .acf
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Tema escuro"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Tema escuro" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Tema claro"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Tema claro" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Buscar" placeholder="Buscar" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Pesquisar">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Limpar" aria-label="Limpar" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Inicializando busca
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/caio-imperial/minitela-r15" title="Ir para repositório" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    caio-imperial/minitela-r15
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navegação" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Minitela GC9002" class="md-nav__button md-logo" aria-label="Minitela GC9002" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Minitela GC9002
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/caio-imperial/minitela-r15" title="Ir para repositório" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    caio-imperial/minitela-r15
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Início
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Começar
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Começar
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comecar/instalacao/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Requisitos e instalação
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comecar/imagem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Enviar uma imagem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comecar/gif/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GIF animado
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comecar/tags/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tags em tempo real
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comecar/painel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Painel gráfico
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comecar/recuperacao/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recuperar a tela
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Referência
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Referência
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../referencia/protocolo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Protocolo AHMI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../referencia/flash/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mapa da flash
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../referencia/acf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formato .acf
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../referencia/codec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Codec STC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../referencia/gif/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GIF (fatias e trailer)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../referencia/tags/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tags e IDs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hardware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ferramentas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ferramentas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Engenharia reversa
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Engenharia reversa
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    O formato .acf
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    O formato .acf
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Índice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#fato-1-o-codec-de-pixel-e-dxt1dxt5-nao-e-proprietario" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 1 — o codec de pixel é DXT1/DXT5, não é proprietário
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-2-alinhamento-de-16-kb-no-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 2 — alinhamento de 16 KB no container
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-3-estrutura-de-alto-nivel-do-arquivo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 3 — estrutura de alto nível do arquivo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enderecos-uteis-no-exe-para-retomar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Endereços úteis no .exe (para retomar)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-4-a-bancada-funcionou-layout-da-imagem-localizado" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 4 — a bancada funcionou: layout da imagem localizado
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-5-o-encoding-do-bloco-resolvido-e-validado-byte-a-byte" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 5 — o encoding do bloco (RESOLVIDO e validado byte a byte)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="FATO 5 — o encoding do bloco (RESOLVIDO e validado byte a byte)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#como-cada-experimento-provou" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Como cada experimento provou
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validação
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-6-estrutura-do-arquivo-e-checksum-com-credito-ao-sidecar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 6 — estrutura do arquivo e checksum (com crédito ao SideCar)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-7-a-tela-de-imagens-e-a-regiao-critica" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 7 — a tela de imagens e a região crítica
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#o-que-ainda-falta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        O que ainda falta
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#o-caminho-que-funciona-resolvido" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        O caminho que funciona (resolvido)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="O caminho que funciona (resolvido)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#o-que-continua-em-aberto-curiosidade-nao-bloqueio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        O que continua em aberto (curiosidade, não bloqueio)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-8-a-semantica-de-gravacao-da-nor-lado-firmware-da-flash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 8 — a semântica de gravação da NOR (lado firmware da flash)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-9-as-tres-imagens-localizadas-com-o-mapa-do-firmware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 9 — as três imagens localizadas, com o mapa do firmware
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="FATO 9 — as três imagens localizadas, com o mapa do firmware">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#onde-ficam-as-3-imagens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Onde ficam as 3 imagens
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-10-imagem-trocada-sem-o-compilador-testado-no-hardware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 10 — imagem trocada sem o compilador (testado no hardware)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-11-gif-animado-nativo-sem-compilador-testado-no-hardware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 11 — GIF animado nativo, sem compilador (testado no hardware)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-12-tamanho-da-textura-escalonador-e-tile-boxes-andam-juntos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 12 — tamanho da textura, escalonador e tile boxes andam juntos
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RE-firmware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    O firmware e a flash
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RE-acf-source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    O .acf pelo código
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comunidade/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Comunidade
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contribuir/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribuir
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../legal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Legal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Índice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#fato-1-o-codec-de-pixel-e-dxt1dxt5-nao-e-proprietario" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 1 — o codec de pixel é DXT1/DXT5, não é proprietário
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-2-alinhamento-de-16-kb-no-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 2 — alinhamento de 16 KB no container
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-3-estrutura-de-alto-nivel-do-arquivo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 3 — estrutura de alto nível do arquivo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enderecos-uteis-no-exe-para-retomar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Endereços úteis no .exe (para retomar)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-4-a-bancada-funcionou-layout-da-imagem-localizado" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 4 — a bancada funcionou: layout da imagem localizado
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-5-o-encoding-do-bloco-resolvido-e-validado-byte-a-byte" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 5 — o encoding do bloco (RESOLVIDO e validado byte a byte)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="FATO 5 — o encoding do bloco (RESOLVIDO e validado byte a byte)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#como-cada-experimento-provou" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Como cada experimento provou
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validação
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-6-estrutura-do-arquivo-e-checksum-com-credito-ao-sidecar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 6 — estrutura do arquivo e checksum (com crédito ao SideCar)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-7-a-tela-de-imagens-e-a-regiao-critica" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 7 — a tela de imagens e a região crítica
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#o-que-ainda-falta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        O que ainda falta
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#o-caminho-que-funciona-resolvido" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        O caminho que funciona (resolvido)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="O caminho que funciona (resolvido)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#o-que-continua-em-aberto-curiosidade-nao-bloqueio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        O que continua em aberto (curiosidade, não bloqueio)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-8-a-semantica-de-gravacao-da-nor-lado-firmware-da-flash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 8 — a semântica de gravação da NOR (lado firmware da flash)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-9-as-tres-imagens-localizadas-com-o-mapa-do-firmware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 9 — as três imagens localizadas, com o mapa do firmware
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="FATO 9 — as três imagens localizadas, com o mapa do firmware">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#onde-ficam-as-3-imagens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Onde ficam as 3 imagens
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-10-imagem-trocada-sem-o-compilador-testado-no-hardware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 10 — imagem trocada sem o compilador (testado no hardware)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-11-gif-animado-nativo-sem-compilador-testado-no-hardware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 11 — GIF animado nativo, sem compilador (testado no hardware)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fato-12-tamanho-da-textura-escalonador-e-tile-boxes-andam-juntos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FATO 12 — tamanho da textura, escalonador e tile boxes andam juntos
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/caio-imperial/minitela-r15/edit/main/docs/RE-acf.md" title="Editar esta página" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="engenharia-reversa-do-formato-textureacf-gc9002-ahmi">Engenharia reversa do formato Texture.acf (GC9002 / AHMI)<a class="headerlink" href="#engenharia-reversa-do-formato-textureacf-gc9002-ahmi" title="Permanent link">&para;</a></h1>
+<p>Objetivo: gerar <code>.acf</code> nativamente no Linux, sem o compilador Windows do ODM.
+Este arquivo é o caderno de laboratório — o que já é fato, o que é hipótese, e o que falta.</p>
+<p>Binário analisado: <code>AHMISimGenDemo_og.exe</code> (PE32 i386, 3,7 MB), extraído de
+<code>/usr/share/minitela/resources/MiniPanel-0.1.6.AppImage</code> → <code>resources/IDE_utils/Gen/</code>.</p>
+<p>PDB deixado no binário: <code>D:\git\AHMI_SW\AHMI_SW_Graphichina\AHMI_Software\AHMISimGen\Release\AHMISimGenDemo.pdb</code>
+— o fabricante é a <strong>GraphiChina</strong> (docs públicas em https://docs.graphichina.com).</p>
+<h2 id="fato-1-o-codec-de-pixel-e-dxt1dxt5-nao-e-proprietario">FATO 1 — o codec de pixel é DXT1/DXT5, não é proprietário<a class="headerlink" href="#fato-1-o-codec-de-pixel-e-dxt1dxt5-nao-e-proprietario" title="Permanent link">&para;</a></h2>
+<p>Isto derruba a conclusão anterior de "codec proprietário". As strings do gerador mostram
+que ele <strong>terceiriza a compressão</strong> para o <code>texconv</code> da Microsoft (DirectXTex):</p>
+<div class="highlight"><pre><span></span><code>zip32\texconv -f DXT1 -o json          zip64\texconv -f DXT1 -o json
+zip32\texconv -f DXT5 -o json          zip64\texconv -f DXT5 -o json
+zip32\texconv -f A8R8B8G8 -ft PNG -o json
+zip32\texconv -f R8G8B8   -ft BMP -o json
+</code></pre></div>
+<p>E os binários estão lá: <code>IDE_utils/Gen/zip64/texconv.exe</code> + <code>D3DX9_41.dll</code> + <code>7z.exe</code>.</p>
+<p>Pipeline do gerador, então:</p>
+<div class="highlight"><pre><span></span><code>file.zip --7z--&gt; PNGs/GIFs --&gt; frames PNG (pasta json/) --texconv--&gt; DDS DXT1/DXT5
+         --&gt; montagem do container --&gt; Texture.acf
+</code></pre></div>
+<p>DXT1 = 8 B por bloco 4x4 (BC1); DXT5 = 16 B (BC3, alpha + BC1). Ambos triviais de
+gerar em Python/Rust/C — existem implementações livres. <strong>A parte "difícil" do codec
+está resolvida: não precisamos inventar nada.</strong></p>
+<p>A pasta <code>IDE_utils/Gen/json/</code> ainda tem os PNGs intermediários do último build do IDE
+(inclusive os <code>*_copy.png</code>, que são a entrada exata do texconv) — material de teste
+pronto para validar um encoder nosso.</p>
+<h2 id="fato-2-alinhamento-de-16-kb-no-container">FATO 2 — alinhamento de 16 KB no container<a class="headerlink" href="#fato-2-alinhamento-de-16-kb-no-container" title="Permanent link">&para;</a></h2>
+<p>Em <code>0x40ACE1</code> (na função que escreve a textura):</p>
+<div class="highlight"><pre><span></span><code><span class="nf">mov</span><span class="w"> </span><span class="mi">0x8</span><span class="p">(</span><span class="nv">%edi</span><span class="p">),</span><span class="nv">%ecx</span><span class="w">        </span><span class="c1">; fim do buffer</span>
+<span class="nf">sub</span><span class="w"> </span><span class="mi">0x4</span><span class="p">(</span><span class="nv">%edi</span><span class="p">),</span><span class="nv">%ecx</span><span class="w">        </span><span class="c1">; posição atual = fim - início</span>
+<span class="nf">and</span><span class="w"> </span><span class="no">$0x80003fff</span><span class="p">,</span><span class="nv">%ecx</span><span class="w">      </span><span class="c1">; posição % 16384</span>
+<span class="nf">je</span><span class="w">  </span><span class="no">...</span><span class="w">                   </span><span class="c1">; já alinhado? segue</span>
+<span class="nf">mov</span><span class="w"> </span><span class="no">$0x4000</span><span class="p">,</span><span class="nv">%eax</span><span class="w">          </span><span class="c1">; 16384</span>
+<span class="nf">sub</span><span class="w"> </span><span class="nv">%ecx</span><span class="p">,</span><span class="nv">%eax</span><span class="w">             </span><span class="c1">; bytes de padding</span>
+<span class="nl">loop:</span><span class="w"> </span><span class="nf">push</span><span class="w"> </span><span class="mi">0</span><span class="c1">; call push_back</span>
+</code></pre></div>
+<p>Ou seja: o buffer é preenchido com zeros até múltiplo de <strong>0x4000 (16 KB)</strong>.
+Bate com a medição dos arquivos reais — todo <code>.acf</code> tem <code>tamanho = 8 + N*16384</code>
+(os do pacote levam ainda um bloco extra de 32768, ver FATO 3):</p>
+<table>
+<thead>
+<tr>
+<th>arquivo</th>
+<th>tamanho</th>
+<th>payload</th>
+<th>payload/16384</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Texture.acf (IDE)</td>
+<td>819208</td>
+<td>819200</td>
+<td>50</td>
+</tr>
+<tr>
+<td>Texture.acf (pacote)</td>
+<td>851976</td>
+<td>819200</td>
+<td>50 (+32768 de cauda)</td>
+</tr>
+<tr>
+<td>Texture21.acf</td>
+<td>1507336</td>
+<td>1474560</td>
+<td>90 (+32768)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="fato-3-estrutura-de-alto-nivel-do-arquivo">FATO 3 — estrutura de alto nível do arquivo<a class="headerlink" href="#fato-3-estrutura-de-alto-nivel-do-arquivo" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>[0..4)     u32 LE  tamanho do payload
+[4..8)     u32     checksum/hash do payload
+[8 .. 8+N) payload (seções alinhadas a 16 KB)
+[fim]      nos arquivos do pacote: +32768 bytes de config,
+           magic 'AHMI' no início e a5 5a 5a a5 nos últimos 4 bytes
+</code></pre></div>
+<p>O <code>.acf</code> que sai do IDE <strong>não tem</strong> a cauda de 32 KB (819208 bytes), e é exatamente esse
+arquivo que o app do Windows envia (<code>electron.js</code>: lê <code>ideDir/Acf/Texture.acf</code> e manda
+direto). Então a cauda é opcional para o firmware.</p>
+<p>Nomes de saída conhecidos do gerador: <code>Texture.acf</code>, <code>Texture_add.acf</code>, <code>TextureEven.acf</code>,
+<code>TextureOdd.acf</code>, <code>TextureVideo.acf</code>, <code>ConfigData&amp;Texture.acf</code>, <code>GIF_0.acf</code>.</p>
+<h2 id="enderecos-uteis-no-exe-para-retomar">Endereços úteis no .exe (para retomar)<a class="headerlink" href="#enderecos-uteis-no-exe-para-retomar" title="Permanent link">&para;</a></h2>
+<p>Seções: <code>.text</code> VMA 0x401000 (file 0x400) | <code>.rdata</code> VMA 0x52C000 (file 0x12A800)</p>
+<table>
+<thead>
+<tr>
+<th>o que</th>
+<th>endereço</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"TextureData size is about Equal to: "</td>
+<td>ref em <code>0x40A9DC</code></td>
+</tr>
+<tr>
+<td><strong>"start writing texture ..."</strong></td>
+<td>ref em <code>0x40AC59</code></td>
+</tr>
+<tr>
+<td>padding de 16 KB</td>
+<td><code>0x40ACE1</code>–<code>0x40AD22</code></td>
+</tr>
+<tr>
+<td>"start writing add_texture ..."</td>
+<td>ref em <code>0x40B140</code></td>
+</tr>
+<tr>
+<td>"writing ConfigData&amp;Texture.acf file done."</td>
+<td>ref em <code>0x40B53E</code></td>
+</tr>
+<tr>
+<td>"start compress file..."</td>
+<td>ref em <code>0x40B83E</code></td>
+</tr>
+<tr>
+<td>"Texture address over " (erro de estouro)</td>
+<td>refs em <code>0x43C31A</code>, <code>0x43CB48</code>, <code>0x43CF97</code>, <code>0x43DE5E</code>, <code>0x46D69A</code>, <code>0x46D75B</code></td>
+</tr>
+</tbody>
+</table>
+<p>Toda a montagem do arquivo vive em <code>0x40A900</code>–<code>0x40B900</code>. As funções que <em>produzem</em> os
+dados de textura (e decidem endereço de cada recurso) estão na faixa <code>0x43C000</code>–<code>0x46E000</code>,
+apontadas pelas referências de "Texture address over".</p>
+<h2 id="fato-4-a-bancada-funcionou-layout-da-imagem-localizado">FATO 4 — a bancada funcionou: layout da imagem localizado<a class="headerlink" href="#fato-4-a-bancada-funcionou-layout-da-imagem-localizado" title="Permanent link">&para;</a></h2>
+<p>Wine 8.0 + prefixo <strong>win64</strong> (<code>~/.wine-mt64</code>) roda o compilador em ~5,5 s. Detalhes que
+custaram tentativa: num prefixo win32 ele procura <code>zip32\7z.exe</code> (que não existe no
+pacote — só vem <code>zip64/</code>), e sem <code>wine64</code> instalado o prefixo win64 não sobe.</p>
+<p>Com <code>lab_acf.py</code>, compilando imagens sintéticas e comparando as saídas:</p>
+<table>
+<thead>
+<tr>
+<th>experimento</th>
+<th>resultado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>vermelho liso vs azul liso</td>
+<td><strong>uma única região muda: offset 685992, 57600 bytes</strong></td>
+</tr>
+<tr>
+<td>marker (bloco 4x4 branco em (0,0) e em (236,236)) vs preto</td>
+<td>exatamente <strong>2 grupos</strong>: offsets 0–6 e 57584–57590</td>
+</tr>
+<tr>
+<td>quad (4 cores) vs preto</td>
+<td>3600 grupos de 3 bytes, um a cada 16</td>
+</tr>
+<tr>
+<td>stripes (60 faixas) vs preto</td>
+<td>3600 grupos de 7 bytes, um a cada 16</td>
+</tr>
+</tbody>
+</table>
+<p>Disso sai o layout, sem ambiguidade:</p>
+<ul>
+<li>a imagem do slot ocupa <strong>57600 bytes</strong> a partir do offset <strong>685992</strong> do payload;</li>
+<li>são <strong>3600 blocos de 16 bytes</strong>, um por bloco de 4x4 pixels (240/4 = 60; 60x60 = 3600);</li>
+<li>a ordem é <strong>raster simples, sem swizzle</strong>: o bloco (0,0) está no offset 0 e o bloco
+  (59,59) no offset 3599x16 = 57584 — foi exatamente o que o marker mostrou.</li>
+</ul>
+<p>Bytes de um bloco, por cor de entrada:</p>
+<div class="highlight"><pre><span></span><code>preto     00 00 00 00 00 00 fe ff 01 00 00 00 00 00 00 00
+branco    fe ff ff ff ff ff ff ff 01 00 00 00 00 00 00 00
+vermelho  fe ff 01 00 00 00 fe ff 01 00 00 00 00 00 00 00
+azul      00 00 00 00 fe ff ff ff 01 00 00 00 00 00 00 00
+</code></pre></div>
+<p>16 B/bloco é o tamanho de DXT5/BC3, e o <code>texconv -f DXT5</code> do pipeline corrobora. Mas a
+leitura DXT5 canônica (alpha0, alpha1, 6 B de índices de alpha, c0, c1, 4 B de índices)
+<strong>não</strong> explica esses bytes: em branco puro, quem muda são os 8 primeiros bytes (o campo
+que seria de alpha), enquanto o campo de cor fica <code>01 00 00 00</code>. Ou os campos estão em
+outra ordem, ou é um bitstream próprio de 128 bits por bloco.</p>
+<h2 id="fato-5-o-encoding-do-bloco-resolvido-e-validado-byte-a-byte">FATO 5 — o encoding do bloco (RESOLVIDO e validado byte a byte)<a class="headerlink" href="#fato-5-o-encoding-do-bloco-resolvido-e-validado-byte-a-byte" title="Permanent link">&para;</a></h2>
+<p>Cada bloco de 16 bytes é um <strong>bitstream LSB-first que começa no bit 1</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>bits</th>
+<th>campo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1–8 / 9–16</td>
+<td>R0 / R1</td>
+</tr>
+<tr>
+<td>17–24 / 25–32</td>
+<td>G0 / G1</td>
+</tr>
+<tr>
+<td>33–40 / 41–48</td>
+<td>B0 / B1</td>
+</tr>
+<tr>
+<td>49–56 / 57–64</td>
+<td>A0 / A1</td>
+</tr>
+<tr>
+<td>65–128</td>
+<td>16 pesos de 4 bits, pixel <em>i</em> em <code>65+4i</code> (raster dentro do bloco 4x4)</td>
+</tr>
+</tbody>
+</table>
+<p>Cor final: <code>c = c0 + (c1 - c0) * peso / 15</code>. Dois endpoints RGBA8888 e um peso por pixel —
+a ideia de BC7/ASTC, não o DXT5 canônico (o <code>texconv -f DXT5</code> do pipeline é etapa
+intermediária, não o formato final; foi o que despistou a análise inicial).</p>
+<p><strong>Detalhe que fecha o formato:</strong> o peso do pixel 15 ocuparia os bits 125–128, e o bit 128
+já pertence ao byte do bloco seguinte. O compilador do ODM <strong>nunca usa esse bit</strong> — medido
+com pesos forçados (0, 1, 3, 7): o byte seguinte sai sempre <code>0x00</code>. Ele orienta os
+endpoints (trocando c0 com c1 e invertendo os pesos) para que o último peso caiba em
+3 bits. O encoder faz o mesmo.</p>
+<h3 id="como-cada-experimento-provou">Como cada experimento provou<a class="headerlink" href="#como-cada-experimento-provou" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>níveis de cinza</strong>: os 6 primeiros bytes repetem o tom <strong>deslocado 1 bit à esquerda</strong>
+  (8 → <code>0x10</code>, 16 → <code>0x20</code>, 64 → <code>0x80</code>, 192 → <code>0x180</code>) — revela o offset de 1 bit e os
+  8 bits por canal.</li>
+<li><strong>cores puras</strong>: vermelho → R0=R1=255, resto 0; azul → B0=B1=255 — prova a ordem
+  R0,R1,G0,G1,B0,B1 (pares por canal, não cor0 inteira seguida de cor1).</li>
+<li><strong>um pixel branco em fundo preto</strong>: endpoints viram (0,0,0) e (255,255,255) e só aquele
+  peso vai a 15.</li>
+<li><strong>posição do pixel</strong>: o peso do pixel <em>i</em> acende exatamente os bits <code>1+4i..4+4i</code>.</li>
+<li><strong>transbordo</strong>: o bit 128 é sempre 0; o peso do pixel 15 nunca passa de 7.</li>
+</ul>
+<h3 id="validacao">Validação<a class="headerlink" href="#validacao" title="Permanent link">&para;</a></h3>
+<p><code>acf_codec.py</code> codifica um bloco de 16 tons de cinza e produz
+<code>fe 01 fe 01 fe 01 fe ff df 9b 57 13 cf 8a 46 02</code> — <strong>idêntico byte a byte</strong> ao que o
+compilador do ODM gera para a mesma entrada. Round-trip sem perda.</p>
+<p>Numa foto real (240x240), o encoder nativo dá <strong>PSNR 34,3 dB</strong> e erro médio de 2,64 por
+canal, usando só o modo 0 — visualmente indistinguível do original.</p>
+<h2 id="fato-6-estrutura-do-arquivo-e-checksum-com-credito-ao-sidecar">FATO 6 — estrutura do arquivo e checksum (com crédito ao SideCar)<a class="headerlink" href="#fato-6-estrutura-do-arquivo-e-checksum-com-credito-ao-sidecar" title="Permanent link">&para;</a></h2>
+<p>O projeto <strong>SideCar</strong> (github.com/FreyreCorona/SideCar), em Go, ataca a mesma minitela e
+resolveu o checksum. Verificado aqui contra 5 arquivos (de fábrica e gerados pelo
+compilador do ODM): bate em todos.</p>
+<div class="highlight"><pre><span></span><code>checksum = XOR de todas as words de 32 bits LE, pulando:
+             - o próprio campo (offset 4)
+             - a última word do arquivo (FooterMagic 0xA55A5AA5)
+Com o checksum correto no lugar, o XOR de TODAS as words == 0xA55A5AA5.
+</code></pre></div>
+<p>O layout do arquivo, na leitura deles (equivalente à minha, vista de outro ângulo — o
+campo que eu lia como "tamanho do payload" u32 são os campos magic+count):</p>
+<div class="highlight"><pre><span></span><code>0x0000  u16  magic         0x0080 texture / 0x0000 config (LE: 0x8000)
+0x0002  u16  count         número de blocos de recurso de 64 KB
+0x0004  u32  checksum
+0x0008  u32  desconhecido
+0x000C  24B  projectID     "67004c7703ad6966e4fe0d13"
+...
+[header 16 KB][count x 64 KB de blocos][dados do projeto]
+</code></pre></div>
+<p>Medido: <code>Texture.acf</code> de fábrica tem count=12 (blocos até 802816, sobrando 49160 de
+dados de projeto); os <code>Texture1..21</code> têm count=27.</p>
+<p><strong>Onde discordamos:</strong> o SideCar trata a imagem como RGB565 cru de 115200 bytes em
+<code>0x4000 + 10*0x10000 + 0x37B0</code> = 686000. Decodificar o template assim dá ruído, e gravar
+RGB565 ali <strong>faz o firmware reiniciar em ciclo</strong> (testado). O README deles diz que o
+projeto está em desenvolvimento e o foco é dashboard de métricas — essa parte
+provavelmente não foi exercitada.</p>
+<h2 id="fato-7-a-tela-de-imagens-e-a-regiao-critica">FATO 7 — a tela de imagens e a região crítica<a class="headerlink" href="#fato-7-a-tela-de-imagens-e-a-regiao-critica" title="Permanent link">&para;</a></h2>
+<p>O app tem uma tela "Personalizar Imagens" com <strong>três</strong> imagens navegáveis por setas. São
+as <code>resources/gifs_imagens/img{1,2,3}.jpg</code> do pacote: mascotes Go, símbolo da Positivo e
+logo "POSITIVO".</p>
+<p>Mapa de gravações feitas no <code>Texture.acf</code> de fábrica (offsets no payload):</p>
+<table>
+<thead>
+<tr>
+<th>região escrita</th>
+<th>resultado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>685992 – 743592</td>
+<td>ok — logo apareceu com metade suja</td>
+</tr>
+<tr>
+<td>714792 – 772392</td>
+<td>ok — régua de cores visível</td>
+</tr>
+<tr>
+<td>753192 – 772392</td>
+<td>ok — sujou o rodapé de uma imagem e o topo da seguinte</td>
+</tr>
+<tr>
+<td>686000 – 801200 (RGB565)</td>
+<td><strong>firmware reinicia em ciclo</strong></td>
+</tr>
+<tr>
+<td>753192 – 810792</td>
+<td><strong>firmware reinicia em ciclo</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Conclusão: existe <strong>região crítica entre 772392 e 801200</strong> — escrever ali derruba o
+render. Não é o checksum (os dois casos que quebraram tinham checksum recalculado e
+correto; os que funcionaram tinham checksum antigo, e um teste dedicado provou que o
+firmware não valida checksum).</p>
+<p>E o conteúdo escrito no formato de blocos apareceu como <strong>lixo verde</strong> na tela, não como
+a imagem — ou seja, a região das imagens custom <strong>não</strong> usa o formato de blocos do
+FATO 5. Provavelmente é onde o SideCar está certo quanto ao formato (pixels crus), só
+que no offset errado.</p>
+<h2 id="o-que-ainda-falta">O que ainda falta<a class="headerlink" href="#o-que-ainda-falta" title="Permanent link">&para;</a></h2>
+<p><strong>1. Onde ficam as 3 imagens custom, e em que formato.</strong> É o único bloqueio para a imagem
+personalizada. O que se sabe:</p>
+<ul>
+<li>estão nos blocos 10–11 (a escrita em 753192 pegou o fim de uma e o começo da outra);</li>
+<li><strong>não</strong> usam o formato de blocos do FATO 5 — escrevê-lo ali produz lixo verde na tela;</li>
+<li>há <strong>região crítica entre 772392 e 801200</strong>: escrever ali faz o firmware reiniciar em
+  ciclo (recuperável regravando o <code>Texture.acf</code> de fábrica).</li>
+</ul>
+<p>Correlacionar por luminância com as <code>img{1,2,3}.jpg</code> conhecidas não resolveu — as três são
+quase todas pretas, então a assinatura não discrimina (erros 11–46, sem pico claro).</p>
+<p>Caminho mais promissor: usar a bancada. Compilar o projeto-base com as <strong>três imagens
+originais</strong> nos slots e comparar com o <code>Texture.acf</code> de fábrica byte a byte. Se as
+estruturas casarem, os offsets caem de graça. Hoje elas não casam: o compilado do projeto
+intocado dá 868360 bytes contra 851976 do de fábrica (+16384, um bloco de 16 KB), o que
+indica que o projeto-base do pacote não é exatamente o de produção, ou que os parâmetros
+de compressão usados foram outros.</p>
+<p><strong>2. O modo 1 de bloco</strong> — só necessário para decodificar arquivos oficiais; para gerar,
+o modo 0 basta (FATO 5).</p>
+<h2 id="o-caminho-que-funciona-resolvido">O caminho que funciona (resolvido)<a class="headerlink" href="#o-caminho-que-funciona-resolvido" title="Permanent link">&para;</a></h2>
+<p>Recompilar o projeto <strong>funciona</strong> — e é a via mais simples, tornando o patch por offset
+desnecessário. O que eu vinha errando:</p>
+<ol>
+<li>usava o <code>BkpFileZip/file.zip</code> (um <strong>backup</strong>, com conteúdo diferente) em vez do
+   <code>file.zip</code> principal do pacote — mesmos nomes de arquivo, tamanhos bem diferentes
+   (947 KB contra 2,88 MB; os slots do principal são GIFs de 21, 30 e 44 frames);</li>
+<li>concluí cedo demais que "o ACF recompilado trava o firmware". Não trava: o compilado
+   com as três imagens estáticas nos slots tem <strong>901128 bytes</strong> (count=13, contra 851976 e
+   count=12 do de fábrica) e roda perfeitamente. O tamanho maior não é problema.</li>
+</ol>
+<p>O travamento do primeiro teste veio da combinação de conteúdo dos slots (uma foto
+complexa junto dos GIFs animados grandes), não da estrutura nem do tamanho.</p>
+<p>Fluxo validado, implementado em <code>minitela_build.py</code>:</p>
+<div class="highlight"><pre><span></span><code>imagem -&gt; GIF 240x240 de 1 frame (paleta sem dither)
+       -&gt; troca o slot no file.zip principal
+       -&gt; AHMISimGenDemo_og.exe -f file.zip -m 2 -c 0 -e 0 -d 1 -o ACF/
+       -&gt; Texture.acf -&gt; minitela_ctl.py send
+</code></pre></div>
+<p>Os três slots correspondem às três imagens da tela "Personalizar Imagens" do app oficial.</p>
+<h3 id="o-que-continua-em-aberto-curiosidade-nao-bloqueio">O que continua em aberto (curiosidade, não bloqueio)<a class="headerlink" href="#o-que-continua-em-aberto-curiosidade-nao-bloqueio" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Modo 1 de bloco</strong> (<code>bit0=1</code>): necessário só para <em>decodificar</em> arquivos oficiais; o
+  encoder do FATO 5 gera em modo 0 com qualidade excelente.</li>
+<li><strong>Onde exatamente ficam as 3 imagens</strong> dentro do <code>.acf</code> e em que formato: o patch por
+  offset chegou a funcionar parcialmente (a régua de calibração localizou a fronteira
+  entre duas imagens em 753192), mas ficou obsoleto quando o caminho de recompilar
+  funcionou. Fica registrado: há <strong>região crítica entre 772392 e 801200</strong> — escrever ali
+  faz o firmware reiniciar em ciclo.</li>
+</ul>
+<h2 id="fato-8-a-semantica-de-gravacao-da-nor-lado-firmware-da-flash">FATO 8 — a semântica de gravação da NOR (lado firmware da flash)<a class="headerlink" href="#fato-8-a-semantica-de-gravacao-da-nor-lado-firmware-da-flash" title="Permanent link">&para;</a></h2>
+<p>Análise estática do <code>flash_download.elf</code> do pacote GC9002 (o flash algorithm do CDK),
+detalhada em <a href="../RE-firmware/"><code>RE-firmware.md</code></a>. O que muda o entendimento do <code>.acf</code>:</p>
+<ul>
+<li><code>0x08000000</code> é <code>CQSPI_DATA_BASE</code>; leitura de flash é XIP (loads normais), não comando
+  por chunk — <code>csi_spiflash_read @ 0x020015ba</code> → <code>qspi_direct_access_read @ 0x02002762</code>.</li>
+<li>gravar = <strong>erase de setor (4 KB) + page program</strong>; não existe escrita parcial em NOR,
+  então qualquer patch de 1 byte reescreve 4 KB. Isso explica o dano colateral do FATO 7.</li>
+<li>o driver <strong>trunca o endereço de erase em 4 KB</strong> (<code>addr &amp; 0xFFFFF000</code>, <code>0x02001784</code>) e
+  para o laço em <code>(addr &amp; 0xFFFFF000) &lt;= offset+size</code>: apagar N bytes apaga
+  <code>ceil(N/4096)</code> setores inteiros. (Fato neste binário; hipótese para o firmware AHMI,
+  que usa o mesmo SDK.)</li>
+<li><strong>16 KB do container = 4 setores exatos</strong> — o alinhamento do FATO 2 cai certinho na
+  granularidade da flash.</li>
+<li>a geometria (setor/bloco/página/opcodes) é lida da <strong>SFDP em runtime</strong>
+  (<code>SFDP_flash_read_parameter @ 0x0200107c</code>), não de tabela de ID. O binário não diz
+  qual é o part; no máximo o byte de capacidade sugere 8 ou 16 MB.</li>
+<li><code>flashChecksum @ 0x020008b0</code> é stub (<code>return 0</code>): <strong>nem o caminho de gravação do
+  fabricante valida checksum</strong>. Corrobora o FATO 7.</li>
+</ul>
+<h2 id="fato-9-as-tres-imagens-localizadas-com-o-mapa-do-firmware">FATO 9 — as três imagens localizadas, com o mapa do firmware<a class="headerlink" href="#fato-9-as-tres-imagens-localizadas-com-o-mapa-do-firmware" title="Permanent link">&para;</a></h2>
+<p>O <code>acf_inspect.py</code> lê o <code>.acf</code> com o mapa do código-fonte (<code>RE-acf-source.md</code> §3) e
+valida o que o firmware valida: <code>StartOfConfigdata % 16384</code>, magic <code>0x494d4841</code>,
+<code>AHMIInfo.Version == 0x5A010a13</code> e o <code>CheckCode</code> de cada página
+(<code>0xA55A5AA5 ^ XOR(words)</code>).</p>
+<p><strong>Os 22 <code>.acf</code> de fábrica do pacote passam sem um único problema</strong> (11 ou 9 páginas,
+94–98 texturas cada). Isso fecha a lacuna de validação que a bancada anterior não tinha:
+agora dá para provar que um arquivo gerado é aceitável <em>antes</em> de gravar.</p>
+<h3 id="onde-ficam-as-3-imagens">Onde ficam as 3 imagens<a class="headerlink" href="#onde-ficam-as-3-imagens" title="Permanent link">&para;</a></h3>
+<p>São as páginas <strong>4, 5 e 6 (0-based)</strong> — as telas GIF 1/2/3. Cada uma tem duas texturas:</p>
+<table>
+<thead>
+<tr>
+<th>página</th>
+<th>#</th>
+<th>tipo</th>
+<th>dimensão</th>
+<th>endereço (fábrica)</th>
+<th>endereço (compilado por nós)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4</td>
+<td>0</td>
+<td>PURECOLOR</td>
+<td>240x240</td>
+<td><code>0xff000000</code> (fundo preto)</td>
+<td><code>0xff000000</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>1</td>
+<td>STCRGBA888</td>
+<td>fábrica <strong>192x192</strong>, nosso <strong>240x240</strong></td>
+<td><code>0x000a77b0</code></td>
+<td><code>0x000a77b0</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>1</td>
+<td>STCRGBA888</td>
+<td>idem</td>
+<td><code>0x000b07c0</code></td>
+<td><code>0x000b58c0</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>1</td>
+<td>STCRGBA888</td>
+<td>idem</td>
+<td><code>0x000b97d0</code></td>
+<td><code>0x000c39d0</code></td>
+</tr>
+</tbody>
+</table>
+<p>Duas provas de consistência:</p>
+<ul>
+<li>a textura da imagem 1 começa em <strong><code>0x000a77b0</code> nos dois arquivos</strong> — o layout até ali
+  é determinístico;</li>
+<li>os tamanhos fecham: <code>0xA77B0 + 36864 = 0xB07C0</code> e <code>0xB07C0 + 36864 = 0xB97D0</code>
+  (fábrica, 192x192 RGBA = 36864 B), e <code>0xA77B0 + 57600 = 0xB58C0</code>,
+  <code>0xB58C0 + 57600 = 0xC39D0</code> (nosso, 240x240 RGBA = 57600 B, com 16 B de alinhamento
+  entre fatias).</li>
+</ul>
+<p>Consequência: o slot aceita as duas dimensões, e o tamanho de cada fatia é
+<code>ceil(w/4)*ceil(h/4)*16</code> — o que o <code>RE-acf-source.md</code> §2.1 já tinha derivado. A "região
+crítica" que travava o render no FATO 7 é a config a partir de <code>StartOfConfigdata</code>
+(802816 aqui), não a região das imagens.</p>
+<h2 id="fato-10-imagem-trocada-sem-o-compilador-testado-no-hardware">FATO 10 — imagem trocada sem o compilador (testado no hardware)<a class="headerlink" href="#fato-10-imagem-trocada-sem-o-compilador-testado-no-hardware" title="Permanent link">&para;</a></h2>
+<p>Com a tabela de texturas localizada (FATO 9) e a interpolação correta do codec, dá para
+trocar as três imagens <strong>sem recompilar</strong> e <strong>sem wine</strong>:</p>
+<div class="highlight"><pre><span></span><code>./minitela_patch.py --template &lt;acf que funciona&gt; --out novo.acf foto1.jpg foto2.png --send
+</code></pre></div>
+<p>Por que é seguro: as texturas ficam antes de <code>StartOfConfigdata</code>, então nenhum
+<code>CheckCode</code> de página muda; só o checksum do header (que o firmware não valida) é
+recalculado. Verificado por diff: um patch das 3 imagens altera <strong>0 bytes</strong> fora das três
+regiões de textura e do campo de checksum.</p>
+<p>Codec: a interpolação é <code>(w + w/8)/16</code> com saturação (<code>interpolate()</code> em
+<code>CS/AHMI/Simulator/stc.cpp</code>), não <code>w/15</code>. O modo 0 (uma partição) gera qualquer bloco;
+o compilador do ODM usa modo 1 (duas partições) em blocos de cores não colineares, o que
+deixa um resíduo visível nesses blocos — medido em ~1,8/255 de erro médio numa foto.</p>
+<p>Testado no hardware em 25/11/2026: imagem "TESTE PATCH" gravada e exibida na tela
+Imagens/GIF 1.</p>
+<h2 id="fato-11-gif-animado-nativo-sem-compilador-testado-no-hardware">FATO 11 — GIF animado nativo, sem compilador (testado no hardware)<a class="headerlink" href="#fato-11-gif-animado-nativo-sem-compilador-testado-no-hardware" title="Permanent link">&para;</a></h2>
+<p>Quadros não são texturas separadas: são <strong>fatias</strong> de um único registro <code>TextureClass</code>
+(<code>SingleSliceSize = S</code>, <code>SliceFlagsHeaderAddr != 0</code>, quadro <em>n</em> em <code>TexAddr + n*S</code>), e o
+widget GIF (tipo 34) avança <code>GifSliceNum</code> fatias a cada <code>GifInterval</code> ticks. O trailer de
+fatias fica logo após a última: ponteiros <code>u32</code> gravados como u16 alto + u16 baixo, e um
+bitmap MSB-first com 1 = fatia opaca. Detalhes e validação da receita em
+<a href="../RE-acf-source/"><code>RE-acf-source.md</code></a> §7.</p>
+<p>Como o arquivo cresce, o <code>acf_anim.py</code> remonta a área de textura: reloca tudo depois do
+slot, atualiza <code>TexAddr</code>/<code>SliceFlagsHeaderAddr</code>, <code>StartOfConfigdata</code>, <code>TotalSize</code>,
+<code>TotalTextureSize</code>, o campo <code>@8</code>, os <code>CheckCode</code> das páginas e o checksum do arquivo.</p>
+<p>Testado no hardware em 25/11/2026: GIF de 8 quadros (1,31 MB) gravado e <strong>animando</strong> na
+tela Imagens, gerado por <code>minitela_patch.py</code> sem wine.</p>
+<p>Limites práticos: até 96 quadros (tamanho do trailer) e o arquivo tem que caber na
+partição de textura (3/7/15 MB conforme a flash; ver FATO 8 e <code>RE-firmware.md</code>).</p>
+<p>A rotina também sabe <strong>mudar o tamanho da textura</strong> (atualiza <code>SingleSliceSize</code>,
+<code>TexWidth/Height</code>, trailer e endereços), mas isso <strong>não basta</strong> para a tela cheia: a
+geometria do widget mora no bloco da página e anda junto — ver FATO 12.</p>
+<h2 id="fato-12-tamanho-da-textura-escalonador-e-tile-boxes-andam-juntos">FATO 12 — tamanho da textura, escalonador e tile boxes andam juntos<a class="headerlink" href="#fato-12-tamanho-da-textura-escalonador-e-tile-boxes-andam-juntos" title="Permanent link">&para;</a></h2>
+<p>Comparando o bloco da página 4 de um <code>.acf</code> de fábrica (imagens 192) com o de um compilado
+com imagens 240, só <strong>10 bytes</strong> diferem. O que o compilador muda no registro da textura:</p>
+<table>
+<thead>
+<tr>
+<th>campo (registro)</th>
+<th>fábrica (192)</th>
+<th>compilado (240)</th>
+<th>regra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>+0</code> <code>SingleSliceSize</code></td>
+<td>36864</td>
+<td>57600</td>
+<td><code>ceil(w/4)*ceil(h/4)*16</code></td>
+</tr>
+<tr>
+<td><code>+16/+18</code> <code>TexWidth/Height</code></td>
+<td>192/192</td>
+<td>240/240</td>
+<td>o tamanho novo</td>
+</tr>
+<tr>
+<td><code>+36/+38</code> <code>ScalerX/Y</code> (1.9 fixo)</td>
+<td>640 (1,25×)</td>
+<td>512 (1,0×)</td>
+<td><code>s_novo = s_antigo * dim_antiga / dim_nova</code></td>
+</tr>
+<tr>
+<td><code>+40..43</code> tile boxes</td>
+<td><code>(6,6,6,6)</code></td>
+<td><code>(0,0,7,7)</code></td>
+<td>esquerda/topo 0, direita/baixo <code>w/32</code></td>
+</tr>
+</tbody>
+</table>
+<p>O <code>SliceFlagsHeaderAddr</code> (<code>+8</code>) fica com <strong>0</strong> no nosso caso (1 quadro, sem trailer) e o
+compilador grava o endereço de um trailer vazio — as duas formas renderizam.</p>
+<p>Sobram <strong>2 bytes</strong> desconhecidos em <code>+0x19a..0x19b</code> do bloco (fora do registro, na área de
+widget/canvas), que não impedem o render.</p>
+<p>Prova no hardware (25/11/2026): textura 240 num template de fábrica com esses ajustes
+mostra a imagem inteira; <strong>sem</strong> os ajustes de escalonador/tile boxes, só o canto superior
+esquerdo (a textura vira 240×1,25 = 300 e é recortada).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Voltar para o topo
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Rodapé" >
+        
+          
+          <a href="../ferramentas/" class="md-footer__link md-footer__link--prev" aria-label="Anterior: Ferramentas">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Anterior
+              </span>
+              <div class="md-ellipsis">
+                Ferramentas
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../RE-firmware/" class="md-footer__link md-footer__link--next" aria-label="Próximo: O firmware e a flash">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Próximo
+              </span>
+              <div class="md-ellipsis">
+                O firmware e a flash
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Código MIT · textos CC BY-SA 4.0 · sem material proprietário do fabricante
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copiado para \u00e1rea de transfer\u00eancia", "clipboard.copy": "Copiar para \u00e1rea de transfer\u00eancia", "search.result.more.one": "mais 1 nesta p\u00e1gina", "search.result.more.other": "# mais nesta p\u00e1gina", "search.result.none": "Nenhum documento encontrado", "search.result.one": "1 documento encontrado", "search.result.other": "# documentos encontrados", "search.result.placeholder": "Digite para iniciar a busca", "search.result.term.missing": "Ausente", "select.version": "Selecione a vers\u00e3o"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

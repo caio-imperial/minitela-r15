@@ -1,0 +1,3856 @@
+
+<!doctype html>
+<html lang="pt" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Usar a minitela 240x240 do Positivo Vision R15M no Linux: imagens, GIF animado, tags em tempo real e a engenharia reversa do protocolo e do formato .acf.">
+      
+      
+      
+        <link rel="canonical" href="https://caio-imperial.github.io/minitela-r15/RE-acf-source/">
+      
+      
+        <link rel="prev" href="../RE-firmware/">
+      
+      
+        <link rel="next" href="../comunidade/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
+    
+    
+      
+        <title>O .acf pelo código - Minitela GC9002</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#textureacf-visto-pelo-codigo-fonte-do-sdk-11020-gc9002" class="md-skip">
+          Pular para conteúdo
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Cabeçalho">
+    <a href=".." title="Minitela GC9002" class="md-header__button md-logo" aria-label="Minitela GC9002" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Minitela GC9002
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              O .acf pelo código
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Tema escuro"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Tema escuro" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Tema claro"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Tema claro" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Buscar" placeholder="Buscar" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Pesquisar">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Limpar" aria-label="Limpar" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Inicializando busca
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/caio-imperial/minitela-r15" title="Ir para repositório" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    caio-imperial/minitela-r15
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navegação" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Minitela GC9002" class="md-nav__button md-logo" aria-label="Minitela GC9002" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Minitela GC9002
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/caio-imperial/minitela-r15" title="Ir para repositório" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    caio-imperial/minitela-r15
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Início
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Começar
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Começar
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comecar/instalacao/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Requisitos e instalação
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comecar/imagem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Enviar uma imagem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comecar/gif/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GIF animado
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comecar/tags/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tags em tempo real
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comecar/painel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Painel gráfico
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comecar/recuperacao/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recuperar a tela
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Referência
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Referência
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../referencia/protocolo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Protocolo AHMI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../referencia/flash/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mapa da flash
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../referencia/acf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formato .acf
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../referencia/codec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Codec STC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../referencia/gif/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GIF (fatias e trailer)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../referencia/tags/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tags e IDs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hardware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ferramentas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ferramentas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Engenharia reversa
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Engenharia reversa
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RE-acf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    O formato .acf
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RE-firmware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    O firmware e a flash
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    O .acf pelo código
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    O .acf pelo código
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Índice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#resumo-executivo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resumo executivo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-como-o-firmware-carrega-e-valida-o-textureacf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Como o firmware carrega e valida o Texture.acf
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Como o firmware carrega e valida o Texture.acf">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-onde-o-arquivo-mora-na-flash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Onde o arquivo mora na flash
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-a-sequencia-exata-loadconfigdata-ramo-embedded" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 A sequência exata (LoadConfigData, ramo EMBEDDED)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-o-que-e-validado-e-o-que-nao-e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 O que é validado, e o que não é
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-o-header-campo-por-campo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4 O header, campo por campo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-como-o-firmware-consome-a-config-depois-disso" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.5 Como o firmware consome a config depois disso
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-as-3-imagens-custom-e-o-formato-de-pixel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. As 3 imagens custom e o formato de pixel
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. As 3 imagens custom e o formato de pixel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-onde-a-informacao-esta-a-tabela-de-recursos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Onde a informação está (a "tabela de recursos")
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-o-codec-stc-16-b-por-bloco-44-dois-sub-formatos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 O codec: "STC", 16 B por bloco 4×4, dois sub-formatos
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-layout-de-bits-confirmacao-e-correcao-do-fato-5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Layout de bits — confirmação e correção do FATO 5
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-singleslicesize-fatias-e-o-16-kb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 SingleSliceSize, fatias e o 16 KB
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-onde-estao-as-3-imagens-custom-o-que-da-para-afirmar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Onde estão as 3 imagens custom — o que dá para afirmar
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-o-compressor-o-que-o-fonte-nao-tem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.6 O compressor (o que o fonte não tem)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-estrutura-exata-do-container-de-recursos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Estrutura exata do container de recursos
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Estrutura exata do container de recursos">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-visao-geral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Visão geral
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-configinfoclass-csahmidynamicpagecfgclassh93-145-284-bytes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 ConfigInfoClass (CS/AHMI/DynamicPageCfgClass.h:93-145, 284 bytes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-dynamicpagecfgclass-56-bytes-dynamicpagecfgclassh43-75" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 DynamicPageCfgClass (56 bytes) — DynamicPageCfgClass.h:43-75
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-os-dois-checksums-um-ignorado-um-fatal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 Os dois checksums (um ignorado, um fatal)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-armadilha-existem-dois-ahmi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 Armadilha: existem dois "AHMI"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-comparacao-com-o-re-acfmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Comparação com o RE-acf.md
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-roteiro-para-gerar-o-acf-sem-o-compilador-do-odm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Roteiro para gerar o .acf sem o compilador do ODM
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-nao-documentado-pendencias" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Não documentado / pendências
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-gif-animado" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. GIF animado
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#71-q1-onde-estao-os-75-quadros" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Q1 — onde estão os 75 quadros
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#72-q2-como-o-widget-referencia-a-sequencia" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Q2 — como o widget referencia a sequência
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#73-q3-os-quadros-estao-crus-stc-nao-em-gzip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 Q3 — os quadros estão crus (STC), não em gzip
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#74-o-trailer-de-fatias-sliceflagsheaderaddr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.4 O trailer de fatias (SliceFlagsHeaderAddr)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#75-q4-o-que-muda-no-header-e-no-configinfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.5 Q4 — o que muda no header e no ConfigInfo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#76-q5-receita-para-gerar-o-animado" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.6 Q5 — receita para gerar o animado
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7.6 Q5 — receita para gerar o animado">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#validacao-da-receita-reconstrucao" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validação da receita (reconstrução)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#77-o-que-o-minitela_patchpy-precisa-mudar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.7 O que o minitela_patch.py precisa mudar
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comunidade/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Comunidade
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contribuir/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribuir
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../legal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Legal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Índice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#resumo-executivo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resumo executivo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-como-o-firmware-carrega-e-valida-o-textureacf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Como o firmware carrega e valida o Texture.acf
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Como o firmware carrega e valida o Texture.acf">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-onde-o-arquivo-mora-na-flash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Onde o arquivo mora na flash
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-a-sequencia-exata-loadconfigdata-ramo-embedded" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 A sequência exata (LoadConfigData, ramo EMBEDDED)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-o-que-e-validado-e-o-que-nao-e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 O que é validado, e o que não é
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-o-header-campo-por-campo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4 O header, campo por campo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-como-o-firmware-consome-a-config-depois-disso" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.5 Como o firmware consome a config depois disso
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-as-3-imagens-custom-e-o-formato-de-pixel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. As 3 imagens custom e o formato de pixel
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. As 3 imagens custom e o formato de pixel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-onde-a-informacao-esta-a-tabela-de-recursos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Onde a informação está (a "tabela de recursos")
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-o-codec-stc-16-b-por-bloco-44-dois-sub-formatos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 O codec: "STC", 16 B por bloco 4×4, dois sub-formatos
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-layout-de-bits-confirmacao-e-correcao-do-fato-5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Layout de bits — confirmação e correção do FATO 5
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-singleslicesize-fatias-e-o-16-kb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 SingleSliceSize, fatias e o 16 KB
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-onde-estao-as-3-imagens-custom-o-que-da-para-afirmar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Onde estão as 3 imagens custom — o que dá para afirmar
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-o-compressor-o-que-o-fonte-nao-tem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.6 O compressor (o que o fonte não tem)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-estrutura-exata-do-container-de-recursos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Estrutura exata do container de recursos
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Estrutura exata do container de recursos">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-visao-geral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Visão geral
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-configinfoclass-csahmidynamicpagecfgclassh93-145-284-bytes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 ConfigInfoClass (CS/AHMI/DynamicPageCfgClass.h:93-145, 284 bytes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-dynamicpagecfgclass-56-bytes-dynamicpagecfgclassh43-75" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 DynamicPageCfgClass (56 bytes) — DynamicPageCfgClass.h:43-75
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-os-dois-checksums-um-ignorado-um-fatal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 Os dois checksums (um ignorado, um fatal)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-armadilha-existem-dois-ahmi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 Armadilha: existem dois "AHMI"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-comparacao-com-o-re-acfmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Comparação com o RE-acf.md
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-roteiro-para-gerar-o-acf-sem-o-compilador-do-odm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Roteiro para gerar o .acf sem o compilador do ODM
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-nao-documentado-pendencias" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Não documentado / pendências
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-gif-animado" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. GIF animado
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#71-q1-onde-estao-os-75-quadros" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Q1 — onde estão os 75 quadros
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#72-q2-como-o-widget-referencia-a-sequencia" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Q2 — como o widget referencia a sequência
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#73-q3-os-quadros-estao-crus-stc-nao-em-gzip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 Q3 — os quadros estão crus (STC), não em gzip
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#74-o-trailer-de-fatias-sliceflagsheaderaddr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.4 O trailer de fatias (SliceFlagsHeaderAddr)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#75-q4-o-que-muda-no-header-e-no-configinfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.5 Q4 — o que muda no header e no ConfigInfo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#76-q5-receita-para-gerar-o-animado" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.6 Q5 — receita para gerar o animado
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7.6 Q5 — receita para gerar o animado">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#validacao-da-receita-reconstrucao" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validação da receita (reconstrução)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#77-o-que-o-minitela_patchpy-precisa-mudar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.7 O que o minitela_patch.py precisa mudar
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/caio-imperial/minitela-r15/edit/main/docs/RE-acf-source.md" title="Editar esta página" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="textureacf-visto-pelo-codigo-fonte-do-sdk-11020-gc9002">Texture.acf visto pelo código-fonte do SDK 1.10.20 (GC9002)<a class="headerlink" href="#textureacf-visto-pelo-codigo-fonte-do-sdk-11020-gc9002" title="Permanent link">&para;</a></h1>
+<p>Este arquivo é a leitura do <strong>firmware</strong> (lado device) do formato <code>.acf</code>. Complementa
+<a href="../RE-acf/"><code>RE-acf.md</code></a> (que é a leitura do <strong>compilador</strong> e da bancada) e
+<a href="../RE-firmware/"><code>RE-firmware.md</code></a> (flash/NOR). Não substitui nenhum dos dois.</p>
+<p>Fonte primária (doravante <code>LIB/</code> e <code>CS/</code>):</p>
+<table>
+<thead>
+<tr>
+<th>apelido</th>
+<th>caminho</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LIB/</code></td>
+<td><code>.tools/vendor/sdk120/v1.10.20_2025.07.02_GC9002/GC9002/GC9002/GC9002LIB/</code></td>
+</tr>
+<tr>
+<td><code>CS/</code></td>
+<td><code>.tools/vendor/sdk120/v1.10.20_2025.07.02_GC9002/GC9002/CommonSource/</code></td>
+</tr>
+<tr>
+<td><code>EX/</code></td>
+<td><code>.tools/vendor/sdk120/v1.10.20_2025.07.02_GC9002/U盘_480x272_CTP/Texture.acf</code> (amostra real, 480x272)</td>
+</tr>
+</tbody>
+</table>
+<p>Todas as afirmações abaixo têm <code>arquivo:linha</code>. O que não tem, está marcado
+<strong>hipótese</strong> ou <strong>não documentado</strong>. Nada foi executado e nada foi gravado no device:
+a única coisa que rodou foi aritmética em Python sobre bytes da amostra <code>EX/</code>.</p>
+<hr />
+<h2 id="resumo-executivo">Resumo executivo<a class="headerlink" href="#resumo-executivo" title="Permanent link">&para;</a></h2>
+<ol>
+<li>O firmware <strong>não valida o checksum do arquivo</strong> (campo <code>+4</code>). Ele valida três coisas:
+   <code>StartOfConfigdata % 16384 == 0</code>, <code>MagicNumber == 0x494d4841</code> ("AHMI") e
+   <code>AHMIInfo.Version == AHMI_CPU1_VERSION (0x5A010a13)</code>
+   — <code>CS/AHMI/FileLoad.cpp:570</code>, <code>:582</code>, <code>:589</code>.</li>
+<li>Mas ele <strong>valida um checksum por página</strong>, e isso é o que RE-acf.md não viu:
+   <code>CheckCode == 0xA55A5AA5 ^ XOR(words do bloco da página)</code> — <code>CS/Main/AHMIInterface.cpp:1421</code></li>
+<li><code>CS/AHMI/validation.cpp:75</code>. Provado contra as 9 páginas da amostra real.
+   O laço de leitura é <code>do{...}while(checkCode != newPage-&gt;CheckCode)</code> (<code>:1387</code>–<code>:1423</code>):
+   <strong>em caso de divergência ele não sai nunca</strong>. É a explicação mecânica da "região
+   crítica" do FATO 7.</li>
+<li>O "header" do arquivo não é magic+count: é <code>u32 StartOfConfigdata</code> seguido de
+   <code>u32 checksum</code>, <code>u32 ?</code>, e uma string de projeto. O "magic 0x8000 / count" do
+   FATO 6 é o <strong>mesmo u32 lido como dois u16</strong>. E a "região crítica" de 772392–801200
+   (FATO 7) é simplesmente tudo a partir de <code>StartOfConfigdata</code> (802816 no <code>.acf</code> de
+   fábrica), porque ali começa a config que o <code>CheckCode</code> cobre.</li>
+<li>A "tabela de recursos" que faltava existe e é legível: <code>TextureClass[totalNumOfTexture]</code>,
+   <strong>48 bytes por registro</strong>, dentro do bloco de cada página, com
+   <code>SingleSliceSize</code>, <code>TexAddr</code>, <code>mTexAttr</code>, <code>TexWidth</code>, <code>TexHeight</code>, …
+   — <code>CS/AHMI/TextureClass.h:59</code>, <code>CS/AHMI/DynamicPageClass.cpp:180</code>.
+   <code>SingleSliceSize</code> em bytes = <code>ceil(w/4)*ceil(h/4)*16</code> (conferido em 3 texturas reais).</li>
+<li>O decodificador de bloco está no fonte, e <strong>confirma o FATO 5</strong>, com uma ressalva:
+   aquilo é o modo <strong>STCRGBA888</strong> (<code>CS/AHMI/Simulator/stc.cpp:629</code>). Existe um segundo
+   modo, <strong>STCRGB888</strong>, com layout diferente (pesos de <strong>5 bits</strong> a partir do bit 49,
+   <code>stc.cpp:723</code>). O <code>acf_codec.py</code> do repo implementa só o primeiro.</li>
+<li>A interpolação real não é <code>peso/15</code>: é <code>(w + w/8)/16</code> com saturação (idem <code>(w+w/16)/32</code>
+   no modo RGB). Diferença de ~5% no meio da rampa.</li>
+<li>O "1 byte/pixel" cai do próprio formato: 240×240 = 57.600 B = os 57.600 B medidos no
+   FATO 4. O slot de imagem do FATO 7 <strong>é</strong> o formato de blocos; "lixo verde" é sintoma de
+   escrever o sub-formato errado (hipótese, ver §2.5).</li>
+</ol>
+<hr />
+<h2 id="1-como-o-firmware-carrega-e-valida-o-textureacf">1. Como o firmware carrega e valida o <code>Texture.acf</code><a class="headerlink" href="#1-como-o-firmware-carrega-e-valida-o-textureacf" title="Permanent link">&para;</a></h2>
+<h3 id="11-onde-o-arquivo-mora-na-flash">1.1 Onde o arquivo mora na flash<a class="headerlink" href="#11-onde-o-arquivo-mora-na-flash" title="Permanent link">&para;</a></h3>
+<p><code>GC9002</code> não tem "flash de textura" separada: o <code>.acf</code> está <strong>no mesmo QSPI mapeado em
+0x08000000</strong> que o código, e é lido por XIP (dereference byte a byte).</p>
+<table>
+<thead>
+<tr>
+<th>o que</th>
+<th>endereço</th>
+<th>fonte</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>base da região de config</td>
+<td><code>0x080F0000</code></td>
+<td><code>CS/Main/AHMIInterface.h:77</code> (<code>ROM_CONFIG_BASE_ADDR</code>)</td>
+</tr>
+<tr>
+<td><code>upg_cfg.bin</code></td>
+<td><code>+0x7000</code> = <code>0x080F7000</code></td>
+<td><code>LIB/projects/Bootloader/Source/Upgrade/adapt/upgrade_ci.h:116</code></td>
+</tr>
+<tr>
+<td><code>CONFIG_START_ADDRESS</code></td>
+<td><code>+0x8000</code> = <code>0x080F8000</code></td>
+<td><code>upgrade_ci.h:114</code> (recebe <code>cpu0_config.bin</code>, <code>upgrade_ci.h:156</code>)</td>
+</tr>
+<tr>
+<td>calibração de touch</td>
+<td><code>+0xB000</code></td>
+<td><code>CS/Main/AHMIInterface.h:95</code></td>
+</tr>
+<tr>
+<td>store tags (u32)</td>
+<td><code>+0xD000</code></td>
+<td><code>AHMIInterface.h:89</code></td>
+</tr>
+<tr>
+<td><code>product.bin</code></td>
+<td><code>+0xF000</code></td>
+<td><code>AHMIInterface.h:83</code></td>
+</tr>
+<tr>
+<td><strong>início do <code>.acf</code></strong></td>
+<td><code>ROM_CONFIG_BASE_ADDR + 0x10000</code> = <strong><code>0x08100000</code></strong></td>
+<td><code>CS/AHMI/csi_ahmi/csi_ahmi.h:39-40</code></td>
+</tr>
+<tr>
+<td>fim da área de textura</td>
+<td><code>0x08400000</code> (3 MB)</td>
+<td><code>upgrade_ci.h:82</code> (<code>TEXTURE_FLASH_MAX_ADDR</code>)</td>
+</tr>
+<tr>
+<td>backup do bootloader</td>
+<td><code>0x083C0000</code></td>
+<td><code>upgrade_ci.h:84-85</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>TEXTUREFLASH_START_ADDR = TEXTURE_START_ADDR_FOR_GPU = 0x08100000</code> e
+<code>TEXTURE_ADDR_OFFSET = TEXTUREFLASH_START_ADDR - 0x08000000 = 0x10000</code>
+(<code>csi_ahmi.h:41</code>). Consequência prática: <strong><code>TexAddr</code> gravado no <code>.acf</code> é offset de
+arquivo</strong>, e o endereço que o GPU recebe é <code>0x08100000 + TexAddr</code>
+(<code>CS/AHMI/TextureClass.cpp:791</code>).</p>
+<p>Leitura: <code>csi_ahmi_SeekReadConfigDataAddr(a)</code> só faz <code>base = 0x08100000 + a</code>
+(<code>CS/AHMI/csi_ahmi/csi_ahmi.c:915-922</code>); <code>csi_ahmi_ReadConfigData</code> chama
+<code>csi_hal_extern_flash_read</code> (<code>:908</code>), que em GC9002 é
+<code>gc9002_hal_internal_flash_read</code> (<code>CS/csi_hal/csi_hal_driver/csi_hal_driver_flash.c:516</code>)
+— um <code>for</code> de leitura de byte em <code>addr+i</code> com espera do bit de busy do CQSPI
+(<code>:185-200</code>). Não há comando de leitura por chunk.</p>
+<blockquote>
+<p>Nota: <code>LIB/projects/AHMI_SW/.../GClib/src/texture_flash.c</code> (o <code>DRAM_CACHE</code>/QSPI2/NAND) é
+código de biblioteca multi-chip; no GC9002 o caminho usado é o acima. O
+<code>ext_flash_gzip_self_adaption()</code> (<code>texture_flash.c:366</code>), que procura "AHMI" em <code>0x20</code> e
+em <code>0x40000</code>, está <strong>desligado</strong> (<code>texture_flash.c:137</code>, comentado).</p>
+</blockquote>
+<h3 id="12-a-sequencia-exata-loadconfigdata-ramo-embedded">1.2 A sequência exata (<code>LoadConfigData</code>, ramo <code>EMBEDDED</code>)<a class="headerlink" href="#12-a-sequencia-exata-loadconfigdata-ramo-embedded" title="Permanent link">&para;</a></h3>
+<p><code>CS/AHMI/FileLoad.cpp:542-608</code>. Para <code>CHIP_GC9002</code> (linhas 546-563):</p>
+<div class="highlight"><pre><span></span><code>align_size = 16*1024;            // :548
+StartOfConfigdata_Pos = 0;       // :549   (GC9002 nunca usa o caso gzip)
+
+csi_ahmi_SeekReadConfigDataAddr(0);           // :562
+csi_ahmi_ReadConfigData(&amp;StartOfConfigdata, 4);// :565   -&gt; u32 em offset 0 do arquivo
+if (StartOfConfigdata % align_size != 0) erro; // :570-574
+csi_ahmi_SeekReadConfigDataAddr(StartOfConfigdata);     // :577
+csi_ahmi_ReadConfigData(mConfigInfo, sizeof(ConfigInfoClass)); // :580
+if (mConfigInfo-&gt;MagicNumber != 0x494d4841) erro;       // :582-586
+if (mConfigInfo-&gt;AHMIInfo.Version != AHMI_CPU1_VERSION) erro; // :589-593
+screenratio = mConfigInfo-&gt;screenratio;                 // :596
+cfgString = malloc(CfgStringSize);                      // :598
+csi_ahmi_ReadConfigData(cfgString, CfgStringSize);       // :600
+</code></pre></div>
+<p>O outro ramo (<code>#if !defined(CHIP_GC9002)</code>, linhas 550-560) usa <code>align_size = 1024</code> e
+<code>StartOfConfigdata_Pos = 128*1024-4</code> quando <code>DRAM_CACHE-&gt;Gzip_EN</code> — formado o
+<code>ConfigData&amp;TextureCMP.acf</code>. <strong>No GC9002 esse caminho não existe</strong>: <code>vector</code> gzip de
+arquivo inteiro é coisa de GC9003/GC9005.</p>
+<h3 id="13-o-que-e-validado-e-o-que-nao-e">1.3 O que é validado, e o que não é<a class="headerlink" href="#13-o-que-e-validado-e-o-que-nao-e" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>campo</th>
+<th>validado?</th>
+<th>onde</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>u32 @0</code> (StartOfConfigdata) múltiplo de 16 KB</td>
+<td><strong>sim</strong></td>
+<td><code>FileLoad.cpp:570</code></td>
+</tr>
+<tr>
+<td><code>u32 @4</code> (checksum do arquivo)</td>
+<td><strong>não</strong> — nenhum leitor no SDK consome esse campo. <code>grep StartOfConfigdata</code> só acha <code>FileLoad.cpp</code> e o bootloader; nada lê <code>+4</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>u32 @8</code></td>
+<td>não lido por ninguém</td>
+<td>—</td>
+</tr>
+<tr>
+<td>string de projeto <code>@12</code></td>
+<td>não lida pelo firmware (o bootloader lê versões <em>dentro</em> do ConfigInfo, em <code>StartOfConfigdata+92/+124</code>)</td>
+<td><code>upgrade_ci.h:133-135</code>, <code>upgrade_c1.c:1232-1273</code></td>
+</tr>
+<tr>
+<td><code>MagicNumber</code> (ConfigInfo+32)</td>
+<td><strong>sim</strong></td>
+<td><code>FileLoad.cpp:582</code></td>
+</tr>
+<tr>
+<td><code>AHMIInfo.Version</code></td>
+<td><strong>sim</strong>, igualdade exata com <code>AHMI_CPU1_VERSION</code></td>
+<td><code>FileLoad.cpp:589</code>, <code>CS/AHMI/Config/AHMICfgDefinition.h:114</code></td>
+</tr>
+<tr>
+<td><code>md5_value[32]</code> (ConfigInfo+0)</td>
+<td><strong>não</strong> — só existe a declaração, <code>CS/AHMI/DynamicPageCfgClass.h:96</code>; nenhum uso no código</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong><code>CheckCode</code> de cada página</strong></td>
+<td><strong>sim</strong>, e é fatal</td>
+<td><code>AHMIInterface.cpp:1421</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>AHMI_CPU1_VERSION = 0x5A010a13</code> (<code>AHMICfgDefinition.h:114</code>). A amostra <code>EX/</code> traz
+exatamente <code>0x5a010a13</code> em ConfigInfo+260 — ou seja, o <code>.acf</code> e o firmware têm que ser
+do mesmo build do gerador, senão o aparelho não carrega.</p>
+<p>Falha em qualquer um dos três testes → <code>startAHMI()</code> entra em
+<code>for(;;) DrawFivePointPage(...)</code> (<code>CS/Main/AHMIInterface.cpp:686-732</code>): a tela dos cinco
+pontos vermelhos, para sempre. No GC9002 o <code>Feed_WDG1()</code> está dentro de
+<code>#if defined(CHIP_GC9005)</code> e o <code>else</code> faz <code>i++</code> duas vezes (<code>:717-726</code>) — laço
+deliberadamente infinito.</p>
+<p>Falha de <code>CheckCode</code> é diferente: o <code>do{}while</code> de <code>AHMIInterface.cpp:1387-1423</code> relê o
+mesmo endereço para sempre (a leitura é XIP, o valor nunca muda). CPU1 trava. <strong>Hipótese</strong>
+para o "reinicia em ciclo" do FATO 7: o CPU0 (MCU principal) tem watchdog próprio e
+reseta o conjunto quando o CPU1 para de responder.</p>
+<h3 id="14-o-header-campo-por-campo">1.4 O header, campo por campo<a class="headerlink" href="#14-o-header-campo-por-campo" title="Permanent link">&para;</a></h3>
+<p>Medido em <code>EX/</code> (480×272, 737.288 B) e conferido contra o struct:</p>
+<table>
+<thead>
+<tr>
+<th>offset</th>
+<th>tipo</th>
+<th>valor em <code>EX/</code></th>
+<th>significado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>+0</code></td>
+<td>u32 LE</td>
+<td><code>0x000B0000</code> = 720896</td>
+<td><code>StartOfConfigdata</code>: offset <strong>a partir do byte 0 do arquivo</strong> até o <code>ConfigInfoClass</code>. Múltiplo de 16 KB.</td>
+</tr>
+<tr>
+<td><code>+4</code></td>
+<td>u32 LE</td>
+<td><code>0x1D99EAB8</code></td>
+<td>checksum: <code>XOR</code> de <strong>todas</strong> as words de 32 bits do arquivo, exceto ele mesmo e a última word (ver §3.6)</td>
+</tr>
+<tr>
+<td><code>+8</code></td>
+<td>u32 LE</td>
+<td><code>0x00054950</code> = 346448</td>
+<td><strong>não documentado</strong>. Observação: é exatamente <code>TotalTextureSize/2</code> (692896/2) nesta amostra. Não é lido por firmware nem bootloader.</td>
+</tr>
+<tr>
+<td><code>+12</code></td>
+<td>char[]</td>
+<td><code>"480x272_demo1753175099001"</code></td>
+<td>identificação do projeto (texto, terminado em NUL, o resto até 0x4000 é zero)</td>
+</tr>
+<tr>
+<td><code>+0x4000</code></td>
+<td>—</td>
+<td>blocos STC</td>
+<td>início da área de textura (offset físico, não tabelado)</td>
+</tr>
+<tr>
+<td><code>StartOfConfigdata</code></td>
+<td>—</td>
+<td><code>ConfigInfoClass</code></td>
+<td>ver §3.2</td>
+</tr>
+<tr>
+<td><code>EOF-4</code></td>
+<td>u32</td>
+<td><code>0xA55A5AA5</code></td>
+<td>footer obrigatório (entra no XOR acima)</td>
+</tr>
+</tbody>
+</table>
+<p>Consequência aritmética (bate com o FATO 2): <code>tamanho_do_arquivo = 8 + k*16384</code>
+(<code>EX/</code>: 8 + 45×16384 = 737288). O <code>+8</code> é o header; todo o resto é grade de 16 KB.</p>
+<h3 id="15-como-o-firmware-consome-a-config-depois-disso">1.5 Como o firmware consome a config depois disso<a class="headerlink" href="#15-como-o-firmware-consome-a-config-depois-disso" title="Permanent link">&para;</a></h3>
+<p><code>InitialAHMIStruct</code> (<code>AHMIInterface.cpp</code>, a partir de ~<code>:1000</code>):</p>
+<ul>
+<li>páginas: <code>NumofPages</code> registros de <code>sizeof(DynamicPageCfgClass)</code> lidos em sequência
+  a partir de <code>StartOfConfigdata + 284 + CfgStringSize</code>
+  (<code>:1208</code> dá a posição corrente, <code>:1223</code> e <code>:1356</code> fazem o seek, <code>:1489</code> pula o array);</li>
+<li>o bloco de dados de cada página fica em <code>StartOfConfigdata + StoreOffset</code>
+  (<code>:1363</code>, <code>DynamicPageClass.cpp:697</code>) e tem <code>TotalSize</code> bytes;</li>
+<li>os <code>TotalNumOfTexture</code> registros de textura ficam <strong>dentro</strong> desse bloco (§2.1);</li>
+<li>sons: <code>mStartAddr</code> é offset e vira <code>0x08100000 + mStartAddr</code> (<code>:1508-1512</code>);</li>
+<li>pages com fundo <code>STCRGBA888</code> guardam <code>TexAddr | 0x80000000</code> no array de fundos
+  (<code>:1458-1470</code>, o <code>| 0x80000000</code> em <code>:1469</code>) — o bit 31 é o flag "STC com alpha" (§2.2).</li>
+</ul>
+<hr />
+<h2 id="2-as-3-imagens-custom-e-o-formato-de-pixel">2. As 3 imagens custom e o formato de pixel<a class="headerlink" href="#2-as-3-imagens-custom-e-o-formato-de-pixel" title="Permanent link">&para;</a></h2>
+<h3 id="21-onde-a-informacao-esta-a-tabela-de-recursos">2.1 Onde a informação está (a "tabela de recursos")<a class="headerlink" href="#21-onde-a-informacao-esta-a-tabela-de-recursos" title="Permanent link">&para;</a></h3>
+<p>Cada página tem seu próprio bloco de dados, com layout fixo definido em
+<code>DynamicPageClass::InitPage</code> (<code>CS/AHMI/DynamicPageClass.cpp:155-195</code>):</p>
+<div class="highlight"><pre><span></span><code>bass + 0                                    CanvasClass        [NumOfCanvas]
+     + NumOfCanvas*|Canvas|                 SubCanvasClass     [NumOfSubCanvas]
+     + NumOfSubCanvas*|Sub|                 WidgetClass        [NumOfWidget]
+     + NumOfWidget*|Widget|                 AnimationKeyFrame  [mNumOfAnimationKeyFrames]
+     + mNumOfAnimationKeyFrames*|AKF|       AnimationAction    [mNunOfAnimationActions]
+     + ...*|AA|                             u8 actionInstr      [ActionInstructionsSize]
+     + ActionInstructionsSize               &gt;&gt;&gt; TextureClass   [totalNumOfTexture]  &lt;&lt;&lt;
+     + totalNumOfTexture*48                 touchWidgetRange   [NumofTouchWidget]
+     + ...                                  u16 gifWidgetList  [NumofGifWidget]
+     + ...                                  u16 pageAction     [NumOfPageAction]
+     + ...                                  u16 canvasAction   [NumOfCanvasAction]
+</code></pre></div>
+<p>Citação: <code>pBasicTextureList = (TextureClass*)(pActionInstructions + mActionInstructionsSize)</code>
+(<code>DynamicPageClass.cpp:180</code>). O bloco é <strong>exatamente</strong> <code>TotalSize</code> bytes e começa em
+<code>StartOfConfigdata + StoreOffset</code>.</p>
+<p><code>TextureClass</code> (<code>CS/AHMI/TextureClass.h:59-90</code>, sem métodos virtuais ⇒ sem vtable,
+<code>sizeof = 48</code> com <code>VERSION_2</code>) — layout observado e confirmado em arquivo real:</p>
+<table>
+<thead>
+<tr>
+<th>off</th>
+<th>tipo</th>
+<th>campo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>u32</td>
+<td><code>SingleSliceSize</code> — bytes de <strong>uma</strong> fatia</td>
+</tr>
+<tr>
+<td>4</td>
+<td>u32</td>
+<td><code>TexAddr</code> — offset no <code>.acf</code> (se <code>&amp;0xF0000000 == 0</code>)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>u32</td>
+<td><code>SliceFlagsHeaderAddr</code> — 0 = sem color-slice; ≠0 = tabela de flags</td>
+</tr>
+<tr>
+<td>12</td>
+<td>u32</td>
+<td><code>mTexAttr</code> — bits 7-4 = tipo (§2.2), bit 3 mask, 8 <code>ADDRTEXTURE</code>, 15 <code>DRAWING</code>, … (<code>drawImmediately_cd.h:222-300</code>)</td>
+</tr>
+<tr>
+<td>16</td>
+<td>u16</td>
+<td><code>TexWidth</code></td>
+</tr>
+<tr>
+<td>18</td>
+<td>u16</td>
+<td><code>TexHeight</code></td>
+</tr>
+<tr>
+<td>20</td>
+<td>u16</td>
+<td><code>FocusedSlice</code></td>
+</tr>
+<tr>
+<td>22-34</td>
+<td>s16×7</td>
+<td><code>OffsetX/Y</code>, <code>RotateAngle</code>, <code>ShearAngleX/Y</code>, <code>ShearAngleZX/ZY</code></td>
+</tr>
+<tr>
+<td>36,38</td>
+<td>s16</td>
+<td><code>ScalerX/Y</code> (1.9 fixo: 512 = 1.0)</td>
+</tr>
+<tr>
+<td>40-43</td>
+<td>s8×4</td>
+<td><code>TexLeft/Top/Right/ButtomTileBox</code></td>
+</tr>
+<tr>
+<td>44</td>
+<td>u8</td>
+<td><code>staticTexture</code> (fatias por bloco de 16 KB; 0 = sem entrelaçamento)</td>
+</tr>
+<tr>
+<td>45</td>
+<td>u8</td>
+<td><code>useCanvasPoint</code></td>
+</tr>
+<tr>
+<td>46-47</td>
+<td>—</td>
+<td>padding</td>
+</tr>
+</tbody>
+</table>
+<p>Receita para achar a tabela sem conhecer <code>|Widget|</code>: quando <code>NumofTouchWidget</code>,
+<code>NumofGifWidget</code>, <code>NumOfPageAction</code> e <code>NumOfCanvasAction</code> são 0 (caso comum),
+<code>início_da_tabela = TotalSize - totalNumOfTexture*48</code>.</p>
+<p><strong>Verificado</strong> na página 6 da amostra <code>EX/</code> (<code>StoreOffset=4480</code>, <code>TotalSize=3252</code>,
+<code>totalNumOfTexture=12</code> → tabela em <code>3252-576 = 2676</code>):</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>SingleSliceSize</th>
+<th>TexAddr</th>
+<th>attr</th>
+<th>tipo</th>
+<th>W×H</th>
+<th>conferência</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>0</td>
+<td><code>0xFFFFFFFF</code></td>
+<td><code>0x00000130</code></td>
+<td>3 = PURECOLOR</td>
+<td>480×272</td>
+<td>fundo chapado</td>
+</tr>
+<tr>
+<td>1</td>
+<td>2912</td>
+<td><code>0x000A53C0</code></td>
+<td><code>0x00000110</code></td>
+<td>1 = STCRGBA888</td>
+<td>104×26</td>
+<td>26×7×16 = <strong>2912</strong> ✓</td>
+</tr>
+<tr>
+<td>2</td>
+<td>16</td>
+<td><code>0x000A6A80</code></td>
+<td><code>0x00000110</code></td>
+<td>1</td>
+<td>4×4</td>
+<td>1×1×16 = <strong>16</strong> ✓</td>
+</tr>
+<tr>
+<td>11</td>
+<td>13312</td>
+<td><code>0x000A6AA0</code></td>
+<td><code>0x00000110</code></td>
+<td>1</td>
+<td>254×51</td>
+<td>64×13×16 = <strong>13312</strong> ✓</td>
+</tr>
+</tbody>
+</table>
+<p>Isso prova duas coisas de uma vez: o tamanho de uma textura é
+<code>ceil(w/4)*ceil(h/4)*16</code>, e texturas <strong>não</strong> são alinhadas a 16 KB entre si
+(<code>0xA53C0 % 0x4000 = 5056</code>). Só o container e o <code>StartOfConfigdata</code> são.</p>
+<h3 id="22-o-codec-stc-16-b-por-bloco-44-dois-sub-formatos">2.2 O codec: "STC", 16 B por bloco 4×4, dois sub-formatos<a class="headerlink" href="#22-o-codec-stc-16-b-por-bloco-44-dois-sub-formatos" title="Permanent link">&para;</a></h3>
+<p>Os tipos no GC9002 (<code>CS/AHMI/drawImmediately_cd.h:222-249</code>, ramo <code>CHIP_GC9002</code>):</p>
+<div class="highlight"><pre><span></span><code>STCRGB888   0x00     &lt;- blocos de 16 B, SEM alpha
+STCRGBA888  0x10     &lt;- blocos de 16 B, COM alpha
+ALPHA1 0x20  PURECOLOR 0x30  RGB565 0x40  RGBA8888 0x50  Y8 0x60
+RGB565_RE 0x70  PUREMASK 0x80  ALPHA2 0x90  ALPHA8 0xa0  ALPHA4 0xb0
+ARGB1555 0xc0  ARGB4444 0xd0  SFBC 0xe0  RGBA8888_RE 0xf0
+</code></pre></div>
+<p>No GC9002 <code>0x00</code>/<code>0x10</code> são <strong>STC</strong>, não DXT1/DXT5: no simulador de GPU
+<code>ahmi::cache()</code> o <code>SIM_DXT1</code> (código 0) do GC9003 é trocado por
+<code>stc_rgb_dec()</code> quando <code>embedded_platform != EMBEDDED_GC9003</code>
+(<code>CS/AHMI/Simulator/ahmiv3.cpp:825-875</code>, chamada em <code>:872</code>). O tipo que o hardware
+recebe é <code>TexType = (texture_ctrl &amp; 0x1e) &gt;&gt; 1</code> (<code>ahmiv3.cpp:1257</code>).</p>
+<p>Os decodificadores:</p>
+<table>
+<thead>
+<tr>
+<th>função</th>
+<th>arquivo:linha</th>
+<th>quando</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>stc_rgba_dec</code></td>
+<td><code>stc.cpp:706-721</code></td>
+<td>tipo <code>0x10</code> (STCRGBA888)</td>
+</tr>
+<tr>
+<td><code>stc_rgb_dec</code></td>
+<td><code>stc.cpp:1189-1201</code></td>
+<td>tipo <code>0x00</code> (STCRGB888)</td>
+</tr>
+<tr>
+<td><code>stc_rgba_one_partition_dec</code></td>
+<td><code>stc.cpp:629-658</code></td>
+<td><strong>é o FATO 5</strong></td>
+</tr>
+<tr>
+<td><code>stc_rgb_one_partition_dec</code></td>
+<td><code>stc.cpp:723-747</code></td>
+<td>modo 0 do RGB, layout diferente</td>
+</tr>
+</tbody>
+</table>
+<p>O bit 0 escolhe a partição (<code>stc.cpp:1190-1201</code>):</p>
+<div class="highlight"><pre><span></span><code>bit0 == 0        -&gt; one partition          (o "modo 0" do RE-acf.md)
+&amp; 0x3 == 0x1     -&gt; two partition          (RGBA) / two plane two partition (RGB)
+&amp; 0x7 == 0x3     -&gt; two plane two partition (RGBA) / two partition (RGB)
+&amp; 0xf == 0x7     -&gt; two plane one partition
+senão            -&gt; three partition
+</code></pre></div>
+<h3 id="23-layout-de-bits-confirmacao-e-correcao-do-fato-5">2.3 Layout de bits — confirmação e correção do FATO 5<a class="headerlink" href="#23-layout-de-bits-confirmacao-e-correcao-do-fato-5" title="Permanent link">&para;</a></h3>
+<p><strong><code>stc_rgba_one_partition_dec</code></strong> (<code>stc.cpp:629-658</code>) — bitstream LSB-first:</p>
+<table>
+<thead>
+<tr>
+<th>bits</th>
+<th>campo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>flag de partição (0 = one partition)</td>
+</tr>
+<tr>
+<td>1-8 / 9-16</td>
+<td>R0 / R1</td>
+</tr>
+<tr>
+<td>17-24 / 25-32</td>
+<td>G0 / G1</td>
+</tr>
+<tr>
+<td>33-40 / 41-48</td>
+<td>B0 / B1</td>
+</tr>
+<tr>
+<td>49-56 / 57-64</td>
+<td><strong>A0 / A1</strong></td>
+</tr>
+<tr>
+<td>65+4i (i=0..15)</td>
+<td>peso de 4 bits do pixel i (o 16º só tem 3 bits reais — ver abaixo)</td>
+</tr>
+</tbody>
+</table>
+<p>Interpolação (<code>stc.cpp:2-9</code>):
+<code>tw = w + w/8;  c = clamp(a0 + (a1-a0)*tw/16)</code>.</p>
+<p><strong><code>stc_rgb_one_partition_dec</code></strong> (<code>stc.cpp:723-747</code>) — sem alpha, pesos de 5 bits:</p>
+<table>
+<thead>
+<tr>
+<th>bits</th>
+<th>campo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>flag de partição</td>
+</tr>
+<tr>
+<td>1-8 / 9-16</td>
+<td>R0 / R1</td>
+</tr>
+<tr>
+<td>17-24 / 25-32</td>
+<td>G0 / G1</td>
+</tr>
+<tr>
+<td>33-40 / 41-48</td>
+<td>B0 / B1</td>
+</tr>
+<tr>
+<td><strong>49+5i</strong> (i=0..15)</td>
+<td>peso de <strong>5 bits</strong>; <code>w' = w + w/16; c = clamp(a0 + (a1-a0)*w'/32)</code> (<code>stc.cpp:11-18</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Orçamento de bits — e é aqui que o FATO 5 acertou em cheio:</p>
+<ul>
+<li><strong>RGBA</strong>: o 16º peso começa no bit 125 e só tem <strong>3 bits reais</strong> (125, 126, 127; o bit
+  128 não existe no <code>u128</code>, então <code>weight_table&gt;&gt;60</code> entrega 3 bits + zero). Peso máximo
+  do pixel 15 = <strong>7</strong>. É exatamente o "o peso do pixel 15 nunca passa de 7" medido.</li>
+<li><strong>RGB</strong>: 49 + 16×5 = 129 &gt; 128 — o 16º peso começa em 124 e tem <strong>4 bits</strong> (0..15 de
+  uma faixa 0..31), não 3.</li>
+</ul>
+<p><code>y*4+x</code> é a ordem raster dentro do bloco (<code>stc.cpp:739</code>, <code>:649</code>).</p>
+<p><strong>Prova de que o FATO 5 é o modo RGBA</strong>: o bloco que o compilador do ODM gerou para
+16 tons de cinza — <code>fe 01 fe 01 fe 01 fe ff df 9b 57 13 cf 8a 46 02</code> (FATO 5) —
+decodificado com <code>stc_rgba_one_partition_dec</code> dá pesos <code>15,14,13,…,0</code> e
+R = <code>0,15,31,47,63,79,95,111,143,159,175,191,207,223,239,255</code> (rampa monotônica).
+Decodificado com o modo RGB (5 bits no bit 49) dá lixo
+(pesos <code>31,31,31,31,30,6,15,21,9,28,25,10,20,17,4,0</code>).</p>
+<p><strong>Correção ao FATO 5</strong> (única diferença real): a fórmula não é <code>c0 + (c1-c0)*w/15</code>
+mas <code>c0 + (c1-c0)*(w + w/8)/16</code>. Para w=15 o fator é 135/128 (satura); para w=7 é
+63/128 = 0,492, contra 7/15 = 0,467 — ~5% de erro no meio da rampa. Um encoder que
+queira bater a imagem tem que inverter a função real, não <code>w/15</code>.
+<strong>Hipótese</strong> (não provada em silício): <code>interpolate()</code> é o modelo de referência de uma
+tabela de hardware; se o ASIC fizer exatamente <code>w/15</code>, o gerador é que estaria
+"errado". Os 16 níveis do teste acima são compatíveis com as duas leituras, então a
+única forma de decidir é medir luminância na tela ou achar a LUT no RTL.</p>
+<h3 id="24-singleslicesize-fatias-e-o-16-kb">2.4 <code>SingleSliceSize</code>, fatias e o 16 KB<a class="headerlink" href="#24-singleslicesize-fatias-e-o-16-kb" title="Permanent link">&para;</a></h3>
+<p><code>TextureClass.cpp:785-793</code> calcula o deslocamento da fatia:</p>
+<div class="highlight"><pre><span></span><code>if (staticTexture == 0)
+    addr = FocusedSlice * SingleSliceSize;
+else
+    addr = 0x4000*(FocusedSlice/staticTexture) + (FocusedSlice%staticTexture)*SingleSliceSize;
+TexAddr_final = TexAddr + addr + TEXTURE_ADDR_OFFSET;   // se (TexAddr &amp; 0xF0000000)==0
+</code></pre></div>
+<p><code>staticTexture</code> = "quantas fatias cabem em um bloco de 16 KB" — é o único lugar em que
+o 16 KB aparece <em>dentro</em> da textura. <code>img_align()</code> (<code>TextureClass.cpp:80-172</code>) é a
+contraparte no gerador: escolhe a largura da fatia para que
+<code>(w+3)/4*4 * (h+3)/4*4 &lt;= 16*1024 - 64</code> — os 64 bytes são cabeçalho de fatia
+(relacionado a <code>SliceFlagsHeaderAddr</code>). Para uma textura "normal" (não animada),
+<code>SingleSliceSize</code> é o tamanho da imagem inteira e <code>staticTexture = 0</code>, como se vê nos
+12 registros da página 6 da amostra.</p>
+<h3 id="25-onde-estao-as-3-imagens-custom-o-que-da-para-afirmar">2.5 Onde estão as 3 imagens custom — o que dá para afirmar<a class="headerlink" href="#25-onde-estao-as-3-imagens-custom-o-que-da-para-afirmar" title="Permanent link">&para;</a></h3>
+<p><strong>Fato aritmético</strong>: uma imagem 240×240 em STC ocupa <code>60×60×16 = 57.600</code> bytes = 1 B/px.
+É <em>exatamente</em> a região de 57.600 B em 685992 que o FATO 4 mediu. Portanto o slot de
+imagem do FATO 4 <strong>é</strong> o formato de blocos, e a conclusão do FATO 7 ("a região das
+imagens custom <strong>não</strong> usa o formato de blocos") está <strong>contradizida</strong> por aritmética
+e pelo fonte.</p>
+<p><strong>O que continua não documentado</strong>: os offsets exatos dos 3 slots no <code>Texture.acf</code> de
+fábrica 240×240 — esse arquivo não está no repo nem no pacote do SDK, então não deu para
+ler a tabela. O procedimento para obtê-los em 5 linhas de Python está em §5; ele não
+depende do compilador do ODM.</p>
+<p><strong>Hipóteses para o "lixo verde" do FATO 7</strong> (as duas explicam o mesmo sintoma):</p>
+<ol>
+<li>sub-formato trocado: escrever blocos no layout RGBA (pesos de 4 bits no bit 65) numa
+   textura cujo registro diz tipo <code>0x00</code> (RGB, pesos de 5 bits no bit 49) — ou vice-versa.
+   Como 1 byte/px é o mesmo, o tamanho bate e o resultado é ruído colorido;</li>
+<li>widget do tipo GIF: o firmware trata widgets de <code>pGifWidgetList</code> à parte
+   (<code>AHMIInterface.cpp:400-450</code>), e nesse caso o dado não é a textura crua e sim um
+   bloco comprimido com LUT: <code>u32@bloco</code> com <code>lutSize = valor&gt;&gt;12</code> (KB), em
+   <code>bloco + lutSize*1024</code> a string <code>"AHMI"</code> e, logo depois, os primeiros 32 B comprimidos
+   que <code>decompress_first256bytes()</code> expande para o <code>BlockHeader</code> de 28 B
+   (nome "GIF", w, h, textType, texaddr, singlesliceSize, picnum, delay, res)
+   — <code>CS/gziplib/gzipBlock.cpp:39-91</code>, <code>gzipBlock.h:26-38</code>, <code>gzip.cpp:1272-1289</code>.
+   Cada frame começa em <code>0x20 + n*SinglesliceSize</code>
+   (<code>AHMIInterface.cpp:435</code>, <code>:439-443</code>). Escrever STC cru no início do bloco estraga
+   o header comprimido → lixo.</li>
+</ol>
+<p>Para decidir, basta ler o registro de textura do widget correspondente: se <code>attr&gt;&gt;4</code>
+for <code>0x1</code>/<code>0x0</code> é textura crua; se o widget estiver em <code>pGifWidgetList</code>, é bloco LUT.</p>
+<h3 id="26-o-compressor-o-que-o-fonte-nao-tem">2.6 O compressor (o que o fonte <strong>não</strong> tem)<a class="headerlink" href="#26-o-compressor-o-que-o-fonte-nao-tem" title="Permanent link">&para;</a></h3>
+<p>Não existe encoder STC no SDK: <code>grep -rn "stc_.*enc\|STC_ENC"</code> em <code>CommonSource/</code> não
+retorna nada. O SDK entrega o <strong>decodificador</strong> (simulador de GPU) e o <strong>container</strong>; a
+compressão continua sendo o que o <code>acf_codec.py</code> já faz. Bom para o repo: a codificação
+do FATO 5 é o lado que não precisa mais ser descoberto.</p>
+<hr />
+<h2 id="3-estrutura-exata-do-container-de-recursos">3. Estrutura exata do container de recursos<a class="headerlink" href="#3-estrutura-exata-do-container-de-recursos" title="Permanent link">&para;</a></h2>
+<h3 id="31-visao-geral">3.1 Visão geral<a class="headerlink" href="#31-visao-geral" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>[0x0000]  u32  StartOfConfigdata     múltiplo de 0x4000
+[0x0004]  u32  checksum_arquivo
+[0x0008]  u32  ?                     (= TotalTextureSize/2 na amostra)
+[0x000C]  char projectID[]           NUL-terminado, zero-padded até 0x4000
+[0x4000]  ...  dados de textura STC  (endereçados por TexAddr de cada registro)
+[StartOfConfigdata]                ConfigInfoClass (284 B)
+[+284]                             cfgString (CfgStringSize B)
+[+284+CfgStringSize]               DynamicPageCfgClass[NumofPages]  (56 B cada)
+[+...]                             WaveFilter[], WaveFilterStatus[], Sound[],
+                                   TagClassCfg + links[], strings, arrays, fontes,
+                                   hints, initString, tagValueSpace
+[StartOfConfigdata+StoreOffset_i]  bloco de dados da página i (TotalSize_i B)
+[EOF-4]   u32  0xA55A5AA5
+</code></pre></div>
+<p>Conferido na amostra <code>EX/</code>: <code>TotalSize</code> (ConfigInfo+36) = 737.280 = tamanho do arquivo
+menos 8; <code>StartOfConfigdata</code> = 720.896; área de config = 16.392 B (16 KB + os 8 do
+header); a cadeia <code>StoreOffset</code> das 9 páginas fecha (<code>2392, 2740, …, 7784</code> com
+<code>TotalSize</code> 348 e a última de 52), e <code>DynamicPageSize</code> = 3252 = <code>TotalSize</code> da maior
+página.</p>
+<h3 id="32-configinfoclass-csahmidynamicpagecfgclassh93-145-284-bytes">3.2 <code>ConfigInfoClass</code> (<code>CS/AHMI/DynamicPageCfgClass.h:93-145</code>, 284 bytes)<a class="headerlink" href="#32-configinfoclass-csahmidynamicpagecfgclassh93-145-284-bytes" title="Permanent link">&para;</a></h3>
+<p>Offsets verificados campo a campo contra <code>EX/</code>:</p>
+<table>
+<thead>
+<tr>
+<th>off</th>
+<th>campo</th>
+<th>valor em <code>EX/</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td><code>u8 md5_value[32]</code></td>
+<td><code>"8c20d72d…765084"</code> (não é validado por ninguém)</td>
+</tr>
+<tr>
+<td>32</td>
+<td><code>u32 MagicNumber</code></td>
+<td><code>0x494d4841</code></td>
+</tr>
+<tr>
+<td>36</td>
+<td><code>u32 TotalSize</code></td>
+<td>737280 (= tamanho do arquivo − 8)</td>
+</tr>
+<tr>
+<td>40</td>
+<td><code>u32 TotalTextureSize</code></td>
+<td>692896</td>
+</tr>
+<tr>
+<td>44</td>
+<td><code>u32 DynamicPageSize</code></td>
+<td>3252</td>
+</tr>
+<tr>
+<td>48</td>
+<td><code>u16 NumofTimers</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>50</td>
+<td><code>u16 NumofUartBuf</code></td>
+<td>1</td>
+</tr>
+<tr>
+<td>52</td>
+<td><code>u16 NumofWidget</code></td>
+<td>100</td>
+</tr>
+<tr>
+<td>54</td>
+<td><code>u16 NumOfWaveFilter</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>56</td>
+<td><code>u16 NumOfWaveFilterStatus</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>58</td>
+<td><code>u16 NumofTags</code></td>
+<td>34</td>
+</tr>
+<tr>
+<td>60</td>
+<td><code>u16 NumofTagUpdateQueue</code></td>
+<td>30</td>
+</tr>
+<tr>
+<td>62</td>
+<td><code>u16 TagValueTotalSize</code></td>
+<td>596</td>
+</tr>
+<tr>
+<td>64</td>
+<td><code>u8 NumofSound</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>66</td>
+<td><code>u16 NumofSysPage</code></td>
+<td>3</td>
+</tr>
+<tr>
+<td>68</td>
+<td><code>u16 StringSize</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>70</td>
+<td><code>u16 PageSwipeMode</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>72</td>
+<td><code>u16 CfgStringSize</code></td>
+<td>100</td>
+</tr>
+<tr>
+<td>74</td>
+<td><code>u16 NumofPages</code></td>
+<td>9</td>
+</tr>
+<tr>
+<td>76</td>
+<td><code>s16 screenratio</code></td>
+<td>512 (=1,0 em 1.9)</td>
+</tr>
+<tr>
+<td>78</td>
+<td><code>u16 encoding</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>80</td>
+<td><code>u32 audioAttr</code></td>
+<td>16000</td>
+</tr>
+<tr>
+<td>84</td>
+<td><code>u8 AHMIScene</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>86</td>
+<td><code>u16 serialBaudRate</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>88</td>
+<td><code>u16 NumofStrings</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>90</td>
+<td><code>u16 NumOfHints</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>92</td>
+<td><code>u8 YTHVersion[32]</code></td>
+<td><code>"1.10.20_build_2025.07.02.10.45"</code></td>
+</tr>
+<tr>
+<td>124</td>
+<td><code>u8 IDEVersion[32]</code></td>
+<td><code>"1.10.20_build_2025.7.9.11.28"</code></td>
+</tr>
+<tr>
+<td>156</td>
+<td><code>u8 CPU0Version[32]</code></td>
+<td><code>"CPU0VERSION"</code> (placeholder)</td>
+</tr>
+<tr>
+<td>188</td>
+<td><code>u8 CPU1Version[32]</code></td>
+<td><code>"1.10.20_build_2025.07.02.10.45"</code></td>
+</tr>
+<tr>
+<td>220</td>
+<td><code>u8 DeviceID[32]</code></td>
+<td><code>"CPU0DEVICEID"</code> (placeholder)</td>
+</tr>
+<tr>
+<td>252</td>
+<td><code>u16 NumofArrayDatas</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>254</td>
+<td><code>u16 NumOfFontRanges</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>256</td>
+<td><code>u16 NumOfFont</code></td>
+<td>1</td>
+</tr>
+<tr>
+<td>258</td>
+<td><code>u8 NumOfKBStates</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>259</td>
+<td><code>u8 NumOfMenuStates</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>260</td>
+<td><code>u32 AHMIInfo.Version</code></td>
+<td><strong><code>0x5A010a13</code></strong></td>
+</tr>
+<tr>
+<td>264</td>
+<td><code>u16 AHMIInfo.ScreenWidth</code></td>
+<td>480</td>
+</tr>
+<tr>
+<td>266</td>
+<td><code>u16 AHMIInfo.ScreenHeight</code></td>
+<td>272</td>
+</tr>
+<tr>
+<td>268</td>
+<td><code>u16 AHMIInfo.ColorSpace</code></td>
+<td>16</td>
+</tr>
+<tr>
+<td>270</td>
+<td><code>u16 AHMIInfo.TileSize</code></td>
+<td>32</td>
+</tr>
+<tr>
+<td>272</td>
+<td><code>ProjectScreenOptions</code> (4×u16 + u8 <code>enable</code>)</td>
+<td>0,0,0,0,0</td>
+</tr>
+</tbody>
+</table>
+<p>Confirmação cruzada: o bootloader lê <code>YTHVersion</code> em <code>TEXTURE_START_ADDRESS+92</code> e
+<code>IDEVersion</code> em <code>+124</code> (<code>upgrade_ci.h:133-134</code>, <code>upgrade_c1.c:1247-1266</code>), com
+<code>offset = *(u32*)TEXTURE_START_ADDRESS</code> somado — isto é, <strong>dentro do
+<code>StartOfConfigdata</code></strong>. Bate com a tabela acima.</p>
+<p><strong>Divergência anotada</strong>: <code>DEVICE_ID_STORE_ADDR = TEXTURE_START_ADDRESS + 284</code>
+(<code>upgrade_ci.h:135</code>) aponta para o <em>fim</em> do struct, mas <code>DeviceID</code> está em <code>+220</code>
+nesta versão. O bootloader dessa mesma SDK provavelmente está defasado nessa constante
+(ou o struct do gerador tem 8 bytes a mais entre <code>IDEVersion</code> e <code>DeviceID</code>). Não é
+relevante para o <code>.acf</code> em si, mas é armadilha para quem for ler versão de device.</p>
+<h3 id="33-dynamicpagecfgclass-56-bytes-dynamicpagecfgclassh43-75">3.3 <code>DynamicPageCfgClass</code> (56 bytes) — <code>DynamicPageCfgClass.h:43-75</code><a class="headerlink" href="#33-dynamicpagecfgclass-56-bytes-dynamicpagecfgclassh43-75" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>off</th>
+<th>campo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td><code>u32 StoreOffset</code> (relativo a <code>StartOfConfigdata</code>)</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>u32 TotalSize</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>u32 CheckCode</code></td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>u16 PageAttr</code></td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>u16 totalNumOfTexture</code></td>
+</tr>
+<tr>
+<td>16</td>
+<td><code>u16 ActionInstructionsSize</code></td>
+</tr>
+<tr>
+<td>18</td>
+<td><code>u16 NumOfPageAction</code></td>
+</tr>
+<tr>
+<td>20</td>
+<td><code>u16 NumOfCanvasAction</code></td>
+</tr>
+<tr>
+<td>22</td>
+<td><code>u16 NumOfWidget</code></td>
+</tr>
+<tr>
+<td>24</td>
+<td><code>u16 NumofTouchWidget</code></td>
+</tr>
+<tr>
+<td>26</td>
+<td><code>u16 NumofGifWidget</code></td>
+</tr>
+<tr>
+<td>28</td>
+<td><code>u16 pageAnimationDuration</code></td>
+</tr>
+<tr>
+<td>30</td>
+<td><code>u16 pageReleasingAnimationDuration</code></td>
+</tr>
+<tr>
+<td>32</td>
+<td><code>u16 NumOfCanvas</code></td>
+</tr>
+<tr>
+<td>34</td>
+<td><code>u16 NumOfSubCanvas</code></td>
+</tr>
+<tr>
+<td>36</td>
+<td><code>u8 AnimationType</code></td>
+</tr>
+<tr>
+<td>37</td>
+<td><code>u8 enlightedWidgetID</code></td>
+</tr>
+<tr>
+<td>38</td>
+<td><code>u8 mStartOfStack</code></td>
+</tr>
+<tr>
+<td>39</td>
+<td><code>u8 mNumOfPara</code></td>
+</tr>
+<tr>
+<td>40</td>
+<td><code>u8 timingFun</code></td>
+</tr>
+<tr>
+<td>42</td>
+<td><code>u16 mNumOfAnimationKeyFrames</code></td>
+</tr>
+<tr>
+<td>44</td>
+<td><code>u8 mNunOfAnimationActions</code></td>
+</tr>
+<tr>
+<td>45</td>
+<td><code>u8 VideoType</code></td>
+</tr>
+<tr>
+<td>46</td>
+<td><code>PageScreenOptions</code> (4×s16)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="34-os-dois-checksums-um-ignorado-um-fatal">3.4 Os dois checksums (um ignorado, um fatal)<a class="headerlink" href="#34-os-dois-checksums-um-ignorado-um-fatal" title="Permanent link">&para;</a></h3>
+<p><strong>(a) checksum do arquivo, <code>u32 @4</code></strong> — não é validado por ninguém, mas existe e é
+fácil de gerar:</p>
+<div class="highlight"><pre><span></span><code>checksum = XOR de todos os u32 LE do arquivo,
+           exceto a word em +4 e a última word (footer 0xA55A5AA5)
+&lt;=&gt; (XOR de todas as words, incluindo o campo e o footer) == 0xA55A5AA5
+</code></pre></div>
+<p>Verificado em <code>EX/</code>: <code>XOR(todas) = 0xA55A5AA5</code>; <code>XOR(sem +4, sem footer) = 0x1D99EAB8</code>
+= valor gravado. (As duas formulações do FATO 6 são equivalentes, porque o footer entra
+no XOR do "tudo".)</p>
+<p><strong>(b) <code>CheckCode</code> de página</strong> — é o <code>XORCheck</code> de verdade
+(<code>CS/AHMI/validation.cpp:75-86</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="n">u32</span><span class="w"> </span><span class="nf">XORCheck</span><span class="p">(</span><span class="n">u32</span><span class="w"> </span><span class="o">*</span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="n">u32</span><span class="w"> </span><span class="n">datalen</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">u32</span><span class="w"> </span><span class="n">checkCode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0xA55A5AA5</span><span class="p">;</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">&lt;</span><span class="n">datalen</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="n">checkCode</span><span class="w"> </span><span class="o">^=</span><span class="w"> </span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">checkCode</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="c1">// chamado com: XORCheck((u32*)PageSpace, TotalSize/4)</span>
+</code></pre></div>
+<p>i.e. <code>CheckCode = 0xA55A5AA5 ^ XOR(words do bloco, TotalSize/4)</code>, sobre os
+<code>TotalSize</code> bytes do bloco da página, em <code>StartOfConfigdata+StoreOffset</code>.
+<code>TotalSize % 4 == 0</code> em todas as páginas observadas.</p>
+<p><strong>Provado contra arquivo real</strong> — as 9 páginas da amostra <code>EX/</code>:</p>
+<table>
+<thead>
+<tr>
+<th>página</th>
+<th>TotalSize</th>
+<th><code>CheckCode</code> gravado</th>
+<th><code>0xA55A5AA5 ^ XOR(words)</code></th>
+<th>ok</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>348</td>
+<td><code>0xAC5302AC</code></td>
+<td><code>0xAC5302AC</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>1</td>
+<td>348</td>
+<td><code>0xAC517CAC</code></td>
+<td><code>0xAC517CAC</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>2</td>
+<td>348</td>
+<td><code>0xAC577EAC</code></td>
+<td><code>0xAC577EAC</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>3</td>
+<td>348</td>
+<td><code>0xAC5578AC</code></td>
+<td><code>0xAC5578AC</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>4</td>
+<td>348</td>
+<td><code>0xAC5B7AAC</code></td>
+<td><code>0xAC5B7AAC</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>5</td>
+<td>348</td>
+<td><code>0x50498A88</code></td>
+<td><code>0x50498A88</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>6</td>
+<td>3252</td>
+<td><code>0xACC52E20</code></td>
+<td><code>0xACC52E20</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>7</td>
+<td>52</td>
+<td><code>0x51BAA78A</code></td>
+<td><code>0x51BAA78A</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>8</td>
+<td>52</td>
+<td><code>0x51BAA78A</code></td>
+<td><code>0x51BAA78A</code></td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+<p>O mesmo se aplica ao <code>ConfigData&amp;Texture.acf</code> (caminho <code>PC_SIM</code>, <code>FileLoad.cpp:149</code>) e
+às recargas de página em RAM (<code>DynamicPageClass.cpp:272, 394, 734, 1002, 1090</code>).</p>
+<h3 id="35-armadilha-existem-dois-ahmi">3.5 Armadilha: existem dois "AHMI"<a class="headerlink" href="#35-armadilha-existem-dois-ahmi" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>constante</th>
+<th>valor u32</th>
+<th>como aparece nos bytes</th>
+<th>onde</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MagicNumber</code></td>
+<td><code>0x494d4841</code></td>
+<td><code>41 48 4d 49</code> = <code>"AHMI"</code></td>
+<td><code>FileLoad.cpp:582</code>, ConfigInfo+32</td>
+</tr>
+<tr>
+<td><code>CFG_MAGIC_NUM</code></td>
+<td><code>0x41484D49</code></td>
+<td><code>49 4d 48 41</code> = <code>"IMHA"</code></td>
+<td><code>LIB/projects/Bootloader/Source/Cfg/adapt/cfg_ci.h:30</code>, <code>upg_cfg.bin</code> (offset 0 = <code>49 4d 48 41</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>São o mesmo texto com byte-order trocado, em dois formatos diferentes (o <code>.acf</code> e o
+<code>upg_cfg.bin</code>). Um <code>grep</code> por <code>"AHMI"</code> no binário bruto só acha o do <code>.acf</code>; o do
+<code>upg_cfg.bin</code> não aparece.</p>
+<hr />
+<h2 id="4-comparacao-com-o-re-acfmd">4. Comparação com o <code>RE-acf.md</code><a class="headerlink" href="#4-comparacao-com-o-re-acfmd" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th><code>RE-acf.md</code> afirma</th>
+<th>fonte diz</th>
+<th>veredito</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>FATO 2</strong> — o container é preenchido com zeros até múltiplo de 0x4000; todo <code>.acf</code> tem <code>8 + N*16384</code></td>
+<td>O <code>+8</code> é o header do arquivo (<code>StartOfConfigdata</code> + checksum) e o firmware <strong>exige</strong> <code>StartOfConfigdata % 16384 == 0</code> (<code>FileLoad.cpp:570</code>). O arquivo mede <code>8 + k*16384</code> porque <code>ConfigInfo.TotalSize</code> (= arquivo − 8) é sempre múltiplo de 16 KB. O arredondamento é do gerador (exe); do firmware vem a <em>exigência</em>.</td>
+<td><strong>CONFIRMA</strong> (mecanismo explicado)</td>
+</tr>
+<tr>
+<td><strong>FATO 2</strong> — "16 KB cai na granularidade da flash (4 setores)"</td>
+<td>Verdade para erase, mas o <code>.acf</code> no GC9002 está no <strong>mesmo QSPI do código</strong> (0x08100000) e é lido por XIP; não há flash de textura separada nem erase por chunk</td>
+<td><strong>CORRIGE</strong> (o alinhamento é do container, não da geometria de escrita)</td>
+</tr>
+<tr>
+<td><strong>FATO 3</strong> — <code>[0..4) u32 tamanho do payload</code>, <code>[4..8) checksum</code>, <code>+32768 de config com 'AHMI' e a5 5a 5a a5</code></td>
+<td><code>@0</code> é <code>StartOfConfigdata</code> (offset até o ConfigInfo), não tamanho. <code>@4</code> é o checksum. <code>@8</code> e <code>@12</code> existem. O "AHMI" fica em <code>StartOfConfigdata + 32</code> (dentro do ConfigInfo), <strong>não</strong> numa cauda de 32 KB com magic próprio; o <code>A5 5A 5A A5</code> é footer de 4 bytes, não um bloco</td>
+<td><strong>CORRIGE</strong></td>
+</tr>
+<tr>
+<td><strong>FATO 3</strong> — "o <code>.acf</code> do IDE não tem a cauda, então a cauda é opcional"</td>
+<td>A "cauda" é o bloco de config (<code>ConfigInfo</code>+páginas), que o firmware <strong>exige</strong> (magic + versão). Sem ela o aparelho mostra os cinco pontos. O que varia é o tamanho dela (1 bloco de 16 KB na amostra, ~48 KB no de fábrica 240×240)</td>
+<td><strong>CORRIGE</strong></td>
+</tr>
+<tr>
+<td><strong>FATO 4</strong> — imagem do slot = 57600 B em 685992, 3600 blocos de 16 B, raster sem swizzle, bloco (0,0) no offset 0</td>
+<td><code>57600 = 240×240×1 byte/px = 60×60×16</code>; o formato é 1 B/px por bloco 4×4 e a ordem é raster (o decodificador indexa <code>y*4+x</code> dentro do bloco e o offset vem de <code>TexAddr</code>)</td>
+<td><strong>CONFIRMA</strong></td>
+</tr>
+<tr>
+<td><strong>FATO 5</strong> — bitstream LSB-first a partir do bit 1; R0/R1/G0/G1/B0/B1/A0/A1; 16 pesos de 4 bits a partir do bit 65; <code>c = c0+(c1-c0)*w/15</code></td>
+<td>Layout de bits <strong>exato</strong> = <code>stc_rgba_one_partition_dec</code> (<code>stc.cpp:629-658</code>) — é o tipo <strong>STCRGBA888</strong>. A interpolação é <code>(w + w/8)/16</code> com saturação, não <code>w/15</code>. E existe o tipo <strong>STCRGB888</strong>, com pesos de <strong>5 bits a partir do bit 49</strong> e <code>(w+w/16)/32</code> (<code>stc.cpp:723-747</code>)</td>
+<td><strong>CONFIRMA o layout / CORRIGE a fórmula / COMPLETA</strong> (há um segundo layout)</td>
+</tr>
+<tr>
+<td><strong>FATO 5</strong> — "o bit 128 nunca é usado; o compilador orienta os endpoints para o último peso caber em 3 bits"</td>
+<td>Confere e o motivo é exatamente esse: em RGBA o 16º peso começa no bit 125 e sobra com <strong>3 bits</strong> (máx. 7) porque o <code>u128</code> acaba em 127. No modo RGB sobra com <strong>4 bits</strong> (máx. 15 de 0..31)</td>
+<td><strong>CONFIRMA</strong></td>
+</tr>
+<tr>
+<td><strong>FATO 6</strong> — <code>u16 magic 0x0080</code>, <code>u16 count</code>, header de 16 KB + <code>count</code>×64 KB</td>
+<td><code>@0</code> é um <strong>u32</strong> <code>StartOfConfigdata</code>: o "magic 0x8000" e o "count 12" são os dois u16 desse único u32 (<code>0x000C8000</code> → <code>0x8000</code> e <code>12</code>). Não há magic <code>0x0080</code> nem tabela de blocos de 64 KB; os 64 KB são só artefato de ler o offset como par u16</td>
+<td><strong>CORRIGE</strong></td>
+</tr>
+<tr>
+<td><strong>FATO 6</strong> — checksum = XOR de todas as words pulando o campo e a última word; com o valor certo, XOR de tudo = 0xA55A5AA5</td>
+<td>Exato. Verificado numa amostra independente (480×272): <code>XOR(tudo) = 0xA55A5AA5</code>, <code>XOR(sem +4 e sem footer) = 0x1D99EAB8</code> = gravado</td>
+<td><strong>CONFIRMA</strong></td>
+</tr>
+<tr>
+<td><strong>FATO 7 / "o que falta" #1</strong> — o firmware <strong>não</strong> valida checksum (teste dedicado)</td>
+<td>Não valida o <strong>do arquivo</strong> (<code>@4</code>); <strong>valida o <code>CheckCode</code> de cada página</strong> e trava em loop infinito se divergir (<code>AHMIInterface.cpp:1421</code> + <code>:1387-1423</code>)</td>
+<td><strong>CORRIGE</strong> (parcialmente: o teste provou a metade certa)</td>
+</tr>
+<tr>
+<td><strong>FATO 7</strong> — "região crítica entre 772392 e 801200; escrever ali reinicia em ciclo"</td>
+<td><code>StartOfConfigdata</code> do <code>.acf</code> de fábrica 240×240 é <strong>802816</strong> (49×16384; = 851976 − 49160, pela conta do próprio FATO 6). A partir dele começam <code>ConfigInfo</code>, <code>cfgString</code>, a tabela de páginas e os blocos de página. Qualquer escrita que atravesse 802816 corrompe o <code>CheckCode</code> de alguma página → <code>do{}while</code> infinito. Isso reconcilia <strong>todos</strong> os pontos medidos: <code>753192..772392</code> ok (fica abaixo), <code>753192..810792</code> e <code>686000..801200</code>+ crash (atravessam)</td>
+<td><strong>CONFIRMA e EXPLICA</strong> (a fronteira é <code>StartOfConfigdata</code> = 802816, não 772392; o mecanismo é o checksum de página)</td>
+</tr>
+<tr>
+<td><strong>FATO 7</strong> — "as imagens custom não usam o formato de blocos; provavelmente pixel cru"</td>
+<td>57.600 B = 240×240 em STC (1 B/px) exatamente; o formato <strong>é</strong> o de blocos. "Lixo verde" é compatível com sub-formato trocado (RGB↔RGBA) ou com widget GIF (bloco LUT com header comprimido). "Pixel cru" (RGB565 em 686000) não existe como tipo de textura no firmware</td>
+<td><strong>CONTRADIZ</strong> (a conclusão); a observação de tela continua válida</td>
+</tr>
+<tr>
+<td><strong>FATO 7</strong> — SideCar: RGB565 cru em <code>0x4000 + 10*0x10000 + 0x37B0</code></td>
+<td><code>0x4000 + 10*0x10000 + 0x37B0</code> = 686000, não alinhado a nada; o firmware lê <code>TexAddr</code> do registro de textura, não de fórmula. Gravar ali sem atualizar o registro e o <code>CheckCode</code> da página = lixo + boot loop, que é o que o RE-acf mediu</td>
+<td><strong>CONFIRMA o sintoma / CORRIGE a causa</strong></td>
+</tr>
+<tr>
+<td><strong>FATO 8</strong> — <code>flashChecksum @0x020008b0</code> é stub: o caminho de gravação não valida checksum</td>
+<td>Consistente: em nenhum ponto do SDK o campo <code>@4</code> do <code>.acf</code> é lido ou conferido</td>
+<td><strong>CONFIRMA</strong></td>
+</tr>
+<tr>
+<td>"o modo 1 de bloco é necessário só para decodificar arquivos oficiais"</td>
+<td>O bit 0 seleciona 5 modos de partição (<code>stc.cpp:1190-1201</code>, <code>:708-718</code>); "modo 1" é um deles (<code>&amp;0x3 == 0x1</code>). O gerador do ODM <strong>usa</strong> os modos ≥1 em arquivos oficiais (a primeira textura da amostra <code>EX/</code> tem <code>bit0=1</code>, <code>&amp;0x7==3</code>)</td>
+<td><strong>CONFIRMA, com correção de escopo</strong> (não é 1 modo extra: são 4)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-roteiro-para-gerar-o-acf-sem-o-compilador-do-odm">5. Roteiro para gerar o <code>.acf</code> sem o compilador do ODM<a class="headerlink" href="#5-roteiro-para-gerar-o-acf-sem-o-compilador-do-odm" title="Permanent link">&para;</a></h2>
+<p>O que o fonte prova ser necessário (tudo gera em Python puro):</p>
+<ol>
+<li><strong>Decidir o mapa de texturas.</strong> Para cada textura: <code>w</code>, <code>h</code>, tipo
+   (<code>0x00</code> RGB ou <code>0x10</code> RGBA), e o offset <code>TexAddr</code>. Não precisa alinhamento entre
+   texturas; o primeiro offset livre depois do header (<code>0x4000</code>) serve.</li>
+<li><strong>Comprimir em STC</strong>: <code>ceil(w/4)*ceil(h/4)</code> blocos de 16 B, ordem raster. Modo 0
+   (<code>bit0=0</code>) é o mais simples; o <code>acf_codec.py</code> já gera o sub-formato RGBA (FATO 5),
+   que é o tipo <code>0x10</code>. Para <code>0x00</code> é preciso o layout de 5 bits (§2.3) — <strong>não
+   implementado no repo hoje</strong>.</li>
+<li><strong>Header</strong>: <code>u32 @0 = StartOfConfigdata</code> (múltiplo de 16384, ≥ fim das texturas),
+   <code>@4 = checksum</code>, <code>@8</code> livre, <code>@12</code> = nome do projeto.</li>
+<li><strong><code>ConfigInfoClass</code></strong> (284 B) com <code>MagicNumber=0x494d4841</code>,
+   <code>TotalSize = tamanho_final - 8</code>, <code>NumofPages</code>, <code>CfgStringSize</code>,
+   <code>AHMIInfo.Version = 0x5A010a13</code> da versão do firmware alvo, <code>ScreenWidth/Height</code>.</li>
+<li><strong><code>DynamicPageCfgClass[NumofPages]</code></strong>, <code>cfgString</code>, depois os blocos de página, cada
+   um com <code>StoreOffset</code>, <code>TotalSize</code>, <code>CheckCode = 0xA55A5AA5 ^ XOR(words)</code>
+   e a tabela <code>TextureClass[totalNumOfTexture]</code> no fim do bloco (48 B cada).</li>
+<li><strong>Footer</strong> <code>0xA55A5AA5</code> e o <code>checksum</code> do arquivo por último.</li>
+<li>Sanidade que o device aplica: <code>StartOfConfigdata % 16384</code>, magic, versão,
+   e <code>CheckCode</code> por página. Tudo o resto é livre.</li>
+</ol>
+<p>Validador mínimo (o que o firmware faz, e nada além):</p>
+<div class="highlight"><pre><span></span><code><span class="k">assert</span> <span class="n">StartOfConfigdata</span> <span class="o">%</span> <span class="mi">16384</span> <span class="o">==</span> <span class="mi">0</span>
+<span class="k">assert</span> <span class="n">u32</span><span class="p">(</span><span class="n">StartOfConfigdata</span><span class="o">+</span><span class="mi">32</span><span class="p">)</span> <span class="o">==</span> <span class="mh">0x494d4841</span>
+<span class="k">assert</span> <span class="n">u32</span><span class="p">(</span><span class="n">StartOfConfigdata</span><span class="o">+</span><span class="mi">260</span><span class="p">)</span> <span class="o">==</span> <span class="mh">0x5A010a13</span>      <span class="c1"># versão do firmware alvo</span>
+<span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pages</span><span class="p">:</span>                                       <span class="c1"># 56 B cada</span>
+    <span class="n">blk</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">StartOfConfigdata</span><span class="o">+</span><span class="n">p</span><span class="o">.</span><span class="n">StoreOffset</span><span class="p">:][:</span><span class="n">p</span><span class="o">.</span><span class="n">TotalSize</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">xor_words</span><span class="p">(</span><span class="n">blk</span><span class="p">)</span> <span class="o">^</span> <span class="mh">0xA55A5AA5</span> <span class="o">==</span> <span class="n">p</span><span class="o">.</span><span class="n">CheckCode</span>
+</code></pre></div>
+<hr />
+<h2 id="6-nao-documentado-pendencias">6. Não documentado / pendências<a class="headerlink" href="#6-nao-documentado-pendencias" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Offsets das 3 imagens</strong> no <code>Texture.acf</code> de fábrica 240×240 — falta o arquivo.
+   Com ele, §2.1 + §5 dão a resposta em minutos (e o <code>attr</code> de cada uma decide entre
+   RGB/RGBA e entre textura crua e bloco GIF).</li>
+<li><strong>Significado de <code>u32 @8</code></strong> do header. Medido: <code>TotalTextureSize/2</code> na amostra.
+   Nenhum leitor no SDK. Hipótese: tamanho da textura por buffer (par/ímpar).</li>
+<li><strong><code>DeviceID</code> em <code>+284</code></strong> (bootloader) vs <code>+220</code> (struct desta versão) — divergência
+   não resolvida; não afeta a geração do <code>.acf</code>.</li>
+<li><strong><code>interpolate()</code> vs silício</strong> (§2.3): não dá para decidir só pelo fonte se o ASIC
+   usa <code>(w+w/8)/16</code> ou uma tabela equivalente a <code>w/15</code>. Precisa de medição óptica ou
+   do RTL.</li>
+<li><strong><code>staticTexture</code> / <code>SliceFlagsHeaderAddr</code></strong> (fatias e color-slice, <code>TextureClass.cpp:744-795</code>):
+   o mecanismo está claro; a amostra 480×272 não usava (todas as texturas têm
+   <code>staticTexture=0</code> e <code>SliceFlagsHeaderAddr=0</code>). O <code>SliceFlagsHeaderAddr</code> foi decodificado
+   depois, num arquivo com GIF — ver <strong>§7.4</strong>.</li>
+<li><strong>Encoder STC</strong> não existe no SDK — só o decodificador. O lado da compressão
+   continua sendo o <code>acf_codec.py</code> + FATO 5 (mais a correção da fórmula em §2.3).</li>
+</ol>
+<hr />
+<h2 id="7-gif-animado">7. GIF animado<a class="headerlink" href="#7-gif-animado" title="Permanent link">&para;</a></h2>
+<p>Par de arquivos analisado (mesmo projeto, mesmo comando, só o slot 1 muda):</p>
+<table>
+<thead>
+<tr>
+<th>arquivo</th>
+<th>tamanho</th>
+<th><code>StartOfConfigdata</code></th>
+<th>páginas</th>
+<th>texturas</th>
+<th>quadros no slot 1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/tmp/opencode/template_static.acf</code></td>
+<td>901.128 B</td>
+<td><code>0xD4000</code></td>
+<td>11</td>
+<td>98</td>
+<td>1</td>
+</tr>
+<tr>
+<td><code>/tmp/opencode/gif75.acf</code></td>
+<td>5.160.968 B</td>
+<td><code>0x4E4000</code></td>
+<td>11</td>
+<td><strong>98</strong></td>
+<td><strong>75</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Os dois passam no <code>acf_inspect.py</code> (magic, versão e <code>CheckCode</code> das 11 páginas).</p>
+<p><strong>Ressalva medida</strong>: os dois builds <strong>não</strong> diferem só no slot 1. Das três texturas
+240×240 das páginas 4/5/6: a da pág. 6 é idêntica (MD5 do payload igual), a da <strong>pág. 4</strong>
+(o slot do GIF) mudou de conteúdo, e a da <strong>pág. 5</strong> também (no estático é uma imagem, no
+<code>gif75</code> é um quadro preto — 53.315 dos 57.600 bytes diferentes). Isso importa para
+interpretar o número de bytes divergentes da reconstrução (§7.6).</p>
+<h2 id="71-q1-onde-estao-os-75-quadros">7.1 Q1 — onde estão os 75 quadros<a class="headerlink" href="#71-q1-onde-estao-os-75-quadros" title="Permanent link">&para;</a></h2>
+<p><strong>Não existe textura extra.</strong> O número de registros <code>TextureClass</code> é <strong>98 nos dois
+arquivos</strong>. Os 75 quadros são <strong>75 fatias (slices) de uma única textura</strong>: o registro
+<code>#1</code> da página 4.</p>
+<p>O endereço de cada fatia vem de <code>TextureClass.cpp:785</code> (caso <code>staticTexture == 0</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="n">addr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FocusedSlice</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">SingleSliceSize</span><span class="p">;</span>
+<span class="n">sourcebufferaddr</span><span class="p">[..].</span><span class="n">Addr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TexAddr</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">addr</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">TEXTURE_ADDR_OFFSET</span><span class="p">;</span><span class="w">   </span><span class="c1">// :791</span>
+</code></pre></div>
+<p>Medido no registro (pág. 4, <code>#1</code>, tabela em bloco+<code>0x21C</code>):</p>
+<table>
+<thead>
+<tr>
+<th>campo</th>
+<th>valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SingleSliceSize</code> (+0)</td>
+<td><code>0x0000E100</code> = 57.600</td>
+</tr>
+<tr>
+<td><code>TexAddr</code> (+4)</td>
+<td><code>0x000A77B0</code> = 686.000</td>
+</tr>
+<tr>
+<td><code>SliceFlagsHeaderAddr</code> (+8)</td>
+<td><code>0x004C62B0</code> = 5.006.000 (= <code>TexAddr + 75*SingleSliceSize</code>)</td>
+</tr>
+<tr>
+<td><code>mTexAttr</code> (+12)</td>
+<td><code>0x00000110</code> (STCRGBA888 + <code>ADDRTEXTURE</code>)</td>
+</tr>
+<tr>
+<td><code>TexWidth/TexHeight</code></td>
+<td>240 / 240</td>
+</tr>
+<tr>
+<td><code>staticTexture</code> (+44)</td>
+<td>0 (sem entrelaçamento de 16 KB)</td>
+</tr>
+</tbody>
+</table>
+<p>Portanto <strong>quadro <em>n</em> = <code>0xA77B0 + n*0xE100</code></strong>, contíguos, na ordem das fatias:</p>
+<table>
+<thead>
+<tr>
+<th>n</th>
+<th>offset</th>
+<th>n</th>
+<th>offset</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td><code>0x0A77B0</code></td>
+<td>49</td>
+<td><code>0x3588B0</code></td>
+</tr>
+<tr>
+<td>1</td>
+<td><code>0x0B58B0</code></td>
+<td>50</td>
+<td><code>0x3669B0</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>0x0C39B0</code></td>
+<td>51</td>
+<td><code>0x374AB0</code></td>
+</tr>
+<tr>
+<td>24</td>
+<td><code>0x1F8FB0</code></td>
+<td>74</td>
+<td><code>0x4B81B0</code></td>
+</tr>
+<tr>
+<td>25</td>
+<td><code>0x2070B0</code></td>
+<td>fim</td>
+<td><code>0x4C62B0</code></td>
+</tr>
+</tbody>
+</table>
+<p>Depois do último quadro vem o <em>trailer</em> de fatias (§7.4) e então as texturas das páginas
+5 e 6, que foram relocadas:</p>
+<table>
+<thead>
+<tr>
+<th>região</th>
+<th>estático</th>
+<th>gif75</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pág. 4 <code>#1</code> (slot 1)</td>
+<td><code>0xA77B0</code> + 1×57.600</td>
+<td><code>0xA77B0</code> + 75×57.600 = até <code>0x4C62B0</code></td>
+</tr>
+<tr>
+<td>trailer do slot 1</td>
+<td><code>0xB58B0</code>, 16 B</td>
+<td><code>0x4C62B0</code>, 32 B</td>
+</tr>
+<tr>
+<td>pág. 5 <code>#1</code></td>
+<td><code>0xB58C0</code></td>
+<td><code>0x4C62D0</code></td>
+</tr>
+<tr>
+<td>trailer</td>
+<td><code>0xC39C0</code>, 16 B</td>
+<td><code>0x4D43D0</code>, 16 B</td>
+</tr>
+<tr>
+<td>pág. 6 <code>#1</code></td>
+<td><code>0xC39D0</code></td>
+<td><code>0x4D43E0</code></td>
+</tr>
+<tr>
+<td>trailer</td>
+<td><code>0xD1AD0</code>, 16 B</td>
+<td><code>0x4E24E0</code>, 16 B</td>
+</tr>
+<tr>
+<td>padding até a config</td>
+<td><code>0xD1AE0</code>..<code>0xD4000</code> (9.504 B)</td>
+<td><code>0x4E24F0</code>..<code>0x4E4000</code> (6.928 B)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Conta do tamanho</strong>: <code>4.259.840</code> (delta de <code>StartOfConfigdata</code>) <code>= 74×57.600 + (32−16) − (9.504−6.928)</code>
+= <code>4.262.400 + 16 − 2.576</code>. O crescimento das fatias é absorvido em parte pelo padding
+do fim da área de textura.</p>
+<p>Os 75 quadros têm só <strong>6 conteúdos distintos</strong> (o gerador gravou as repetições, não
+deduplicou): <code>0</code>, <code>1..24</code>, <code>25</code>, <code>26..49</code>, <code>50</code>, <code>51..74</code>. Ele também não reaproveita a
+imagem do build estático: o quadro 0 do <code>gif75</code> ≠ imagem do <code>template_static</code>.</p>
+<h2 id="72-q2-como-o-widget-referencia-a-sequencia">7.2 Q2 — como o widget referencia a sequência<a class="headerlink" href="#72-q2-como-o-widget-referencia-a-sequencia" title="Permanent link">&para;</a></h2>
+<p>O widget é do tipo <code>GIF</code> (34) e guarda cinco <code>u16</code> consecutivos em
+<code>WDG_u16_userVariables[WIDGET_GENERAL_NUM + 8..12]</code> (<code>AHMI/widgetClass_cd.h:152-156</code>:</p>
+<div class="highlight"><pre><span></span><code>+8  GifNowTime     +9  GifInterval   +10 GifNowIdx   +11 GifSliceNum   +12 GifID
+</code></pre></div>
+<p>No bloco da página 4 eles ficam em <strong>bloco+<code>0x178</code>..<code>0x181</code></strong>:</p>
+<table>
+<thead>
+<tr>
+<th>offset</th>
+<th>índice</th>
+<th>campo</th>
+<th>estático</th>
+<th>gif75</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>+0x178</code></td>
+<td><code>[GENERAL+8]</code></td>
+<td><code>GifNowTime</code></td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>+0x17A</code></td>
+<td><code>[GENERAL+9]</code></td>
+<td><code>GifInterval</code></td>
+<td>100</td>
+<td>100</td>
+</tr>
+<tr>
+<td><code>+0x17C</code></td>
+<td><code>[GENERAL+10]</code></td>
+<td><code>GifNowIdx</code></td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>+0x17E</code></td>
+<td><code>[GENERAL+11]</code></td>
+<td><strong><code>GifSliceNum</code></strong></td>
+<td><strong>1</strong></td>
+<td><strong>75</strong></td>
+</tr>
+<tr>
+<td><code>+0x180</code></td>
+<td><code>[GENERAL+12]</code></td>
+<td><code>GifID</code></td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>Fluxo em runtime:</p>
+<ul>
+<li><code>GifClass::widgetCtrl</code> pega a textura por índice:
+  <code>texturePtr = &amp;pCurrentPage-&gt;pBasicTextureList[p_wptr-&gt;StartNumofTex]</code>
+  (<code>CS/AHMI/Widget/Gif.cpp:201</code>). A página tem 2 texturas: <code>#0</code> = <code>PURECOLOR</code>
+  (fundo) e <code>#1</code> = a imagem 240×240, então o widget só pode estar apontando para <code>#1</code>
+  (não localizei o campo <code>StartNumofTex</code> no bloco, mas é o único valor que faz a
+  animação cair sobre a imagem).</li>
+<li>o quadro exibido é <code>texturePtr-&gt;FocusedSlice = p_wptr-&gt;GifNowIdx</code>, validado contra
+  <code>GifSliceNum</code> (<code>Gif.cpp:343-354</code>) — daí o endereço por fatia.</li>
+<li><code>ActionProcessor::tickGifOP</code> (<code>CS/AHMI/ActionProcessor.cpp:2405-2445</code>) soma
+  <code>AnimationIntervalTime</code> (= <strong>30 ms</strong> em <code>EMBEDDED</code>, <code>AHMI/aniamtion.h:30</code>) em
+  <code>GifNowTime</code> a cada tick e, quando passa de <code>GifInterval</code> (= 100), chama
+  <code>SetValueCtrl</code> → <code>GifNowIdx = (GifNowIdx+1) % GifSliceNum</code> (<code>Gif.cpp:415</code>).
+  Período efetivo: <code>ceil(100/30)=4</code> ticks ≈ <strong>120 ms por quadro</strong>.
+  O timer é registrado em <code>DynamicPageClass.cpp:1464</code>
+  (<code>setInterval(tickGifOP, NULL, AnimationIntervalTime)</code>).</li>
+<li><code>GifID</code> fica 0 (<code>= GZIPTYPE_Intern | id 0</code>), mas <strong>não é usado neste firmware</strong>
+  (§7.3).</li>
+</ul>
+<p><strong>Diff byte a byte dos blocos de página</strong> (o resto do bloco é idêntico):</p>
+<table>
+<thead>
+<tr>
+<th>página</th>
+<th>offset no bloco</th>
+<th>campo</th>
+<th>antes → depois</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+<td><code>+0xE52</code> (u16)</td>
+<td>padding do registro <code>#18</code> (<code>TextureClass</code>+46) — ver §7.6</td>
+<td><code>0x0292</code> → <code>0x0291</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>+0x17E</code></td>
+<td><code>GifSliceNum</code></td>
+<td><code>1</code> → <code>75</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>+0x225..0x226</code></td>
+<td><code>#1.SliceFlagsHeaderAddr</code> (bytes 1-2)</td>
+<td><code>0x0B58B0</code> → <code>0x4C62B0</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>+0x220..0x222</code></td>
+<td><code>#1.TexAddr</code></td>
+<td><code>0x0B58C0</code> → <code>0x4C62D0</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>+0x224..0x226</code></td>
+<td><code>#1.SliceFlagsHeaderAddr</code></td>
+<td><code>0x0C39C0</code> → <code>0x4D43D0</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>+0x220..0x222</code></td>
+<td><code>#1.TexAddr</code></td>
+<td><code>0x0C39D0</code> → <code>0x4D43E0</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>+0x224..0x226</code></td>
+<td><code>#1.SliceFlagsHeaderAddr</code></td>
+<td><code>0x0D1AD0</code> → <code>0x4E24E0</code></td>
+</tr>
+</tbody>
+</table>
+<p>E, na tabela de descritores de página (<code>ConfigInfo</code>+284+<code>CfgStringSize</code>, 56 B por página),
+só o <code>CheckCode</code> muda — <code>StoreOffset</code>, <code>TotalSize</code>, contagens e <code>GifSliceNum</code> <strong>da página
+continuam iguais</strong> (o bloco não cresce):</p>
+<table>
+<thead>
+<tr>
+<th>página</th>
+<th><code>CheckCode</code> antes</th>
+<th>depois</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+<td><code>0x6E841F06</code></td>
+<td><code>0x6E871F06</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>0xA7056A92</code></td>
+<td><code>0xA7085092</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>0xA7032492</code></td>
+<td><code>0xA7056492</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>0xA7056692</code></td>
+<td><code>0xA7072292</code></td>
+</tr>
+</tbody>
+</table>
+<p>⚠️ Ou seja: <strong>mexer no bloco de uma página obriga a recalcular o <code>CheckCode</code> daquela
+página</strong> — que não é checksum de textura e sim de página (§3.4). O <code>minitela_patch.py</code>
+hoje não faz isso (ele só mexe antes de <code>StartOfConfigdata</code>).</p>
+<h2 id="73-q3-os-quadros-estao-crus-stc-nao-em-gzip">7.3 Q3 — os quadros estão crus (STC), não em gzip<a class="headerlink" href="#73-q3-os-quadros-estao-crus-stc-nao-em-gzip" title="Permanent link">&para;</a></h2>
+<p>Condição de compilação, lida no fonte:</p>
+<ul>
+<li>o <code>#include</code> do <code>gziplib</code> em <code>Gif.cpp</code> é <code>#ifndef CHIP_GC9002_NoHyper</code> +
+  <code>#if defined(CHIP_GC9002)</code> (<code>Gif.cpp:17-28</code>);</li>
+<li>mas toda a lógica de bloco comprimido está sob <strong><code>#ifdef USE_GZIP_LIB</code></strong>
+  (<code>Gif.cpp:203-259</code>), e em <code>projects/AHMI_SW/Source/ahmi/app/platform.h:42</code> a macro está
+  <strong>comentada</strong>: <code>//#define USE_GZIP_LIB</code>. Idem <code>AHMIInterface.cpp</code> (tarefa de 10 ms).</li>
+<li>não existe macro <code>texture_gif</code> no fonte; o que decide é <code>USE_GZIP_LIB</code>.</li>
+<li><code>CHIP_GC9002_NoHyper</code> só retiraria o <code>#include</code>; o caminho gzip depende de
+  <code>USE_GZIP_LIB</code> de qualquer forma.</li>
+</ul>
+<p>Com <code>USE_GZIP_LIB</code> <strong>ligado</strong>, <code>GifID != 0xFFFF</code> faria o widget buscar
+<code>getGzipBlockInfo(GifID &amp; 0x7FFF, GifID&gt;&gt;15)</code> e o dado seria um bloco LUT:
+<code>u32@bloco</code> com <code>lutSize = valor&gt;&gt;12</code> (KB), <code>"AHMI"</code> em <code>bloco + lutSize*1024</code>, header
+comprimido de 32 B e cada quadro em <code>0x20 + n*SinglesliceSize</code>
+(<code>CS/gziplib/gzipBlock.cpp:39-91</code>, <code>Main/AHMIInterface.cpp:435-443</code>). <strong>Não é o caso
+aqui.</strong></p>
+<p>Provas no arquivo:</p>
+<ul>
+<li>não existe a string <code>"AHMI"</code> nem <code>"GIF"</code> em <code>[0xA77B0, 0x4C62B0)</code>;</li>
+<li>os 75 quadros têm exatamente <code>75 × 57.600 = 75 × 3600 × 16</code> bytes;</li>
+<li>no quadro 0, <strong>3600 de 3600</strong> blocos têm <code>bit0 = 0</code> (STC one-partition, §2.3).</li>
+</ul>
+<h2 id="74-o-trailer-de-fatias-sliceflagsheaderaddr">7.4 O trailer de fatias (<code>SliceFlagsHeaderAddr</code>)<a class="headerlink" href="#74-o-trailer-de-fatias-sliceflagsheaderaddr" title="Permanent link">&para;</a></h2>
+<p>É o que o §2.4 chamava de "tabela de flags" e nenhum arquivo da amostra usava. Layout
+lido de <code>TextureClass.cpp:565-567</code> + <code>getSliceRealOffsetWithFlags</code> (<code>:441-514</code>):</p>
+<div class="highlight"><pre><span></span><code>+0  u32  flagsAddr   = trailer+8
++4  u32  colorsAddr  = trailer+8+(2*ceil(nfatias/16))
++8  u16[ceil(n/16)]  bitmap: bit i = 1 -&gt; fatia i é imagem; 0 -&gt; fatia i é cor
+..  área de cores (2*ceil(n/16) bytes nos arquivos medidos; ver ressalva)
+padding com zero até múltiplo de 16
+</code></pre></div>
+<p>Detalhes que morderam:</p>
+<ul>
+<li>esses dois primeiros <code>u32</code> são gravados como <strong>dois <code>u16</code> little-endian</strong>, e lidos de
+  volta por <code>readU32FromTextureBuffer</code> como <code>(arr[0]&lt;&lt;16)|arr[1]</code> (<code>:377-399</code>).
+  Ex.: <code>4c 00 b8 62</code> → <code>0x004C62B8</code>. Não é <code>u32</code> LE nem BE "de livro".</li>
+<li>o bitmap é lido <strong>MSB-first dentro de cada <code>u16</code></strong> (<code>readBitFromTextureBuffer</code>,
+  <code>:401-439</code>).</li>
+<li>tamanho: <code>8 + 4*ceil(n/16)</code> arredondado para 16 B. Dá <strong>16 B</strong> para n ≤ 32,
+  <strong>32 B</strong> para 33 ≤ n ≤ 96, <strong>48 B</strong> para 97 ≤ n ≤ 112… É por isso que o trailer do
+  slot 1 passa de 16 para 32 bytes com 75 fatias, e o das páginas 5/6 continua 16.</li>
+<li>em <code>getSliceRealOffsetWithFlags</code> o retorno é o <em>índice denso</em> da fatia imagem
+  (conta os bits 1 até <code>FocusedSlice</code> e subtrai 1) — com todas as fatias imagem, o
+  resultado é o próprio índice, e <code>addr = realOffset * SingleSliceSize</code> (<code>:750-765</code>).</li>
+<li><strong>ressalva</strong>: nenhum arquivo analisado tem fatia de <em>cor</em>, então o formato exato da
+  área de cores (2 bytes por 16 fatias no trailer × leitura <code>u32</code> em
+  <code>colorsAddr + idx*4</code>, <code>:777</code>) não foi exercitado. Para GIF (todas as fatias imagem)
+  basta zerar essa área.</li>
+</ul>
+<p>Conteúdo medido em <code>0x4C62B0</code>:
+<code>4c 00 b8 62 | 4c 00 c2 62 | ff ff ff ff ff ff ff ff e0 ff | 00…</code> →
+flagsAddr <code>0x4C62B8</code>, colorsAddr <code>0x4C62C2</code>, 75 bits 1 seguidos de zeros.</p>
+<h2 id="75-q4-o-que-muda-no-header-e-no-configinfo">7.5 Q4 — o que muda no header e no <code>ConfigInfo</code><a class="headerlink" href="#75-q4-o-que-muda-no-header-e-no-configinfo" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>campo</th>
+<th>estático</th>
+<th>gif75</th>
+<th>delta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tamanho do arquivo</td>
+<td>901.128</td>
+<td>5.160.968</td>
+<td>+4.259.840</td>
+</tr>
+<tr>
+<td><code>u32 @0</code> <code>StartOfConfigdata</code></td>
+<td><code>0x000D4000</code></td>
+<td><code>0x004E4000</code></td>
+<td>+4.259.840</td>
+</tr>
+<tr>
+<td><code>u32 @4</code> checksum</td>
+<td><code>0xCBB8713E</code></td>
+<td><code>0x74ADA339</code></td>
+<td>recalculado</td>
+</tr>
+<tr>
+<td><code>u32 @8</code></td>
+<td><code>0x00067A90</code> (424.592)</td>
+<td><code>0x0026FF98</code> (2.555.800)</td>
+<td>+2.131.208</td>
+</tr>
+<tr>
+<td><code>ConfigInfo+36</code> <code>TotalSize</code></td>
+<td>901.120</td>
+<td>5.160.960</td>
+<td>+4.259.840</td>
+</tr>
+<tr>
+<td><code>ConfigInfo+40</code> <code>TotalTextureSize</code></td>
+<td>849.184</td>
+<td>5.111.600</td>
+<td><strong>+4.262.416</strong></td>
+</tr>
+<tr>
+<td><code>ConfigInfo+44</code> <code>DynamicPageSize</code></td>
+<td>6.256</td>
+<td>6.256</td>
+<td>0</td>
+</tr>
+<tr>
+<td>todo o resto do <code>ConfigInfo</code></td>
+<td>—</td>
+<td>—</td>
+<td>idêntico</td>
+</tr>
+</tbody>
+</table>
+<p>Relações (todas conferidas nos dois arquivos):</p>
+<ul>
+<li><code>TotalSize = tamanho_do_arquivo − 8</code> e <code>tamanho = 8 + k*16.384</code>.</li>
+<li><code>@8 = TotalTextureSize / 2</code> (424.592×2 = 849.184; 2.555.800×2 = 5.111.600).</li>
+<li><code>delta(TotalTextureSize) = 74×57.600 + (32−16) = 4.262.416</code> — o campo soma o espaço
+  de textura <strong>incluindo os trailers</strong>, por isso difere do delta do arquivo em 2.576
+  (o padding que diminuiu).</li>
+<li>o checksum do arquivo é a única coisa que precisa ser recalculada <em>depois</em> de tudo
+  (§3.4): <code>XOR</code> de todas as words, exceto a própria e a última.</li>
+</ul>
+<h2 id="76-q5-receita-para-gerar-o-animado">7.6 Q5 — receita para gerar o animado<a class="headerlink" href="#76-q5-receita-para-gerar-o-animado" title="Permanent link">&para;</a></h2>
+<p>Partindo de um <code>.acf</code> estático válido e de N quadros já codificados em STC
+(<code>N × slice_bytes</code>, <code>slice_bytes = ceil(w/4)*ceil(h/4)*16</code>):</p>
+<ol>
+<li><strong>Localizar o registro do slot.</strong> No bloco da página do slot, a tabela
+   <code>TextureClass[]</code> está no fim do bloco; o registro da imagem é o que tem
+   <code>mTexAttr&gt;&gt;4 in (0x0,0x1)</code> e <code>TexWidth × TexHeight</code> = tamanho do widget.
+   <code>TexAddr</code>, <code>SingleSliceSize</code>, <code>SliceFlagsHeaderAddr</code> e o trailer atual (16 B) saem dele.</li>
+<li><strong>Delta</strong> <code>d = (N−1)*slice_bytes + trailer_novo − trailer_velho</code>
+   (<code>trailer(n) = 8 + 4*ceil(n/16)</code> arredondado para 16).</li>
+<li><strong>Remontar a área de textura</strong> <code>[0, StartOfConfigdata)</code>:</li>
+<li><code>[0, TexAddr)</code> intacto;</li>
+<li>N quadros em <code>TexAddr + i*slice_bytes</code>;</li>
+<li>trailer novo em <code>TexAddr + N*slice_bytes</code>: <code>flagsAddr = tr+8</code>,
+     <code>colorsAddr = tr+8+2*ceil(N/16)</code>, bitmap com N bits 1 (MSB-first em cada <code>u16</code>),
+     área de cores zerada, padding até 16;</li>
+<li>toda textura (e trailer) com <code>addr &gt; TexAddr</code> deslocada em <code>+d</code>, na mesma ordem
+     (o gerador reempacota assim; nenhum alinhamento extra é usado);</li>
+<li>completar até <code>StartOfConfigdata_novo</code> com o padding (qualquer byte — o firmware
+     não lê; para reproduzir o gerador, copie o padding antigo truncado).</li>
+<li><strong><code>StartOfConfigdata_novo</code></strong> = <code>arredonda_16K(fim_da_última_textura + trailer + padding)</code>.
+   Na prática: o arquivo final tem que continuar <code>8 + k*16.384</code>; o padding absorve a
+   diferença (aqui sobraram 6.928 B).</li>
+<li><strong>Patchar os registros de textura</strong> de todas as páginas afetadas:
+   <code>TexAddr += d</code> e, se <code>SliceFlagsHeaderAddr != 0</code>, <code>+= d</code>; no registro do slot,
+   <code>SliceFlagsHeaderAddr = TexAddr + N*slice_bytes</code>.</li>
+<li><strong><code>GifSliceNum = N</code></strong> no bloco do widget (<code>WDG_u16_userVariables[+11]</code>, aqui
+   bloco+<code>0x17E</code>). <code>GifNowIdx</code>/<code>GifNowTime</code> = 0. <code>GifID</code> fica como está.</li>
+<li><strong>Recalcular o <code>CheckCode</code></strong> de <em>cada</em> página cujo bloco foi tocado
+   (<code>0xA55A5AA5 ^ XOR(words do bloco)</code>) no descritor <code>ConfigInfo+284+CfgStringSize+i*56+8</code>.</li>
+<li><strong>Header/ConfigInfo</strong>: <code>@0</code>, <code>TotalSize</code>, <code>TotalTextureSize</code> (<code>+delta</code>),
+   <code>@8 = TotalTextureSize/2</code>, e por último o checksum <code>@4</code> e o footer <code>0xA55A5AA5</code>.</li>
+<li>Validar com <code>./acf_inspect.py</code> (é o que o firmware checa).</li>
+</ol>
+<h3 id="validacao-da-receita-reconstrucao">Validação da receita (reconstrução)<a class="headerlink" href="#validacao-da-receita-reconstrucao" title="Permanent link">&para;</a></h3>
+<p>Implementei os 9 passos acima em Python e comparei com o <code>gif75.acf</code> original:</p>
+<table>
+<thead>
+<tr>
+<th>variante</th>
+<th>entrada</th>
+<th>bytes</th>
+<th>divergentes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>B — estrutura</strong></td>
+<td>estático + os 75 quadros do <code>gif75</code> + o conteúdo das páginas 5/6 do <code>gif75</code></td>
+<td>5.160.968</td>
+<td><strong>10</strong></td>
+</tr>
+<tr>
+<td>A — estrita</td>
+<td>estático + os 75 quadros (conteúdo das páginas 5/6 vem do estático)</td>
+<td>5.160.968</td>
+<td><strong>53.326</strong></td>
+</tr>
+</tbody>
+</table>
+<p>A variante A só diverge por <strong>conteúdo</strong>: 53.315 dos 53.326 bytes são os pixels da
+página 5 (o estático tem outra imagem ali — §7.1); os 11 restantes são os mesmos 10 de B
+mais 1 byte de checksum.</p>
+<p>Os <strong>10 bytes</strong> de B, um por um:</p>
+<table>
+<thead>
+<tr>
+<th>offset</th>
+<th>bytes</th>
+<th>o que é</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0x4</code>..<code>0x6</code></td>
+<td>3</td>
+<td><strong>checksum do arquivo</strong> — consequência dos outros (recalculado sobre bytes diferentes)</td>
+</tr>
+<tr>
+<td><code>0x4E41FA</code></td>
+<td>1</td>
+<td><code>CheckCode</code> da pág. 2 — consequência do byte seguinte</td>
+</tr>
+<tr>
+<td><code>0x4E7136</code> (<code>cfg+0x3136</code> = pág.2 bloco <code>+0xE52</code>)</td>
+<td>1</td>
+<td><strong>padding do registro <code>TextureClass</code></strong> (o struct acaba em <code>+45</code>, <code>useCanvasPoint</code>; <code>+46/+47</code> são padding e o firmware não lê)</td>
+</tr>
+<tr>
+<td><code>0x4E91BE</code>, <code>0x4E923A</code> (pág. 7, bloco <code>+0x92</code> e <code>+0x10E</code>)</td>
+<td>2</td>
+<td>campo <code>u16</code> <strong>não decodificado</strong>, duplicado em <code>CanvasClass</code>/<code>SubCanvasClass</code> (204 nas págs. 4/5/6; 79→83 na pág. 7). As duas ocorrências mudam igual → o <code>CheckCode</code> da pág. 7 não muda (o XOR das duas variações se anula)</td>
+</tr>
+<tr>
+<td><code>0x4EC000</code>..<code>0x4EC002</code> (<code>cfg+0x8000</code>)</td>
+<td>3</td>
+<td>lixo de heap do gerador nos 4 bytes antes do footer (<code>0x8FF2E8C4</code> vs <code>0x8FF0E2D4</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Ou seja: <strong>nenhum byte de estrutura divergiu</strong>. Dos 10: 4 são lixo/padding do gerador
+que o firmware não lê (1 em <code>TextureClass</code>+46, 3 antes do footer), 2 são um campo interno
+ainda não decodificado e 4 são checksums que são função dos outros bytes.</p>
+<h2 id="77-o-que-o-minitela_patchpy-precisa-mudar">7.7 O que o <code>minitela_patch.py</code> precisa mudar<a class="headerlink" href="#77-o-que-o-minitela_patchpy-precisa-mudar" title="Permanent link">&para;</a></h2>
+<p>Hoje (<code>minitela_patch.py:103-120</code>) ele abre o template, sobrescreve
+<code>data[addr:addr+slice]</code> com a textura nova (mesmo tamanho, mesmos offsets), chama
+<code>codec.set_checksum</code> e grava. Isso funciona porque a área de textura <strong>não</strong> é coberta
+por nenhum checksum e nada se move.</p>
+<p>Para suportar N &gt; 1 quadros é preciso:</p>
+<ol>
+<li><strong>Deixar de ser patch in-place.</strong> Com N &gt; 1 o arquivo cresce e tudo depois do slot
+   anda; o mínimo é a rotina de "remontar a área de textura + relocar" do §7.6 (passos
+   2-5). Alternativa mais simples e mais segura: manter <strong>um template por número de
+   quadros</strong> (N=1, N=16, N=32, ... usam trailers de tamanhos diferentes) e só
+   sobrescrever os quadros — mas o alvo continua sendo o registro certo, não um offset
+   fixo.</li>
+<li><strong>Escrever o trailer de fatias</strong> (<code>SliceFlagsHeaderAddr</code>) com o tamanho certo
+   (16 B até 32 fatias, 32 B até 96, …) e o bitmap todo em 1 para fatias de imagem.</li>
+<li><strong>Relocar</strong> <code>TexAddr</code> e <code>SliceFlagsHeaderAddr</code> de todas as texturas com
+   <code>addr &gt; slot_addr</code> (aqui as páginas 5 e 6), atualizando os registros nos blocos.</li>
+<li><strong>Atualizar <code>GifSliceNum</code></strong> no bloco do widget (não existe campo equivalente na
+   página: <code>DynamicPageCfgClass</code> não tem contagem de quadros).</li>
+<li><strong>Recalcular o <code>CheckCode</code></strong> de toda página cujo bloco mudou (<code>0xA55A5AA5 ^ XOR</code>).
+   Este é o ponto que hoje não existe e que faria o firmware entrar no
+   <code>do{}while</code> infinito de <code>AHMIInterface.cpp:1387-1423</code> se ficasse para trás.</li>
+<li><strong>Atualizar o header</strong>: <code>@0</code>, <code>TotalSize = tamanho−8</code>, <code>TotalTextureSize += d</code>,
+   <code>@8 = TotalTextureSize/2</code>, e só então <code>@4</code> (checksum) — nessa ordem.</li>
+<li><strong>Manter <code>8 + k*16.384</code></strong>: o padding do fim da área de textura é a variável de ajuste;
+   <code>StartOfConfigdata</code> continua múltiplo de 16 KB e <code>DynamicPageSize</code> não muda.</li>
+<li><strong>Não copiar o padding nem os bytes <code>TextureClass</code>+46/+47 do template novo</strong> — são
+   lixo de heap do gerador; qualquer valor serve (mas, se quiser reprodutibilidade byte
+   a byte, copie do template truncado, como na reconstrução).</li>
+<li>Ler os quadros do GIF respeitando o <code>GifInterval</code> implícito: o firmware consome
+   <code>GifSliceNum</code> fatias em sequência a <code>ceil(GifInterval/30)</code> ticks cada
+   (<code>ActionProcessor.cpp:2405-2437</code>), então o campo <code>GifInterval</code> do bloco tem que
+   acompanhar o atraso do GIF se ele mudar.</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Voltar para o topo
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Rodapé" >
+        
+          
+          <a href="../RE-firmware/" class="md-footer__link md-footer__link--prev" aria-label="Anterior: O firmware e a flash">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Anterior
+              </span>
+              <div class="md-ellipsis">
+                O firmware e a flash
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../comunidade/" class="md-footer__link md-footer__link--next" aria-label="Próximo: Comunidade">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Próximo
+              </span>
+              <div class="md-ellipsis">
+                Comunidade
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Código MIT · textos CC BY-SA 4.0 · sem material proprietário do fabricante
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copiado para \u00e1rea de transfer\u00eancia", "clipboard.copy": "Copiar para \u00e1rea de transfer\u00eancia", "search.result.more.one": "mais 1 nesta p\u00e1gina", "search.result.more.other": "# mais nesta p\u00e1gina", "search.result.none": "Nenhum documento encontrado", "search.result.one": "1 documento encontrado", "search.result.other": "# documentos encontrados", "search.result.placeholder": "Digite para iniciar a busca", "search.result.term.missing": "Ausente", "select.version": "Selecione a vers\u00e3o"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>
