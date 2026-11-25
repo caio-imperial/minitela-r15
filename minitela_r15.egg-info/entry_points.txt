@@ -1,0 +1,2 @@
+[console_scripts]
+minitela = minitela_cli:main

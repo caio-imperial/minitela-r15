@@ -106,6 +106,39 @@ precisa estar rodando **antes** do reset.
     originais da sua unidade e um plano para `product`/`calibration`. `cpu1` errado, sem
     backup, é o mesmo estado de novo.
 
+## Caso real: o `CheckCode` de uma página
+
+Uma unidade de outro usuário parou de enumerar USB (`-110`/`-62`) depois de gravar um
+`.acf` editado à mão. A reconstrução offline do arquivo mostrou **um único** invariante
+quebrado:
+
+```
+pg4: CheckCode gravado 0xd0691422, recalculado 0xd0d91492
+```
+
+Duas palavras explicavam toda a diferença:
+
+| offset no bloco | antes (controle) | depois (editado) | campo |
+|---|---|---|---|
+| `+0x1c` | `0x00f000f0` | `0x00c000c0` | `TexWidth/TexHeight` |
+| `+0x24` | `0x02000200` | `0x02800280` | `ScalerX/Y` (1.9 fixo) |
+
+`0x300030 ^ 0x800080 = 0xb000b0` — exatamente o delta do `CheckCode`. Nenhuma outra
+palavra mudou, e as fatias da animação estavam intactas.
+
+É o retrato do [FATO 12](../RE-acf.md#fato-12-tamanho-da-textura-escalonador-e-tile-boxes-andam-juntos):
+**mexer no bloco de uma página exige recalcular o `CheckCode` daquela página**, e o par
+tamanho↔escalonador tem de andar junto.
+
+Reparo offline:
+
+```bash
+./acf_inspect.py --fix seu.acf --out corrigido.acf
+```
+
+Mas atenção: com o app preso **antes** do USB, o arquivo corrigido ainda precisa ser
+entregue — e aí só vale o caminho por UART descrito acima.
+
 ## Cuidado que evita o problema
 
 - deixar **"limpar resíduo da flash antes"** marcado no painel;

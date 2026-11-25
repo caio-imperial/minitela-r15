@@ -14,6 +14,16 @@ que ela precisa é um `.exe` de Windows.
 
 ## Colocando uma imagem sua na minitela
 
+Instalação em um comando (com o repo clonado):
+
+```bash
+pipx install .        # ou: pip install --user .
+minitela doctor       # checa python, ffmpeg, tela, app oficial
+```
+
+Depois, tudo por um comando só: `minitela patch`, `minitela tags`, `minitela gui`,
+`minitela inspect`, `minitela doctor`.
+
 Uma vez só, para montar o ambiente:
 
 ```bash

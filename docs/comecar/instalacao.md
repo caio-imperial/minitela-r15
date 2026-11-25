@@ -20,6 +20,38 @@ sudo apt install wine wine32:i386 wine64
 O `wine64` é obrigatório: num prefixo win32 o compilador procura `zip32\7z.exe`, que não
 existe no pacote. O ambiente é criado em `~/.wine-mt64` pelo `setup`.
 
+## Instalação em um comando (recomendado)
+
+Com o repositório clonado, um comando instala o CLI e deixa tudo no `PATH`:
+
+```bash
+pipx install .        # ou: pip install --user .
+minitela doctor
+```
+
+O `doctor` diz o que está pronto e o que falta:
+
+```
+[ok  ] python 3.12.3
+[ok  ] ffmpeg: /usr/bin/ffmpeg
+!     wine: ausente (so necessario para build/layout)
+[ok  ] tela: /dev/ttyACM0
+!     app oficial: rodando (segura a porta; use pkill -x minitela)
+```
+
+A partir daí, um comando só:
+
+```bash
+minitela patch --template /usr/share/minitela/resources/ACF/Texture.acf \
+               --out ~/minha.acf --tela-cheia ~/foto.jpg --send
+minitela tags set cidade "Linhares"
+minitela inspect --diagnostico ~/minha.acf
+minitela gui
+```
+
+Todos os subcomandos: `patch`, `gif`, `tags`, `ctl`, `gui`, `inspect`, `build`,
+`recover`, `doctor`, `version`.
+
 ## Clone e confira
 
 ```bash

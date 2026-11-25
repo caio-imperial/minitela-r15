@@ -1,0 +1,10 @@
+acf_anim
+acf_codec
+acf_inspect
+minitela_build
+minitela_cli
+minitela_ctl
+minitela_gui
+minitela_patch
+minitela_recover
+minitela_tags

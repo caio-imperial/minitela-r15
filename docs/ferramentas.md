@@ -1,7 +1,9 @@
 # Ferramentas
 
 Todas em Python, só com a stdlib. Elas se carregam por caminho, então devem ficar na raiz
-do repositório.
+do repositório — ou ser instaladas com `pipx install .`, que cria o comando `minitela`
+(subcomandos `patch`, `gif`, `tags`, `ctl`, `gui`, `inspect`, `build`, `recover`,
+`doctor`).
 
 ## Para usar
 
