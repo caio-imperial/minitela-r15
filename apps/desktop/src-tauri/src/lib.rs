@@ -157,6 +157,12 @@ pub fn run() {
             commands::diagnostico,
             commands::patch_imagens,
             commands::gravar,
+            commands::controle_estado,
+            commands::conectar,
+            commands::desconectar,
+            commands::devolver_ao_app,
+            commands::pagina,
+            commands::brilho,
             commands::parar_app,
             commands::tags_uma_vez,
             commands::tags_daemon

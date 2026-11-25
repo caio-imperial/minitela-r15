@@ -26,6 +26,12 @@
     problemas: string[];
     paginas: number[];
   };
+  type Controle = {
+    conectado: boolean;
+    porta: string | null;
+    paginas: number;
+    app_oficial: boolean;
+  };
 
   let itens: Item[] = $state([]);
   let carregando = $state(true);
@@ -45,8 +51,30 @@
   let tags = $state("");
   let daemon = $state(false);
 
+  let controle: Controle = $state({
+    conectado: false,
+    porta: null,
+    paginas: 0,
+    app_oficial: false,
+  });
+  let assumindo = $state(false);
+  let paginaAtual = $state(4);
+  let brilhoAtual = $state(100);
+  let brilhoTimer: ReturnType<typeof setTimeout> | undefined;
+
   const kb = (n: number) => `${Math.round(n / 1024)} KB`;
   const base = (p: string) => p.split("/").pop() ?? p;
+
+  // `diag` recebe um valor só depois do primeiro `analisar()`: dentro de `$derived`
+  // o TS estreita o tipo para `null`, por isso o total vem por função.
+  function totalPaginas(d: Diagnostico | null, c: Controle) {
+    return d?.paginas || c.paginas || 0;
+  }
+  const paginasTotal = $derived(totalPaginas(diag, controle));
+  const podeVoltar = $derived(controle.conectado && paginaAtual > 0);
+  const podeAvancar = $derived(
+    controle.conectado && paginasTotal > 0 && paginaAtual < paginasTotal - 1,
+  );
 
   const edicaoAtiva = $derived(edicoes[ativo] as Edicao | undefined);
   const slotAtivo = $derived(slots.find((s) => s.indice === ativo));
@@ -184,9 +212,66 @@
     try {
       parou = await invoke<string>("parar_app");
       await atualizar();
+      await atualizarControle();
     } catch (e) {
       erro = String(e);
     }
+  }
+
+  async function atualizarControle() {
+    try {
+      controle = await invoke<Controle>("controle_estado");
+    } catch {
+      /* o estado é informativo; não vale derrubar a tela por isso */
+    }
+  }
+
+  async function assumir() {
+    erro = "";
+    assumindo = true;
+    try {
+      controle = await invoke<Controle>("conectar", { paginas: paginasTotal || null });
+      await atualizar();
+    } catch (e) {
+      erro = String(e);
+      await atualizarControle();
+    } finally {
+      assumindo = false;
+    }
+  }
+
+  async function devolver() {
+    erro = "";
+    try {
+      controle = await invoke<Controle>("devolver_ao_app");
+      await atualizar();
+    } catch (e) {
+      erro = String(e);
+    }
+  }
+
+  async function irPara(n: number) {
+    if (n < 0 || (paginasTotal > 0 && n >= paginasTotal)) return;
+    erro = "";
+    try {
+      await invoke("pagina", { n });
+      paginaAtual = n;
+    } catch (e) {
+      erro = String(e);
+      await atualizarControle();
+    }
+  }
+
+  function mudarBrilho(v: number) {
+    brilhoAtual = v;
+    clearTimeout(brilhoTimer);
+    brilhoTimer = setTimeout(async () => {
+      try {
+        await invoke("brilho", { n: v });
+      } catch (e) {
+        erro = String(e);
+      }
+    }, 150);
   }
 
   async function gravarNaTela() {
@@ -203,8 +288,11 @@
       const segundos = Math.round(r.bytes / 100) / 10;
       gravado = `gravado em ${r.porta} (${segundos}s)`;
       if (gerado?.paginas.length) {
+        paginaAtual = gerado.paginas[0];
         gravado += ` · exibindo a página ${gerado.paginas[0]}`;
       }
+      await atualizarControle();
+      await atualizar();
     } catch (e) {
       erro = String(e);
     } finally {
@@ -243,6 +331,7 @@
 
   async function carregar() {
     await atualizar();
+    await atualizarControle();
     try {
       const b = await invoke<string | null>("sugestao_base");
       if (b) {
@@ -308,6 +397,78 @@
           {#if a.dica}<small>{a.dica}</small>{/if}
         </div>
       {/each}
+    {/if}
+  </section>
+
+  <section>
+    <div class="topo">
+      <h2>Controle da tela</h2>
+      <div class="acoes">
+        {#if controle.conectado}
+          <button onclick={devolver}>devolver ao app oficial</button>
+        {:else}
+          {#if controle.app_oficial}
+            <button onclick={pararApp}>só parar o app oficial</button>
+          {/if}
+          <button onclick={assumir} disabled={assumindo}>
+            {assumindo ? "assumindo…" : "assumir o controle"}
+          </button>
+        {/if}
+      </div>
+    </div>
+
+    <div class="controle-linha">
+      <span class="ponto" class:ligado={controle.conectado} aria-hidden="true"></span>
+      <span class="estado">
+        {controle.conectado ? "no controle" : "sem conexão"}
+      </span>
+      <span class="caminho">
+        {controle.conectado
+          ? controle.porta
+          : controle.app_oficial
+            ? "o app oficial segura a porta"
+            : "a serial fica livre"}
+      </span>
+    </div>
+
+    {#if !controle.conectado}
+      <p class="dica">
+        assumir o controle para o app oficial (se estiver aberto) e mantém a serial com este
+        app — é o que permite trocar a página, o brilho e gravar.
+      </p>
+    {:else}
+      <div class="paginas">
+        <button onclick={() => irPara(paginaAtual - 1)} disabled={!podeVoltar}>◀</button>
+        <span>
+          página {paginaAtual}
+          {#if paginaAtual >= 4 && paginaAtual <= 6}
+            <small>· slot {paginaAtual - 3}</small>
+          {/if}
+        </span>
+        <button onclick={() => irPara(paginaAtual + 1)} disabled={!podeAvancar}>▶</button>
+        {#each slots as s (s.indice)}
+          <button
+            class="atalho"
+            class:on={paginaAtual === s.pagina}
+            onclick={() => irPara(s.pagina)}
+          >
+            slot {s.indice + 1}
+          </button>
+        {/each}
+      </div>
+
+      <label class="brilho">
+        <span class="rotulo">brilho</span>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={brilhoAtual}
+          oninput={(e) => mudarBrilho(Number(e.currentTarget.value))}
+        />
+        <code>{brilhoAtual}%</code>
+      </label>
+      {#if parou}<p class="dica">{parou}</p>{/if}
     {/if}
   </section>
 
@@ -399,7 +560,6 @@
     {/if}
 
     <div class="acoes">
-      <button onclick={pararApp}>parar app oficial</button>
       <button onclick={gravarNaTela} disabled={!gerado || gravando}>
         {gravando ? "gravando…" : "gravar na tela"}
       </button>
@@ -407,7 +567,9 @@
     {#if !gerado}
       <p class="dica">gere o .acf acima para habilitar a gravação</p>
     {/if}
-    {#if parou}<p class="dica">{parou}</p>{/if}
+    {#if !controle.conectado}
+      <p class="dica">a gravação assume o controle da tela automaticamente</p>
+    {/if}
     {#if gravado}<p class="dica">{gravado}</p>{/if}
 
     <div class="acoes">
@@ -656,6 +818,67 @@
     line-height: 1.4;
     font-size: 12px;
     color: #8b94a3;
+  }
+
+  .controle-linha {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+
+  .controle-linha .ponto {
+    background: #6b7482;
+    flex: none;
+  }
+
+  .controle-linha .ponto.ligado {
+    background: #3ddc84;
+  }
+
+  .estado {
+    color: #cdd4e0;
+  }
+
+  .paginas {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+    color: #b9c2d0;
+  }
+
+  .paginas .atalho {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+
+  .paginas .atalho.on {
+    border-color: #3ddc84;
+    color: #3ddc84;
+  }
+
+  .paginas small {
+    color: #6b7482;
+  }
+
+  .brilho {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+  }
+
+  .brilho .rotulo {
+    color: #aab3c2;
+    min-width: 96px;
+  }
+
+  .brilho input[type="range"] {
+    flex: 1;
+    max-width: 240px;
+    accent-color: #3ddc84;
   }
 
   .achado {

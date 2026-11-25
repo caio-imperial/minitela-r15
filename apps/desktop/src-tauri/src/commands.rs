@@ -21,7 +21,11 @@ pub enum Ajuste {
 }
 
 fn numero(v: f64, padrao: f64, lo: f64, hi: f64) -> f64 {
-    if v.is_finite() { v.clamp(lo, hi) } else { padrao }
+    if v.is_finite() {
+        v.clamp(lo, hi)
+    } else {
+        padrao
+    }
 }
 
 /// Filtro do ffmpeg que produz exatamente `w`×`h` RGB.
@@ -281,11 +285,11 @@ pub struct TagsView {
     pub enviadas: usize,
 }
 
-/// Lê o sistema e manda um round de tags (precisa da porta livre).
+/// Lê o sistema e manda um round de tags (usa a conexão do app).
 #[tauri::command]
 pub fn tags_uma_vez() -> Result<TagsView, String> {
-    let caminho = crate::device::encontra_porta().ok_or("nenhum /dev/ttyACM*")?;
-    let mut p = crate::device::Porta::abre(caminho).map_err(texto)?;
+    let mut g = sessao(None)?;
+    let p = &mut g.as_mut().ok_or("sem conexao com a tela")?.porta;
 
     let relogio = crate::sysinfo::relogio();
     let (bat, estado) = match crate::sysinfo::bateria() {
@@ -369,6 +373,153 @@ pub fn parar_app() -> Result<bool, String> {
     Ok(status.success())
 }
 
+// ------------------------------------------------------------------- controle
+
+/// App oficial — é ele que religamos em "devolver ao app".
+const APP_OFICIAL: &str = "/usr/share/minitela/minitela";
+
+struct Sessao {
+    porta: crate::device::Porta,
+    caminho: String,
+    paginas: u16,
+}
+
+/// Conexão mantida pelo app: enquanto existir, quem manda na tela é este app.
+static SESSAO: std::sync::Mutex<Option<Sessao>> = std::sync::Mutex::new(None);
+
+#[derive(Serialize)]
+pub struct ControleView {
+    pub conectado: bool,
+    pub porta: Option<String>,
+    pub paginas: u16,
+    pub app_oficial: bool,
+}
+
+fn trava() -> Result<std::sync::MutexGuard<'static, Option<Sessao>>, String> {
+    SESSAO
+        .lock()
+        .map_err(|_| "estado do controle corrompido".to_string())
+}
+
+/// Fecha a porta fora do lock: num tty travado o `close()` fica preso no kernel (D).
+fn descarta(sessao: Sessao) {
+    std::thread::spawn(move || drop(sessao));
+}
+
+fn solta() {
+    if let Ok(mut g) = trava()
+        && let Some(s) = g.take()
+    {
+        descarta(s);
+    }
+}
+
+fn vista(g: Option<&Sessao>) -> ControleView {
+    ControleView {
+        conectado: g.is_some(),
+        porta: g.map(|s| s.caminho.clone()),
+        paginas: g.map(|s| s.paginas).unwrap_or(0),
+        app_oficial: crate::device::app_oficial_rodando(),
+    }
+}
+
+/// Para o app oficial (se preciso), abre a porta e faz o handshake.
+fn abre_sessao(paginas: u16) -> Result<Sessao, String> {
+    if crate::device::app_oficial_rodando() {
+        let _ = Command::new("pkill").args(["-x", "minitela"]).status();
+        std::thread::sleep(std::time::Duration::from_secs(2));
+    }
+    let caminho =
+        crate::device::encontra_porta().ok_or("nenhum /dev/ttyACM*: a tela esta conectada?")?;
+    let mut porta = crate::device::Porta::abre(caminho.clone()).map_err(texto)?;
+    if let Err(e) = porta.handshake() {
+        // não fecha aqui: tty mudo trava o close — manda para outra thread
+        std::thread::spawn(move || drop(porta));
+        return Err(format!(
+            "{e} — a tela nao respondeu ao handshake. Desligue e religue a minitela \
+             (o firmware pode ter travado) e tente de novo."
+        ));
+    }
+    Ok(Sessao {
+        porta,
+        caminho: caminho.display().to_string(),
+        paginas,
+    })
+}
+
+/// Conexão existente ou uma nova, aberta fora do lock.
+fn sessao(paginas: Option<u16>) -> Result<std::sync::MutexGuard<'static, Option<Sessao>>, String> {
+    let ja = {
+        let g = trava()?;
+        g.is_some()
+    };
+    if ja {
+        return trava();
+    }
+    let nova = abre_sessao(paginas.unwrap_or(0))?;
+    let mut g = trava()?;
+    if g.is_some() {
+        drop(g);
+        descarta(nova);
+        return trava();
+    }
+    *g = Some(nova);
+    Ok(g)
+}
+
+#[tauri::command]
+pub fn controle_estado() -> ControleView {
+    match trava() {
+        Ok(g) => vista(g.as_ref()),
+        Err(_) => vista(None),
+    }
+}
+
+/// Assume o controle: para o app oficial e mantém a serial aberta com este app.
+#[tauri::command]
+pub fn conectar(paginas: Option<u16>) -> Result<ControleView, String> {
+    let g = sessao(paginas)?;
+    Ok(vista(g.as_ref()))
+}
+
+#[tauri::command]
+pub fn desconectar() -> ControleView {
+    solta();
+    controle_estado()
+}
+
+/// Solta a porta e religa o app oficial.
+#[tauri::command]
+pub fn devolver_ao_app() -> ControleView {
+    solta();
+    let _ = std::fs::remove_file("/tmp/minitela_socket");
+    let _ = Command::new("setsid").arg(APP_OFICIAL).spawn();
+    std::thread::sleep(std::time::Duration::from_millis(500));
+    controle_estado()
+}
+
+/// Troca a página exibida (0..npages-1).
+#[tauri::command]
+pub fn pagina(n: u32) -> Result<(), String> {
+    let mut g = sessao(None)?;
+    g.as_mut()
+        .ok_or("sem conexao com a tela")?
+        .porta
+        .pagina(n)
+        .map_err(texto)
+}
+
+/// Brilho do backlight (0-100).
+#[tauri::command]
+pub fn brilho(n: u32) -> Result<(), String> {
+    let mut g = sessao(None)?;
+    g.as_mut()
+        .ok_or("sem conexao com a tela")?
+        .porta
+        .brilho(n)
+        .map_err(texto)
+}
+
 #[derive(Serialize)]
 pub struct GravacaoView {
     pub porta: String,
@@ -379,41 +530,64 @@ pub struct GravacaoView {
 #[tauri::command]
 pub async fn gravar(caminho: String, pagina: Option<u32>) -> Result<GravacaoView, String> {
     let dados = std::fs::read(&caminho).map_err(texto)?;
-    if crate::device::app_oficial_rodando() {
-        return Err("o app oficial esta rodando e segura a porta: feche com 'parar app'".into());
+    let tem_sessao = {
+        let g = trava()?;
+        g.is_some()
+    };
+    if !tem_sessao && crate::device::app_oficial_rodando() {
+        return Err(
+            "o app oficial esta rodando e segura a porta: assuma o controle (ou feche o app) antes de gravar"
+                .into(),
+        );
     }
-    let porta =
-        crate::device::encontra_porta().ok_or("nenhum /dev/ttyACM*: a tela esta conectada?")?;
-    let inicio = std::time::Instant::now();
-    let caminho_porta = porta.clone();
     let tamanho = dados.len();
-    let dados_movidos = dados.clone();
-    tauri::async_runtime::spawn_blocking(move || {
-        let mut p = crate::device::Porta::abre(caminho_porta.clone()).map_err(texto)?;
-        p.envia_textura(&dados_movidos, |_| {}).map_err(texto)?;
-        if let Some(n) = pagina {
-            std::thread::sleep(std::time::Duration::from_secs(4));
-            // o firmware reenumera o USB ao fim; reabre antes de trocar a página
-            for _ in 0..20 {
-                if let Some(novo) = crate::device::encontra_porta()
-                    && let Ok(mut p2) = crate::device::Porta::abre(novo)
-                    && p2.pagina(n).is_ok()
-                {
-                    return Ok::<usize, String>(1);
-                }
-                std::thread::sleep(std::time::Duration::from_millis(500));
-            }
-            return Ok::<usize, String>(0);
-        }
-        Ok::<usize, String>(0)
-    })
-    .await
-    .map_err(texto)??;
+    let inicio = std::time::Instant::now();
+    let porta = tauri::async_runtime::spawn_blocking(move || grava_bloqueante(dados, pagina))
+        .await
+        .map_err(texto)??;
     Ok(GravacaoView {
-        porta: porta.display().to_string(),
+        porta,
         tamanho,
         bytes: inicio.elapsed().as_millis() as u64,
     })
+}
+
+/// Grava pelo app e devolve a conexão depois que o firmware reenumera o USB.
+fn grava_bloqueante(dados: Vec<u8>, pagina_alvo: Option<u32>) -> Result<String, String> {
+    let mut g = sessao(None)?;
+    let (caminho, paginas) = {
+        let s = g.as_mut().ok_or("sem conexao com a tela")?;
+        s.porta.envia_textura(&dados, |_| {}).map_err(texto)?;
+        (s.caminho.clone(), s.paginas)
+    };
+    // o firmware reenumera o USB ao terminar: solta o fd antigo fora do lock
+    if let Some(s) = g.take() {
+        descarta(s);
+    }
+    drop(g);
+    std::thread::sleep(std::time::Duration::from_secs(4));
+    for _ in 0..20 {
+        if let Some(novo) = crate::device::encontra_porta()
+            && let Ok(mut p2) = crate::device::Porta::abre(novo.clone())
+        {
+            let ok = match pagina_alvo {
+                Some(n) => p2.pagina(n),
+                None => p2.handshake().map(|_| ()),
+            };
+            if ok.is_ok() {
+                let mut g2 = trava()?;
+                *g2 = Some(Sessao {
+                    porta: p2,
+                    caminho: novo.display().to_string(),
+                    paginas,
+                });
+                return Ok(caminho);
+            }
+            std::thread::spawn(move || drop(p2));
+        }
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    }
+    Ok(caminho)
 }
 
 #[derive(Serialize)]

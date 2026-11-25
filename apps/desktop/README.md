@@ -33,7 +33,11 @@ Hoje o app faz três coisas:
 5. **prévia da textura** — decodifica o slot e devolve PNG para a interface (antes e
    depois de gerar). Em arquivos oficiais aparecem artefatos: só o sub-formato de uma
    partição está implementado (issue #2);
-6. **gravar na tela** — protocolo AHMI sobre a serial em Rust (`termios` puro via `nix`,
+6. **controle da tela** — assume a serial (para o app oficial se preciso), mantém a
+   conexão com este app e troca página, brilho e as tags; "devolver ao app oficial"
+   solta a porta e religa o app da Positivo. Num tty travado o `close()` prende a thread
+   no kernel (estado D), então o descarte da porta acontece fora do lock;
+7. **gravar na tela** — protocolo AHMI sobre a serial em Rust (`termios` puro via `nix`,
    sem `serialport`/`libudev`): handshake, troca para modo download, envio por páginas,
    fim e troca de página. Medido no hardware: **4,7 s** para o tema de fábrica.
 
