@@ -54,6 +54,14 @@ Ele converte cada imagem para o formato de bloco do chip (STC, 4x4), escreve nos
 da tabela de texturas, recalcula o checksum do header e valida com `acf_inspect.py`
 antes de gravar. Testado no hardware: a imagem aparece na tela.
 
+Aceita **GIF animado**: os quadros viram fatias de uma mesma textura (`acf_anim.py`), o
+`GifSliceNum` do widget é ajustado e o arquivo cresce `N × 57.600 B` — até 96 quadros.
+O resultado é validado do mesmo jeito antes de gravar.
+
+```bash
+./minitela_patch.py --template base.acf --out animado.acf meu.gif --send
+```
+
 O template continua sendo um artefato de build (um por versão de firmware/screen).
 
 Para voltar às imagens de fábrica:

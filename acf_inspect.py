@@ -99,10 +99,13 @@ def _find_table(data, block_start, size, ntex, nfile):
 
 
 def parse(path, show_textures=False):
-    data = open(path, "rb").read()
+    return parse_bytes(open(path, "rb").read(), path, show_textures)
+
+
+def parse_bytes(data, nome="<mem>", show_textures=False):
     problems = []
     if len(data) < 0x4000:
-        return {"path": path, "erro": "arquivo menor que 16 KB"}, ["tamanho"]
+        return {"path": nome, "erro": "arquivo menor que 16 KB"}, ["tamanho"]
 
     start, file_cks, unk = u32(data, 0), u32(data, 4), u32(data, 8)
     project = data[12:0x4000].split(b"\0", 1)[0].decode("ascii", "replace")
@@ -154,6 +157,7 @@ def parse(path, show_textures=False):
                     w, h = u16(data, p + 16), u16(data, p + 18)
                     texs.append({
                         "i": t,
+                        "off": p,
                         "slice": u32(data, p),
                         "addr": u32(data, p + 4),
                         "attr": attr,
@@ -167,7 +171,7 @@ def parse(path, show_textures=False):
                       "ok": ok, "ntex": ntex, "texs": texs})
 
     info = {
-        "path": path, "tamanho": len(data), "start": start, "unk": unk,
+        "path": nome, "tamanho": len(data), "start": start, "unk": unk,
         "project": project, "file_cks": file_cks, "npages": npages,
         "w": width, "h": height, "version": version, "pages": pages,
         "problemas": problems,

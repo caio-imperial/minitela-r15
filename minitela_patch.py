@@ -40,38 +40,35 @@ def _carrega(nome):
 
 codec = _carrega("acf_codec")
 insp = _carrega("acf_inspect")
+anim = _carrega("acf_anim")
 
 
-def rgb_do_arquivo(src, w, h):
-    """Qualquer imagem -> bytes RGB w*h*3, com o mesmo enquadramento do build."""
+def rgb_quadros(src, w, h):
+    """Qualquer imagem -> lista de quadros RGB (w*h*3 cada), no enquadramento do build."""
     vf = (f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},"
           "format=rgb24")
-    with tempfile.NamedTemporaryFile(suffix=".rgb", delete=False) as tmp:
-        out = tmp.name
-    try:
-        r = subprocess.run(
-            ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", src,
-             "-frames:v", "1", "-vf", vf, "-f", "rawvideo", out],
-            capture_output=True)
-        if r.returncode:
-            sys.exit(f"ffmpeg falhou em {src}:\n{r.stderr.decode(errors='replace')[:800]}")
-        data = open(out, "rb").read()
-    finally:
-        os.unlink(out)
-    if len(data) != w * h * 3:
-        sys.exit(f"ffmpeg devolveu {len(data)} bytes, esperado {w * h * 3}")
-    return data
+    r = subprocess.run(
+        ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", src,
+         "-vf", vf, "-f", "rawvideo", "-"],
+        capture_output=True)
+    if r.returncode:
+        sys.exit(f"ffmpeg falhou em {src}:\n{r.stderr.decode(errors='replace')[:800]}")
+    tam = w * h * 3
+    if not r.stdout or len(r.stdout) % tam:
+        sys.exit(f"ffmpeg devolveu {len(r.stdout)} bytes, não múltiplo de {tam} "
+                 f"({w}x{h})")
+    return [r.stdout[i:i + tam] for i in range(0, len(r.stdout), tam)]
 
 
 def texturas_das_imagens(info):
-    """Devolve as 3 texturas STC das páginas 4/5/6, na ordem."""
+    """Devolve [(página, textura)] das 3 imagens (páginas 4/5/6), na ordem."""
     achadas = []
     for pg in info["pages"]:
         if pg["i"] not in PAGINAS_IMAGENS:
             continue
         for t in pg["texs"]:
-            if t["tipo"].startswith("STC") and not t["addr"] >= info["tamanho"]:
-                achadas.append(t)
+            if t["tipo"].startswith("STC") and t["addr"] < info["start"]:
+                achadas.append((pg["i"], t))
     return achadas
 
 
@@ -102,17 +99,32 @@ def main():
 
     data = bytearray(open(a.template, "rb").read())
     print(f"template: {a.template} ({len(data)} B, {info['w']}x{info['h']})")
-    for img, alvo in zip(a.imagens, alvos):
+    for k, img in enumerate(a.imagens):
+        # reparse a cada imagem: um GIF animado muda o tamanho e os endereços
+        info, probs = insp.parse_bytes(bytes(data))
+        if probs:
+            sys.exit("estado intermediário inválido: " + "; ".join(probs[:2]))
+        pg_i, alvo = texturas_das_imagens(info)[k]
         w, h = alvo["w"], alvo["h"]
-        rgb = rgb_do_arquivo(img, w, h)
-        tex = codec.encode_image(rgb, w, h)
-        if len(tex) != alvo["slice"]:
-            sys.exit(f"{os.path.basename(img)}: textura {len(tex)} B != fatia "
-                     f"{alvo['slice']} B ({w}x{h})")
-        ini = alvo["addr"]
-        data[ini:ini + len(tex)] = tex
-        print(f"  {os.path.basename(img):<28} -> {w}x{h} @ {ini:#08x} "
-              f"({len(tex)} B, {alvo['tipo']})")
+        quadros = rgb_quadros(img, w, h)
+
+        if len(quadros) == 1:
+            tex = codec.encode_image(quadros[0], w, h)
+            if len(tex) != alvo["slice"]:
+                sys.exit(f"{os.path.basename(img)}: textura {len(tex)} B != fatia "
+                         f"{alvo['slice']} B ({w}x{h})")
+            ini = alvo["addr"]
+            data[ini:ini + len(tex)] = tex
+            print(f"  {os.path.basename(img):<28} -> {w}x{h} @ {ini:#08x} "
+                  f"({len(tex)} B, {alvo['tipo']}, estática)")
+        else:
+            if len(quadros) > 96:
+                sys.exit(f"{os.path.basename(img)}: {len(quadros)} quadros; "
+                         "o limite do trailer aqui é 96")
+            quads = [codec.encode_image(q, w, h) for q in quadros]
+            data = bytearray(anim.monta(bytes(data), info, pg_i, alvo, quads))
+            print(f"  {os.path.basename(img):<28} -> {w}x{h} @ {alvo['addr']:#08x} "
+                  f"({len(quads)} quadros, {alvo['tipo']})")
 
     codec.set_checksum(data)
     out = a.out or os.path.splitext(a.template)[0] + "-patch.acf"

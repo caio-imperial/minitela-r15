@@ -376,3 +376,22 @@ deixa um resíduo visível nesses blocos — medido em ~1,8/255 de erro médio n
 
 Testado no hardware em 25/11/2026: imagem "TESTE PATCH" gravada e exibida na tela
 Imagens/GIF 1.
+
+## FATO 11 — GIF animado nativo, sem compilador (testado no hardware)
+
+Quadros não são texturas separadas: são **fatias** de um único registro `TextureClass`
+(`SingleSliceSize = S`, `SliceFlagsHeaderAddr != 0`, quadro *n* em `TexAddr + n*S`), e o
+widget GIF (tipo 34) avança `GifSliceNum` fatias a cada `GifInterval` ticks. O trailer de
+fatias fica logo após a última: ponteiros `u32` gravados como u16 alto + u16 baixo, e um
+bitmap MSB-first com 1 = fatia opaca. Detalhes e validação da receita em
+[`RE-acf-source.md`](./RE-acf-source.md) §7.
+
+Como o arquivo cresce, o `acf_anim.py` remonta a área de textura: reloca tudo depois do
+slot, atualiza `TexAddr`/`SliceFlagsHeaderAddr`, `StartOfConfigdata`, `TotalSize`,
+`TotalTextureSize`, o campo `@8`, os `CheckCode` das páginas e o checksum do arquivo.
+
+Testado no hardware em 25/11/2026: GIF de 8 quadros (1,31 MB) gravado e **animando** na
+tela Imagens, gerado por `minitela_patch.py` sem wine.
+
+Limites práticos: até 96 quadros (tamanho do trailer) e o arquivo tem que caber na
+partição de textura (3/7/15 MB conforme a flash; ver FATO 8 e `RE-firmware.md`).

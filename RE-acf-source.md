@@ -634,7 +634,330 @@ for p in pages:                                       # 56 B cada
    usa `(w+w/8)/16` ou uma tabela equivalente a `w/15`. Precisa de medição óptica ou
    do RTL.
 5. **`staticTexture` / `SliceFlagsHeaderAddr`** (fatias e color-slice, `TextureClass.cpp:744-795`):
-   o mecanismo está claro, mas nenhum arquivo real examinado usou (todas as texturas
-   da amostra têm `staticTexture=0` e `SliceFlagsHeaderAddr=0`).
+   o mecanismo está claro; a amostra 480×272 não usava (todas as texturas têm
+   `staticTexture=0` e `SliceFlagsHeaderAddr=0`). O `SliceFlagsHeaderAddr` foi decodificado
+   depois, num arquivo com GIF — ver **§7.4**.
 6. **Encoder STC** não existe no SDK — só o decodificador. O lado da compressão
    continua sendo o `acf_codec.py` + FATO 5 (mais a correção da fórmula em §2.3).
+
+---
+
+## 7. GIF animado
+
+Par de arquivos analisado (mesmo projeto, mesmo comando, só o slot 1 muda):
+
+| arquivo | tamanho | `StartOfConfigdata` | páginas | texturas | quadros no slot 1 |
+|---|---|---|---|---|---|
+| `/tmp/opencode/template_static.acf` | 901.128 B | `0xD4000` | 11 | 98 | 1 |
+| `/tmp/opencode/gif75.acf` | 5.160.968 B | `0x4E4000` | 11 | **98** | **75** |
+
+Os dois passam no `acf_inspect.py` (magic, versão e `CheckCode` das 11 páginas).
+
+**Ressalva medida**: os dois builds **não** diferem só no slot 1. Das três texturas
+240×240 das páginas 4/5/6: a da pág. 6 é idêntica (MD5 do payload igual), a da **pág. 4**
+(o slot do GIF) mudou de conteúdo, e a da **pág. 5** também (no estático é uma imagem, no
+`gif75` é um quadro preto — 53.315 dos 57.600 bytes diferentes). Isso importa para
+interpretar o número de bytes divergentes da reconstrução (§7.6).
+
+## 7.1 Q1 — onde estão os 75 quadros
+
+**Não existe textura extra.** O número de registros `TextureClass` é **98 nos dois
+arquivos**. Os 75 quadros são **75 fatias (slices) de uma única textura**: o registro
+`#1` da página 4.
+
+O endereço de cada fatia vem de `TextureClass.cpp:785` (caso `staticTexture == 0`):
+
+```c
+addr = FocusedSlice * SingleSliceSize;
+sourcebufferaddr[..].Addr = TexAddr + addr + TEXTURE_ADDR_OFFSET;   // :791
+```
+
+Medido no registro (pág. 4, `#1`, tabela em bloco+`0x21C`):
+
+| campo | valor |
+|---|---|
+| `SingleSliceSize` (+0) | `0x0000E100` = 57.600 |
+| `TexAddr` (+4) | `0x000A77B0` = 686.000 |
+| `SliceFlagsHeaderAddr` (+8) | `0x004C62B0` = 5.006.000 (= `TexAddr + 75*SingleSliceSize`) |
+| `mTexAttr` (+12) | `0x00000110` (STCRGBA888 + `ADDRTEXTURE`) |
+| `TexWidth/TexHeight` | 240 / 240 |
+| `staticTexture` (+44) | 0 (sem entrelaçamento de 16 KB) |
+
+Portanto **quadro *n* = `0xA77B0 + n*0xE100`**, contíguos, na ordem das fatias:
+
+| n | offset | n | offset |
+|---|---|---|---|
+| 0 | `0x0A77B0` | 49 | `0x3588B0` |
+| 1 | `0x0B58B0` | 50 | `0x3669B0` |
+| 2 | `0x0C39B0` | 51 | `0x374AB0` |
+| 24 | `0x1F8FB0` | 74 | `0x4B81B0` |
+| 25 | `0x2070B0` | fim | `0x4C62B0` |
+
+Depois do último quadro vem o *trailer* de fatias (§7.4) e então as texturas das páginas
+5 e 6, que foram relocadas:
+
+| região | estático | gif75 |
+|---|---|---|
+| pág. 4 `#1` (slot 1) | `0xA77B0` + 1×57.600 | `0xA77B0` + 75×57.600 = até `0x4C62B0` |
+| trailer do slot 1 | `0xB58B0`, 16 B | `0x4C62B0`, 32 B |
+| pág. 5 `#1` | `0xB58C0` | `0x4C62D0` |
+| trailer | `0xC39C0`, 16 B | `0x4D43D0`, 16 B |
+| pág. 6 `#1` | `0xC39D0` | `0x4D43E0` |
+| trailer | `0xD1AD0`, 16 B | `0x4E24E0`, 16 B |
+| padding até a config | `0xD1AE0`..`0xD4000` (9.504 B) | `0x4E24F0`..`0x4E4000` (6.928 B) |
+
+**Conta do tamanho**: `4.259.840` (delta de `StartOfConfigdata`) `= 74×57.600 + (32−16) − (9.504−6.928)`
+= `4.262.400 + 16 − 2.576`. O crescimento das fatias é absorvido em parte pelo padding
+do fim da área de textura.
+
+Os 75 quadros têm só **6 conteúdos distintos** (o gerador gravou as repetições, não
+deduplicou): `0`, `1..24`, `25`, `26..49`, `50`, `51..74`. Ele também não reaproveita a
+imagem do build estático: o quadro 0 do `gif75` ≠ imagem do `template_static`.
+
+## 7.2 Q2 — como o widget referencia a sequência
+
+O widget é do tipo `GIF` (34) e guarda cinco `u16` consecutivos em
+`WDG_u16_userVariables[WIDGET_GENERAL_NUM + 8..12]` (`AHMI/widgetClass_cd.h:152-156`:
+
+```
++8  GifNowTime     +9  GifInterval   +10 GifNowIdx   +11 GifSliceNum   +12 GifID
+```
+
+No bloco da página 4 eles ficam em **bloco+`0x178`..`0x181`**:
+
+| offset | índice | campo | estático | gif75 |
+|---|---|---|---|---|
+| `+0x178` | `[GENERAL+8]` | `GifNowTime` | 0 | 0 |
+| `+0x17A` | `[GENERAL+9]` | `GifInterval` | 100 | 100 |
+| `+0x17C` | `[GENERAL+10]` | `GifNowIdx` | 0 | 0 |
+| `+0x17E` | `[GENERAL+11]` | **`GifSliceNum`** | **1** | **75** |
+| `+0x180` | `[GENERAL+12]` | `GifID` | 0 | 0 |
+
+Fluxo em runtime:
+
+- `GifClass::widgetCtrl` pega a textura por índice:
+  `texturePtr = &pCurrentPage->pBasicTextureList[p_wptr->StartNumofTex]`
+  (`CS/AHMI/Widget/Gif.cpp:201`). A página tem 2 texturas: `#0` = `PURECOLOR`
+  (fundo) e `#1` = a imagem 240×240, então o widget só pode estar apontando para `#1`
+  (não localizei o campo `StartNumofTex` no bloco, mas é o único valor que faz a
+  animação cair sobre a imagem).
+- o quadro exibido é `texturePtr->FocusedSlice = p_wptr->GifNowIdx`, validado contra
+  `GifSliceNum` (`Gif.cpp:343-354`) — daí o endereço por fatia.
+- `ActionProcessor::tickGifOP` (`CS/AHMI/ActionProcessor.cpp:2405-2445`) soma
+  `AnimationIntervalTime` (= **30 ms** em `EMBEDDED`, `AHMI/aniamtion.h:30`) em
+  `GifNowTime` a cada tick e, quando passa de `GifInterval` (= 100), chama
+  `SetValueCtrl` → `GifNowIdx = (GifNowIdx+1) % GifSliceNum` (`Gif.cpp:415`).
+  Período efetivo: `ceil(100/30)=4` ticks ≈ **120 ms por quadro**.
+  O timer é registrado em `DynamicPageClass.cpp:1464`
+  (`setInterval(tickGifOP, NULL, AnimationIntervalTime)`).
+- `GifID` fica 0 (`= GZIPTYPE_Intern | id 0`), mas **não é usado neste firmware**
+  (§7.3).
+
+**Diff byte a byte dos blocos de página** (o resto do bloco é idêntico):
+
+| página | offset no bloco | campo | antes → depois |
+|---|---|---|---|
+| 2 | `+0xE52` (u16) | padding do registro `#18` (`TextureClass`+46) — ver §7.6 | `0x0292` → `0x0291` |
+| 4 | `+0x17E` | `GifSliceNum` | `1` → `75` |
+| 4 | `+0x225..0x226` | `#1.SliceFlagsHeaderAddr` (bytes 1-2) | `0x0B58B0` → `0x4C62B0` |
+| 5 | `+0x220..0x222` | `#1.TexAddr` | `0x0B58C0` → `0x4C62D0` |
+| 5 | `+0x224..0x226` | `#1.SliceFlagsHeaderAddr` | `0x0C39C0` → `0x4D43D0` |
+| 6 | `+0x220..0x222` | `#1.TexAddr` | `0x0C39D0` → `0x4D43E0` |
+| 6 | `+0x224..0x226` | `#1.SliceFlagsHeaderAddr` | `0x0D1AD0` → `0x4E24E0` |
+
+E, na tabela de descritores de página (`ConfigInfo`+284+`CfgStringSize`, 56 B por página),
+só o `CheckCode` muda — `StoreOffset`, `TotalSize`, contagens e `GifSliceNum` **da página
+continuam iguais** (o bloco não cresce):
+
+| página | `CheckCode` antes | depois |
+|---|---|---|
+| 2 | `0x6E841F06` | `0x6E871F06` |
+| 4 | `0xA7056A92` | `0xA7085092` |
+| 5 | `0xA7032492` | `0xA7056492` |
+| 6 | `0xA7056692` | `0xA7072292` |
+
+⚠️ Ou seja: **mexer no bloco de uma página obriga a recalcular o `CheckCode` daquela
+página** — que não é checksum de textura e sim de página (§3.4). O `minitela_patch.py`
+hoje não faz isso (ele só mexe antes de `StartOfConfigdata`).
+
+## 7.3 Q3 — os quadros estão crus (STC), não em gzip
+
+Condição de compilação, lida no fonte:
+
+- o `#include` do `gziplib` em `Gif.cpp` é `#ifndef CHIP_GC9002_NoHyper` +
+  `#if defined(CHIP_GC9002)` (`Gif.cpp:17-28`);
+- mas toda a lógica de bloco comprimido está sob **`#ifdef USE_GZIP_LIB`**
+  (`Gif.cpp:203-259`), e em `projects/AHMI_SW/Source/ahmi/app/platform.h:42` a macro está
+  **comentada**: `//#define USE_GZIP_LIB`. Idem `AHMIInterface.cpp` (tarefa de 10 ms).
+- não existe macro `texture_gif` no fonte; o que decide é `USE_GZIP_LIB`.
+- `CHIP_GC9002_NoHyper` só retiraria o `#include`; o caminho gzip depende de
+  `USE_GZIP_LIB` de qualquer forma.
+
+Com `USE_GZIP_LIB` **ligado**, `GifID != 0xFFFF` faria o widget buscar
+`getGzipBlockInfo(GifID & 0x7FFF, GifID>>15)` e o dado seria um bloco LUT:
+`u32@bloco` com `lutSize = valor>>12` (KB), `"AHMI"` em `bloco + lutSize*1024`, header
+comprimido de 32 B e cada quadro em `0x20 + n*SinglesliceSize`
+(`CS/gziplib/gzipBlock.cpp:39-91`, `Main/AHMIInterface.cpp:435-443`). **Não é o caso
+aqui.**
+
+Provas no arquivo:
+
+- não existe a string `"AHMI"` nem `"GIF"` em `[0xA77B0, 0x4C62B0)`;
+- os 75 quadros têm exatamente `75 × 57.600 = 75 × 3600 × 16` bytes;
+- no quadro 0, **3600 de 3600** blocos têm `bit0 = 0` (STC one-partition, §2.3).
+
+## 7.4 O trailer de fatias (`SliceFlagsHeaderAddr`)
+
+É o que o §2.4 chamava de "tabela de flags" e nenhum arquivo da amostra usava. Layout
+lido de `TextureClass.cpp:565-567` + `getSliceRealOffsetWithFlags` (`:441-514`):
+
+```
++0  u32  flagsAddr   = trailer+8
++4  u32  colorsAddr  = trailer+8+(2*ceil(nfatias/16))
++8  u16[ceil(n/16)]  bitmap: bit i = 1 -> fatia i é imagem; 0 -> fatia i é cor
+..  área de cores (2*ceil(n/16) bytes nos arquivos medidos; ver ressalva)
+padding com zero até múltiplo de 16
+```
+
+Detalhes que morderam:
+
+- esses dois primeiros `u32` são gravados como **dois `u16` little-endian**, e lidos de
+  volta por `readU32FromTextureBuffer` como `(arr[0]<<16)|arr[1]` (`:377-399`).
+  Ex.: `4c 00 b8 62` → `0x004C62B8`. Não é `u32` LE nem BE "de livro".
+- o bitmap é lido **MSB-first dentro de cada `u16`** (`readBitFromTextureBuffer`,
+  `:401-439`).
+- tamanho: `8 + 4*ceil(n/16)` arredondado para 16 B. Dá **16 B** para n ≤ 32,
+  **32 B** para 33 ≤ n ≤ 96, **48 B** para 97 ≤ n ≤ 112… É por isso que o trailer do
+  slot 1 passa de 16 para 32 bytes com 75 fatias, e o das páginas 5/6 continua 16.
+- em `getSliceRealOffsetWithFlags` o retorno é o *índice denso* da fatia imagem
+  (conta os bits 1 até `FocusedSlice` e subtrai 1) — com todas as fatias imagem, o
+  resultado é o próprio índice, e `addr = realOffset * SingleSliceSize` (`:750-765`).
+- **ressalva**: nenhum arquivo analisado tem fatia de *cor*, então o formato exato da
+  área de cores (2 bytes por 16 fatias no trailer × leitura `u32` em
+  `colorsAddr + idx*4`, `:777`) não foi exercitado. Para GIF (todas as fatias imagem)
+  basta zerar essa área.
+
+Conteúdo medido em `0x4C62B0`:
+`4c 00 b8 62 | 4c 00 c2 62 | ff ff ff ff ff ff ff ff e0 ff | 00…` →
+flagsAddr `0x4C62B8`, colorsAddr `0x4C62C2`, 75 bits 1 seguidos de zeros.
+
+## 7.5 Q4 — o que muda no header e no `ConfigInfo`
+
+| campo | estático | gif75 | delta |
+|---|---|---|---|
+| tamanho do arquivo | 901.128 | 5.160.968 | +4.259.840 |
+| `u32 @0` `StartOfConfigdata` | `0x000D4000` | `0x004E4000` | +4.259.840 |
+| `u32 @4` checksum | `0xCBB8713E` | `0x74ADA339` | recalculado |
+| `u32 @8` | `0x00067A90` (424.592) | `0x0026FF98` (2.555.800) | +2.131.208 |
+| `ConfigInfo+36` `TotalSize` | 901.120 | 5.160.960 | +4.259.840 |
+| `ConfigInfo+40` `TotalTextureSize` | 849.184 | 5.111.600 | **+4.262.416** |
+| `ConfigInfo+44` `DynamicPageSize` | 6.256 | 6.256 | 0 |
+| todo o resto do `ConfigInfo` | — | — | idêntico |
+
+Relações (todas conferidas nos dois arquivos):
+
+- `TotalSize = tamanho_do_arquivo − 8` e `tamanho = 8 + k*16.384`.
+- `@8 = TotalTextureSize / 2` (424.592×2 = 849.184; 2.555.800×2 = 5.111.600).
+- `delta(TotalTextureSize) = 74×57.600 + (32−16) = 4.262.416` — o campo soma o espaço
+  de textura **incluindo os trailers**, por isso difere do delta do arquivo em 2.576
+  (o padding que diminuiu).
+- o checksum do arquivo é a única coisa que precisa ser recalculada *depois* de tudo
+  (§3.4): `XOR` de todas as words, exceto a própria e a última.
+
+## 7.6 Q5 — receita para gerar o animado
+
+Partindo de um `.acf` estático válido e de N quadros já codificados em STC
+(`N × slice_bytes`, `slice_bytes = ceil(w/4)*ceil(h/4)*16`):
+
+1. **Localizar o registro do slot.** No bloco da página do slot, a tabela
+   `TextureClass[]` está no fim do bloco; o registro da imagem é o que tem
+   `mTexAttr>>4 in (0x0,0x1)` e `TexWidth × TexHeight` = tamanho do widget.
+   `TexAddr`, `SingleSliceSize`, `SliceFlagsHeaderAddr` e o trailer atual (16 B) saem dele.
+2. **Delta** `d = (N−1)*slice_bytes + trailer_novo − trailer_velho`
+   (`trailer(n) = 8 + 4*ceil(n/16)` arredondado para 16).
+3. **Remontar a área de textura** `[0, StartOfConfigdata)`:
+   - `[0, TexAddr)` intacto;
+   - N quadros em `TexAddr + i*slice_bytes`;
+   - trailer novo em `TexAddr + N*slice_bytes`: `flagsAddr = tr+8`,
+     `colorsAddr = tr+8+2*ceil(N/16)`, bitmap com N bits 1 (MSB-first em cada `u16`),
+     área de cores zerada, padding até 16;
+   - toda textura (e trailer) com `addr > TexAddr` deslocada em `+d`, na mesma ordem
+     (o gerador reempacota assim; nenhum alinhamento extra é usado);
+   - completar até `StartOfConfigdata_novo` com o padding (qualquer byte — o firmware
+     não lê; para reproduzir o gerador, copie o padding antigo truncado).
+4. **`StartOfConfigdata_novo`** = `arredonda_16K(fim_da_última_textura + trailer + padding)`.
+   Na prática: o arquivo final tem que continuar `8 + k*16.384`; o padding absorve a
+   diferença (aqui sobraram 6.928 B).
+5. **Patchar os registros de textura** de todas as páginas afetadas:
+   `TexAddr += d` e, se `SliceFlagsHeaderAddr != 0`, `+= d`; no registro do slot,
+   `SliceFlagsHeaderAddr = TexAddr + N*slice_bytes`.
+6. **`GifSliceNum = N`** no bloco do widget (`WDG_u16_userVariables[+11]`, aqui
+   bloco+`0x17E`). `GifNowIdx`/`GifNowTime` = 0. `GifID` fica como está.
+7. **Recalcular o `CheckCode`** de *cada* página cujo bloco foi tocado
+   (`0xA55A5AA5 ^ XOR(words do bloco)`) no descritor `ConfigInfo+284+CfgStringSize+i*56+8`.
+8. **Header/ConfigInfo**: `@0`, `TotalSize`, `TotalTextureSize` (`+delta`),
+   `@8 = TotalTextureSize/2`, e por último o checksum `@4` e o footer `0xA55A5AA5`.
+9. Validar com `./acf_inspect.py` (é o que o firmware checa).
+
+### Validação da receita (reconstrução)
+
+Implementei os 9 passos acima em Python e comparei com o `gif75.acf` original:
+
+| variante | entrada | bytes | divergentes |
+|---|---|---|---|
+| **B — estrutura** | estático + os 75 quadros do `gif75` + o conteúdo das páginas 5/6 do `gif75` | 5.160.968 | **10** |
+| A — estrita | estático + os 75 quadros (conteúdo das páginas 5/6 vem do estático) | 5.160.968 | **53.326** |
+
+A variante A só diverge por **conteúdo**: 53.315 dos 53.326 bytes são os pixels da
+página 5 (o estático tem outra imagem ali — §7.1); os 11 restantes são os mesmos 10 de B
+mais 1 byte de checksum.
+
+Os **10 bytes** de B, um por um:
+
+| offset | bytes | o que é |
+|---|---|---|
+| `0x4`..`0x6` | 3 | **checksum do arquivo** — consequência dos outros (recalculado sobre bytes diferentes) |
+| `0x4E41FA` | 1 | `CheckCode` da pág. 2 — consequência do byte seguinte |
+| `0x4E7136` (`cfg+0x3136` = pág.2 bloco `+0xE52`) | 1 | **padding do registro `TextureClass`** (o struct acaba em `+45`, `useCanvasPoint`; `+46/+47` são padding e o firmware não lê) |
+| `0x4E91BE`, `0x4E923A` (pág. 7, bloco `+0x92` e `+0x10E`) | 2 | campo `u16` **não decodificado**, duplicado em `CanvasClass`/`SubCanvasClass` (204 nas págs. 4/5/6; 79→83 na pág. 7). As duas ocorrências mudam igual → o `CheckCode` da pág. 7 não muda (o XOR das duas variações se anula) |
+| `0x4EC000`..`0x4EC002` (`cfg+0x8000`) | 3 | lixo de heap do gerador nos 4 bytes antes do footer (`0x8FF2E8C4` vs `0x8FF0E2D4`) |
+
+Ou seja: **nenhum byte de estrutura divergiu**. Dos 10: 4 são lixo/padding do gerador
+que o firmware não lê (1 em `TextureClass`+46, 3 antes do footer), 2 são um campo interno
+ainda não decodificado e 4 são checksums que são função dos outros bytes.
+
+## 7.7 O que o `minitela_patch.py` precisa mudar
+
+Hoje (`minitela_patch.py:103-120`) ele abre o template, sobrescreve
+`data[addr:addr+slice]` com a textura nova (mesmo tamanho, mesmos offsets), chama
+`codec.set_checksum` e grava. Isso funciona porque a área de textura **não** é coberta
+por nenhum checksum e nada se move.
+
+Para suportar N > 1 quadros é preciso:
+
+1. **Deixar de ser patch in-place.** Com N > 1 o arquivo cresce e tudo depois do slot
+   anda; o mínimo é a rotina de "remontar a área de textura + relocar" do §7.6 (passos
+   2-5). Alternativa mais simples e mais segura: manter **um template por número de
+   quadros** (N=1, N=16, N=32, ... usam trailers de tamanhos diferentes) e só
+   sobrescrever os quadros — mas o alvo continua sendo o registro certo, não um offset
+   fixo.
+2. **Escrever o trailer de fatias** (`SliceFlagsHeaderAddr`) com o tamanho certo
+   (16 B até 32 fatias, 32 B até 96, …) e o bitmap todo em 1 para fatias de imagem.
+3. **Relocar** `TexAddr` e `SliceFlagsHeaderAddr` de todas as texturas com
+   `addr > slot_addr` (aqui as páginas 5 e 6), atualizando os registros nos blocos.
+4. **Atualizar `GifSliceNum`** no bloco do widget (não existe campo equivalente na
+   página: `DynamicPageCfgClass` não tem contagem de quadros).
+5. **Recalcular o `CheckCode`** de toda página cujo bloco mudou (`0xA55A5AA5 ^ XOR`).
+   Este é o ponto que hoje não existe e que faria o firmware entrar no
+   `do{}while` infinito de `AHMIInterface.cpp:1387-1423` se ficasse para trás.
+6. **Atualizar o header**: `@0`, `TotalSize = tamanho−8`, `TotalTextureSize += d`,
+   `@8 = TotalTextureSize/2`, e só então `@4` (checksum) — nessa ordem.
+7. **Manter `8 + k*16.384`**: o padding do fim da área de textura é a variável de ajuste;
+   `StartOfConfigdata` continua múltiplo de 16 KB e `DynamicPageSize` não muda.
+8. **Não copiar o padding nem os bytes `TextureClass`+46/+47 do template novo** — são
+   lixo de heap do gerador; qualquer valor serve (mas, se quiser reprodutibilidade byte
+   a byte, copie do template truncado, como na reconstrução).
+9. Ler os quadros do GIF respeitando o `GifInterval` implícito: o firmware consome
+   `GifSliceNum` fatias em sequência a `ceil(GifInterval/30)` ticks cada
+   (`ActionProcessor.cpp:2405-2437`), então o campo `GifInterval` do bloco tem que
+   acompanhar o atraso do GIF se ele mudar.
