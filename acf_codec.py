@@ -4,19 +4,23 @@ acf_codec.py — codec nativo do formato de textura da minitela (GC9002 / AHMI).
 
 Formato do bloco (16 bytes = 128 bits, bitstream LSB-first começando no bit 1):
 
-    bit  0        flag de modo
+    bit  0        flag de modo (0 = uma partição; 1 = duas partições)
     bits 1-8      R0      bits  9-16   R1
     bits 17-24    G0      bits 25-32   G1
     bits 33-40    B0      bits 41-48   B1
     bits 49-56    A0      bits 57-64   A1
     bits 65-128   16 pesos de 4 bits (pixel i em 65+4i, ordem raster no bloco 4x4)
 
-    cor do pixel = c0 + (c1 - c0) * peso / 15
+A interpolação é a do firmware (`interpolate()` em CS/AHMI/Simulator/stc.cpp):
 
-Modo 0 é o que este codec escreve. Existe um modo 1 (bit0=1) que o compilador do ODM usa
-em blocos com cores não colineares — decodificá-lo ainda é trabalho em aberto, mas para
-*gerar* não faz falta: o modo 0 representa qualquer bloco, só com menos fidelidade quando
-as cores não caem numa reta no espaço RGB.
+    true_w = w + w/8            (divisão inteira)
+    cor    = clamp(a0 + (a1 - a0) * true_w / 16)
+
+i.e. o peso 15 vira 16/16 = 1.0 e o 8 vira 9/16, e não w/15.
+
+Modo 0 é o que este codec escreve. O compilador do ODM usa modo 1 (duas partições)
+em blocos com cores não colineares; para *gerar* não faz falta — modo 0 representa
+qualquer bloco, com menos fidelidade nesses casos.
 
 Sem dependências além da stdlib.
 """
@@ -50,6 +54,20 @@ def block_base(index):
     return BASE_BIT + index * BLOCK_BITS
 
 
+def _interp(a0, a1, w):
+    """Interpolação do firmware (stc.cpp: interpolate), com truncamento C."""
+    true_w = w + (w >> 3)                  # w + w/8, divisão inteira
+    num = (a1 - a0) * true_w
+    v = a0 + (num >> 4 if num >= 0 else -((-num) >> 4))
+    return 0 if v < 0 else 255 if v > 255 else v
+
+
+def block_mode(textura, index):
+    """0 = uma partição (o que geramos), 1 = duas partições (o compilador do ODM)."""
+    b = block_base(index)
+    return (textura[b >> 3] >> (b & 7)) & 1
+
+
 def decode_block_at(buf, base):
     """Lê um bloco a partir de `base` (em bits) dentro do buffer da textura."""
     e0, e1 = [], []
@@ -59,7 +77,7 @@ def decode_block_at(buf, base):
     px = []
     for p in range(BLOCK_PX):
         w = _rd(buf, base + 64 + 4 * p, 4)
-        px.append(tuple((e0[c] + (e1[c] - e0[c]) * w // 15) & 255 for c in range(4)))
+        px.append(tuple(_interp(e0[c], e1[c], w) for c in range(4)))
     return px
 
 
@@ -92,20 +110,34 @@ def encode_block_at(buf, base, pixels):
     else:
         c0 = min(px, key=lambda q: q[eixo])
         c1 = max(px, key=lambda q: q[eixo])
-        span = c1[eixo] - c0[eixo]
-        pesos = [round((q[eixo] - c0[eixo]) * 15 / span) for q in px]
+        # escolhe o peso que minimiza o erro sob a interpolação REAL do firmware
+        def melhor(q):
+            best = (1 << 30, 0)
+            for w in range(16):
+                e = sum((_interp(c0[c], c1[c], w) - q[c]) ** 2 for c in range(4))
+                if e < best[0]:
+                    best = (e, w)
+            return best[1]
+        pesos = [melhor(q) for q in px]
 
     # O peso do pixel 15 ocuparia os bits 125-128, e o bit 128 já é o byte do bloco
-    # seguinte — o compilador do ODM nunca o usa (medido: é sempre 0). Orientamos os
-    # endpoints para que esse peso caiba em 3 bits, invertendo quando necessário.
-    if pesos[BLOCK_PX - 1] > 7:
-        c0, c1 = c1, c0
-        pesos = [15 - w for w in pesos]
+    # seguinte: o firmware lê apenas 3 bits ali (0-7). Quando o peso natural passa de
+    # 7, invertemos os endpoints (peso vira 15-w) — é o que o compilador do ODM faz.
+    def erro(cc0, cc1, ws):
+        return sum((_interp(cc0[c], cc1[c], ws[p]) - px[p][c]) ** 2
+                   for p in range(BLOCK_PX) for c in range(4))
+
+    cand_a = (c0, c1, pesos) if pesos[BLOCK_PX - 1] <= 7 else None
+    invertidos = [15 - w for w in pesos]
+    cand_b = (c1, c0, invertidos) if invertidos[BLOCK_PX - 1] <= 7 else None
+    if cand_a and cand_b:
+        c0, c1, pesos = cand_a if erro(*cand_a) <= erro(*cand_b) else cand_b
+    elif cand_b:
+        c0, c1, pesos = cand_b
     for c in range(4):
         _wr(buf, base + c * 16, 8, c0[c])
         _wr(buf, base + c * 16 + 8, 8, c1[c])
     for p in range(BLOCK_PX):
-        # o último pixel grava só 3 bits: o quarto cairia no bloco seguinte
         nbits = 4 if p < BLOCK_PX - 1 else 3
         _wr(buf, base + 64 + 4 * p, nbits, pesos[p] & ((1 << nbits) - 1))
 
