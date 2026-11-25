@@ -28,6 +28,15 @@ Por isso o `acf_anim.py` remonta a área de textura: move o que vem depois, corr
 endereços, o `StartOfConfigdata`, o `TotalSize`, o `TotalTextureSize` e o `CheckCode` de
 cada página afetada. Tudo validado antes de gravar.
 
+## Sem template nenhum
+
+O tema de fábrica também serve de base (slots de 192×192, sem precisar de wine nunca):
+
+```bash
+./minitela_patch.py --template /usr/share/minitela/resources/ACF/Texture.acf \
+                    --out ~/animado.acf ~/meu.gif --send
+```
+
 ## Limites
 
 | limite | valor |

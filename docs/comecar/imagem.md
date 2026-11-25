@@ -19,6 +19,19 @@ Se não existir, gere com o compilador (só nesta etapa o wine entra):
 ./minitela_build.py build ~/alguma_foto.jpg
 ```
 
+## Sem template nenhum (nem wine, nunca)
+
+O próprio tema de fábrica serve de base. Ele tem os três slots em **192×192** (o
+template compilado por nós usa 240×240):
+
+```bash
+./minitela_patch.py --template /usr/share/minitela/resources/ACF/Texture.acf \
+                    --out ~/minha.acf ~/foto.jpg --send
+```
+
+Só o `Texture.acf` (o tema padrão) funciona como base — os `Texture1..21.acf` não têm as
+três texturas de imagem nas páginas 4/5/6.
+
 ## Trocar as imagens
 
 ```bash
