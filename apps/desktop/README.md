@@ -28,7 +28,10 @@ Hoje o app faz três coisas:
    em tamanho de slot ou tela cheia), validando antes de escrever;
 4. **tags em tempo real** — relógio, bateria, CPU e wifi, um round avulso ou um daemon de
    5 s (`sysinfo.rs` lê `/sys`, `/proc` e `iwgetid`; envio sem exigir ACK, como o Python);
-5. **gravar na tela** — protocolo AHMI sobre a serial em Rust (`termios` puro via `nix`,
+5. **prévia da textura** — decodifica o slot e devolve PNG para a interface (antes e
+   depois de gerar). Em arquivos oficiais aparecem artefatos: só o sub-formato de uma
+   partição está implementado (issue #2);
+6. **gravar na tela** — protocolo AHMI sobre a serial em Rust (`termios` puro via `nix`,
    sem `serialport`/`libudev`): handshake, troca para modo download, envio por páginas,
    fim e troca de página. Medido no hardware: **4,7 s** para o tema de fábrica.
 

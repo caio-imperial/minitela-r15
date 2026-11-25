@@ -1,6 +1,7 @@
 //! Comandos expostos à interface.
 
 use crate::acf::{codec, inspect, patch};
+use base64::Engine;
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -63,6 +64,41 @@ pub fn diagnostico(caminho: String) -> Result<DiagnosticoView, String> {
         ok: resumo.problemas.is_empty(),
         achados,
     })
+}
+
+/// Prévia da textura do slot como PNG em data URL.
+///
+/// Usa o decodificador de **uma partição** (o que geramos). Blocos oficiais de
+/// duas/três partições aparecem com artefatos — o modo 1 ainda não está implementado.
+#[tauri::command]
+pub fn preview(caminho: String, pagina: Option<usize>) -> Result<String, String> {
+    let dados = std::fs::read(&caminho).map_err(texto)?;
+    let resumo = inspect::parse(&dados).map_err(texto)?;
+    let tex = match pagina {
+        Some(pi) => resumo
+            .paginas
+            .get(pi)
+            .and_then(|p| p.texturas.iter().find(|t| matches!(t.tipo(), 0x00 | 0x10)))
+            .cloned(),
+        None => acha_slot(&resumo).map(|(_, _, t)| t),
+    }
+    .ok_or("nao achei textura de imagem")?;
+
+    let (w, h) = (tex.w as usize, tex.h as usize);
+    let ini = tex.addr as usize;
+    let fim = ini + tex.slice as usize;
+    let rgb = codec::decode_image(&dados[ini..fim], w, h);
+
+    let mut png_bytes = Vec::new();
+    {
+        let mut enc = png::Encoder::new(&mut png_bytes, w as u32, h as u32);
+        enc.set_color(png::ColorType::Rgb);
+        enc.set_depth(png::BitDepth::Eight);
+        let mut writer = enc.write_header().map_err(texto)?;
+        writer.write_image_data(&rgb).map_err(texto)?;
+    }
+    let b64 = base64::engine::general_purpose::STANDARD.encode(&png_bytes);
+    Ok(format!("data:image/png;base64,{b64}"))
 }
 
 /// Primeira textura de imagem (páginas 4/5/6, tipo STC) com o índice da página.
@@ -346,6 +382,18 @@ pub fn patch_imagem(
 
 #[cfg(test)]
 mod tests {
+    /// Prévia do tema de fábrica (pula se o pacote não estiver instalado).
+    #[test]
+    fn preview_do_tema_de_fabrica() {
+        let caminho = "/usr/share/minitela/resources/ACF/Texture.acf";
+        if !std::path::Path::new(caminho).exists() {
+            return;
+        }
+        let url = super::preview(caminho.to_string(), None).expect("preview");
+        assert!(url.starts_with("data:image/png;base64,"));
+        assert!(url.len() > 1000, "png vazio?");
+    }
+
     /// Gera um .acf a partir do tema de fábrica, sem tocar no device.
     /// Rode com: MINITELA_IMAGEM=<arquivo> cargo test --lib -- --ignored gera_acf
     #[test]

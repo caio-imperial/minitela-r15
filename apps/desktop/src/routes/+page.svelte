@@ -37,6 +37,8 @@
   let gravando = $state(false);
   let gravado = $state("");
   let parou = $state("");
+  let previa = $state("");
+  let previaNova = $state("");
   let tags = $state("");
   let daemon = $state(false);
 
@@ -66,10 +68,13 @@
   async function analisar() {
     erro = "";
     gerado = null;
+    previaNova = "";
     try {
       diag = await invoke<Diagnostico>("diagnostico", { caminho: acf });
+      previa = await invoke<string>("preview", { caminho: acf });
     } catch (e) {
       diag = null;
+      previa = "";
       erro = String(e);
     }
   }
@@ -95,6 +100,7 @@
         imagem,
         telaCheia,
       });
+      previaNova = await invoke<string>("preview", { caminho: gerado.saida });
     } catch (e) {
       erro = String(e);
     } finally {
@@ -213,6 +219,12 @@
     {#if acf}
       <p class="caminho">{acf}</p>
     {/if}
+    {#if previa}
+      <figure class="previa">
+        <img src={previa} alt="textura do slot" />
+        <figcaption>slot atual (240×240)</figcaption>
+      </figure>
+    {/if}
     {#if diag}
       <div class="resumo" class:ruim={!diag.ok}>
         <span>{kb(diag.tamanho)}</span>
@@ -253,6 +265,12 @@
       <input type="checkbox" bind:checked={telaCheia} />
       tela cheia (240×240; sem isso usa o tamanho do slot)
     </label>
+    {#if previaNova}
+      <figure class="previa">
+        <img src={previaNova} alt="prévia do novo .acf" />
+        <figcaption>como vai ficar</figcaption>
+      </figure>
+    {/if}
     {#if gerado}
       <div class="resumo bom">
         <span>{base(gerado.saida)}</span>
@@ -449,6 +467,27 @@
 
   .resumo.bom strong {
     color: #3ddc84;
+  }
+
+  .previa {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .previa img {
+    width: 120px;
+    height: 120px;
+    image-rendering: pixelated;
+    border-radius: 8px;
+    border: 1px solid #2b3442;
+    background: #000;
+  }
+
+  .previa figcaption {
+    font-size: 11.5px;
+    color: #8b94a3;
   }
 
   .achado {

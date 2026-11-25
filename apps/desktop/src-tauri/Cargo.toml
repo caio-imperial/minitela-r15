@@ -26,6 +26,8 @@ tauri-plugin-dialog = "2.8.4"
 md-5 = "0.11.0"
 nix = { version = "0.32.0", features = ["term", "poll"] }
 chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
+png = "0.18.1"
+base64 = "0.23.1"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
