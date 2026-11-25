@@ -1,0 +1,40 @@
+name: Bug
+description: Algo não funciona (ferramenta, gravação, tela).
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Antes de abrir: rode `./minitela_ctl.py info` e confira se o app oficial está
+        parado (`pkill -x minitela`). Não cole chaves nem dados pessoais.
+  - type: input
+    id: ambiente
+    attributes:
+      label: Ambiente
+      description: Notebook, distribuição, versão do pacote minitela.
+      placeholder: "Vision R15M, Ubuntu 24.04, minitela 1.0.20"
+    validations:
+      required: true
+  - type: textarea
+    id: comando
+    attributes:
+      label: Comando e saída
+      description: O que você rodou e o que apareceu (inclua o erro completo).
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: tela
+    attributes:
+      label: O que a tela mostrou
+      description: Página, imagem, tela travada, nada…
+    validations:
+      required: true
+  - type: checkboxes
+    id: cuidado
+    attributes:
+      label: Confirmações
+      options:
+        - label: Tenho o .acf de fábrica à mão para recuperar
+        - label: Não gravei em região crítica (bootloader, cpu1, calibration…)

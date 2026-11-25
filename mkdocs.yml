@@ -64,9 +64,12 @@ nav:
       - Codec STC: referencia/codec.md
       - GIF (fatias e trailer): referencia/gif.md
       - Tags e IDs: referencia/tags.md
+  - Hardware: hardware.md
   - Ferramentas: ferramentas.md
   - Engenharia reversa:
       - O formato .acf: RE-acf.md
       - O firmware e a flash: RE-firmware.md
       - O .acf pelo código: RE-acf-source.md
+  - Comunidade: comunidade.md
+  - Contribuir: contribuir.md
   - Legal: legal.md

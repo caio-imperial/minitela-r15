@@ -1,0 +1,33 @@
+name: Ideia
+description: Algo que daria para fazer com a tela (ou com as ferramentas).
+title: "[ideia] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideias não precisam de prova — mas se você já mediu algo, cite endereço/offset.
+        O que **não** cabe: vídeo, 3D e widgets novos (o firmware desenha um conjunto fixo).
+  - type: textarea
+    id: ideia
+    attributes:
+      label: A ideia
+      description: O que você quer ver na tela ou na ferramenta.
+    validations:
+      required: true
+  - type: textarea
+    id: como
+    attributes:
+      label: Como daria para fazer
+      description: Tags, imagens/GIF, um daemon, um patch no codec…
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options:
+        - tags / dados em tempo real
+        - imagem ou GIF
+        - protocolo / flash
+        - codec / formato .acf
+        - ferramenta / GUI
+        - documentação
