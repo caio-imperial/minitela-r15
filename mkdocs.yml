@@ -57,6 +57,13 @@ nav:
       - Tags em tempo real: comecar/tags.md
       - Painel gráfico: comecar/painel.md
       - Recuperar a tela: comecar/recuperacao.md
+  - Referência:
+      - Protocolo AHMI: referencia/protocolo.md
+      - Mapa da flash: referencia/flash.md
+      - Formato .acf: referencia/acf.md
+      - Codec STC: referencia/codec.md
+      - GIF (fatias e trailer): referencia/gif.md
+      - Tags e IDs: referencia/tags.md
   - Ferramentas: ferramentas.md
   - Engenharia reversa:
       - O formato .acf: RE-acf.md
