@@ -14,12 +14,14 @@ que ela precisa é um `.exe` de Windows.
 
 ## Colocando uma imagem sua na minitela
 
-Instalação em um comando (com o repo clonado):
+Instalação em um comando (sem clonar):
 
 ```bash
-pipx install .        # ou: pip install --user .
+pipx install "https://github.com/caio-imperial/minitela-r15/releases/latest/download/minitela_r15-0.1.0-py3-none-any.whl"
 minitela doctor       # checa python, ffmpeg, tela, app oficial
 ```
+
+(Com o repo clonado, `pipx install .` faz o mesmo.)
 
 Depois, tudo por um comando só: `minitela patch`, `minitela tags`, `minitela gui`,
 `minitela inspect`, `minitela doctor`.

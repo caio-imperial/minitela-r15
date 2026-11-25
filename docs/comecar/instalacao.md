@@ -22,7 +22,14 @@ existe no pacote. O ambiente é criado em `~/.wine-mt64` pelo `setup`.
 
 ## Instalação em um comando (recomendado)
 
-Com o repositório clonado, um comando instala o CLI e deixa tudo no `PATH`:
+Sem clonar nada — pegue o pacote da última release:
+
+```bash
+pipx install "https://github.com/caio-imperial/minitela-r15/releases/latest/download/minitela_r15-0.1.0-py3-none-any.whl"
+minitela doctor
+```
+
+Ou, com o repositório clonado:
 
 ```bash
 pipx install .        # ou: pip install --user .
