@@ -25,10 +25,13 @@ Hoje o app faz três coisas:
 2. **leitura/validação de `.acf`** — abre um arquivo e mostra tamanho, tela, páginas,
    texturas e o diagnóstico campo a campo (`CheckCode` por página, magic, versão);
 3. **troca de imagem** — escolhe a base, a imagem e gera o `.acf` novo (estático ou GIF,
-   em tamanho de slot ou tela cheia), validando antes de escrever.
+   em tamanho de slot ou tela cheia), validando antes de escrever;
+4. **gravar na tela** — protocolo AHMI sobre a serial em Rust (`termios` puro via `nix`,
+   sem `serialport`/`libudev`): handshake, troca para modo download, envio por páginas,
+   fim e troca de página. Medido no hardware: **4,7 s** para o tema de fábrica.
 
-O código do porte está em `src-tauri/src/acf/` (`codec.rs`, `inspect.rs`, `patch.rs`),
-validado contra os fixtures gerados pelo Python.
+O código do porte está em `src-tauri/src/acf/` (`codec.rs`, `inspect.rs`, `patch.rs`) e em
+`src-tauri/src/device.rs`, validados contra os fixtures gerados pelo Python e no hardware.
 
 ## Como está hoje
 

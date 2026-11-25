@@ -34,6 +34,9 @@
   let telaCheia = $state(true);
   let gerando = $state(false);
   let gerado: Patch | null = $state(null);
+  let gravando = $state(false);
+  let gravado = $state("");
+  let parou = $state("");
 
   async function atualizar() {
     carregando = true;
@@ -94,6 +97,36 @@
       erro = String(e);
     } finally {
       gerando = false;
+    }
+  }
+
+  async function pararApp() {
+    erro = "";
+    try {
+      const r = await invoke<boolean>("parar_app");
+      parou = r ? "app oficial fechado" : "o app oficial já estava parado";
+      await atualizar();
+    } catch (e) {
+      erro = String(e);
+    }
+  }
+
+  async function gravarNaTela() {
+    const alvo = gerado?.saida ?? acf;
+    if (!alvo) return;
+    gravando = true;
+    erro = "";
+    gravado = "";
+    try {
+      const r = await invoke<{ porta: string; tamanho: number; bytes: number }>("gravar", {
+        caminho: alvo,
+        pagina: 5,
+      });
+      gravado = `gravado em ${r.porta} (${Math.round(r.bytes / 100) / 10}s)`;
+    } catch (e) {
+      erro = String(e);
+    } finally {
+      gravando = false;
     }
   }
 
@@ -182,10 +215,17 @@
         <span>{gerado.quadros} quadro(s)</span>
         {#if gerado.mudou_tamanho}<strong>tamanho ajustado</strong>{/if}
       </div>
-      <p class="dica">
-        validado. Para gravar: <code>pkill -x minitela &amp;&amp; minitela ctl send "{gerado.saida}" -y</code>
-      </p>
+      <p class="dica">validado antes de escrever.</p>
     {/if}
+
+    <div class="acoes">
+      <button onclick={pararApp}>parar app oficial</button>
+      <button onclick={gravarNaTela} disabled={(!gerado && !acf) || gravando}>
+        {gravando ? "gravando…" : "gravar na tela"}
+      </button>
+    </div>
+    {#if parou}<p class="dica">{parou}</p>{/if}
+    {#if gravado}<p class="dica">{gravado}</p>{/if}
   </section>
 
   <footer>

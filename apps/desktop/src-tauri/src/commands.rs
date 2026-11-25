@@ -99,6 +99,66 @@ fn quadros_rgb(imagem: &Path, w: usize, h: usize) -> Result<Vec<Vec<u8>>, String
     Ok(saida.stdout.chunks(tam).map(|c| c.to_vec()).collect())
 }
 
+#[tauri::command]
+pub fn parar_app() -> Result<bool, String> {
+    if !crate::device::app_oficial_rodando() {
+        return Ok(false);
+    }
+    let status = Command::new("pkill")
+        .args(["-x", "minitela"])
+        .status()
+        .map_err(texto)?;
+    std::thread::sleep(std::time::Duration::from_secs(2));
+    Ok(status.success())
+}
+
+#[derive(Serialize)]
+pub struct GravacaoView {
+    pub porta: String,
+    pub tamanho: usize,
+    pub bytes: u64,
+}
+
+#[tauri::command]
+pub async fn gravar(caminho: String, pagina: Option<u32>) -> Result<GravacaoView, String> {
+    let dados = std::fs::read(&caminho).map_err(texto)?;
+    if crate::device::app_oficial_rodando() {
+        return Err("o app oficial esta rodando e segura a porta: feche com 'parar app'".into());
+    }
+    let porta =
+        crate::device::encontra_porta().ok_or("nenhum /dev/ttyACM*: a tela esta conectada?")?;
+    let inicio = std::time::Instant::now();
+    let caminho_porta = porta.clone();
+    let tamanho = dados.len();
+    let dados_movidos = dados.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut p = crate::device::Porta::abre(caminho_porta.clone()).map_err(texto)?;
+        p.envia_textura(&dados_movidos, |_| {}).map_err(texto)?;
+        if let Some(n) = pagina {
+            std::thread::sleep(std::time::Duration::from_secs(4));
+            // o firmware reenumera o USB ao fim; reabre antes de trocar a página
+            for _ in 0..20 {
+                if let Some(novo) = crate::device::encontra_porta()
+                    && let Ok(mut p2) = crate::device::Porta::abre(novo)
+                    && p2.pagina(n).is_ok()
+                {
+                    return Ok::<usize, String>(1);
+                }
+                std::thread::sleep(std::time::Duration::from_millis(500));
+            }
+            return Ok::<usize, String>(0);
+        }
+        Ok::<usize, String>(0)
+    })
+    .await
+    .map_err(texto)??;
+    Ok(GravacaoView {
+        porta: porta.display().to_string(),
+        tamanho,
+        bytes: inicio.elapsed().as_millis() as u64,
+    })
+}
+
 #[derive(Serialize)]
 pub struct PatchView {
     pub saida: String,

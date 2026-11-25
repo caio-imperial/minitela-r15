@@ -6,6 +6,7 @@
 
 pub mod acf;
 mod commands;
+pub mod device;
 
 use serde::Serialize;
 use std::fs;
@@ -149,7 +150,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             ambiente,
             commands::diagnostico,
-            commands::patch_imagem
+            commands::patch_imagem,
+            commands::gravar,
+            commands::parar_app
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o app");
