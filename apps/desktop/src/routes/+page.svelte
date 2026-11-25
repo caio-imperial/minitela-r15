@@ -105,8 +105,7 @@
   async function pararApp() {
     erro = "";
     try {
-      const r = await invoke<boolean>("parar_app");
-      parou = r ? "app oficial fechado" : "o app oficial já estava parado";
+      parou = await invoke<string>("parar_app");
       await atualizar();
     } catch (e) {
       erro = String(e);
@@ -162,7 +161,20 @@
   const kb = (n: number) => `${Math.round(n / 1024)} KB`;
   const base = (p: string) => p.split("/").pop() ?? p;
 
-  onMount(atualizar);
+  async function carregar() {
+    await atualizar();
+    try {
+      const b = await invoke<string | null>("sugestao_base");
+      if (b) {
+        acf = b;
+        await analisar();
+      }
+    } catch (e) {
+      erro = String(e);
+    }
+  }
+
+  onMount(carregar);
 </script>
 
 <main>
@@ -224,13 +236,18 @@
       <h2>Trocar imagem</h2>
       <div class="acoes">
         <button onclick={escolherImagem}>imagem…</button>
-        <button onclick={gerar} disabled={!acf || !imagem || gerando}>
+        <button onclick={gerar} disabled={!imagem || gerando}>
           {gerando ? "gerando…" : "gerar .acf"}
         </button>
       </div>
     </div>
     {#if imagem}
-      <p class="caminho">{base(imagem)}</p>
+      <p class="caminho">imagem: {base(imagem)}</p>
+    {:else}
+      <p class="dica">escolha uma imagem para gerar o .acf</p>
+    {/if}
+    {#if !acf}
+      <p class="dica">nenhuma base: escolha um .acf na seção acima</p>
     {/if}
     <label class="check">
       <input type="checkbox" bind:checked={telaCheia} />
@@ -249,10 +266,13 @@
 
     <div class="acoes">
       <button onclick={pararApp}>parar app oficial</button>
-      <button onclick={gravarNaTela} disabled={(!gerado && !acf) || gravando}>
+      <button onclick={gravarNaTela} disabled={!gerado || gravando}>
         {gravando ? "gravando…" : "gravar na tela"}
       </button>
     </div>
+    {#if !gerado}
+      <p class="dica">gere o .acf acima para habilitar a gravação</p>
+    {/if}
     {#if parou}<p class="dica">{parou}</p>{/if}
     {#if gravado}<p class="dica">{gravado}</p>{/if}
 

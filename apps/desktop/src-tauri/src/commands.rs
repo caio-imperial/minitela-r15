@@ -28,6 +28,19 @@ fn texto(e: impl std::fmt::Display) -> String {
     e.to_string()
 }
 
+/// Base sugerida para o patch: o tema de fábrica, ou o template compilado.
+#[tauri::command]
+pub fn sugestao_base() -> Option<String> {
+    let fabrica = "/usr/share/minitela/resources/ACF/Texture.acf";
+    if Path::new(fabrica).exists() {
+        return Some(fabrica.to_string());
+    }
+    let template = std::env::var_os("HOME")
+        .map(PathBuf::from)?
+        .join(".local/share/minitela-custom/out/minitela.acf");
+    template.exists().then(|| template.display().to_string())
+}
+
 #[tauri::command]
 pub fn diagnostico(caminho: String) -> Result<DiagnosticoView, String> {
     let dados = std::fs::read(&caminho).map_err(texto)?;
@@ -305,7 +318,14 @@ pub fn patch_imagem(
         return Err(format!("resultado nao valida: {}", resumo2.problemas[0]));
     }
 
-    let saida = PathBuf::from(&caminho_acf).with_file_name(format!(
+    // A base costuma ser /usr/share/minitela/... (do root): o resultado vai para o
+    // diretorio do usuario, nunca ao lado da base.
+    let dir = std::env::var_os("HOME")
+        .map(PathBuf::from)
+        .ok_or("HOME nao definido")?
+        .join(".local/share/minitela-custom/out");
+    std::fs::create_dir_all(&dir).map_err(texto)?;
+    let saida = dir.join(format!(
         "{}-patch.acf",
         Path::new(&caminho_acf)
             .file_stem()
@@ -326,6 +346,26 @@ pub fn patch_imagem(
 
 #[cfg(test)]
 mod tests {
+    /// Gera um .acf a partir do tema de fábrica, sem tocar no device.
+    /// Rode com: MINITELA_IMAGEM=<arquivo> cargo test --lib -- --ignored gera_acf
+    #[test]
+    #[ignore]
+    fn gera_acf() {
+        let imagem = std::env::var("MINITELA_IMAGEM").expect("defina MINITELA_IMAGEM");
+        let base = "/usr/share/minitela/resources/ACF/Texture.acf".to_string();
+        let v = super::patch_imagem(base, imagem, true).expect("gerar");
+        eprintln!(
+            "{} | {} B | {} quadro(s) | {:?}",
+            v.saida, v.tamanho, v.quadros, v.tela
+        );
+        assert!(std::path::Path::new(&v.saida).exists());
+        assert!(
+            v.saida.starts_with("/home/"),
+            "saida deve ser gravavel pelo usuario"
+        );
+        assert!(v.problemas.is_empty());
+    }
+
     /// Manda um round de tags no hardware. Rode com:
     ///   cargo test --lib -- --ignored manda_tags --nocapture
     #[test]

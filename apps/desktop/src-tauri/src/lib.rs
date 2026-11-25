@@ -150,6 +150,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             ambiente,
+            commands::sugestao_base,
             commands::diagnostico,
             commands::patch_imagem,
             commands::gravar,
