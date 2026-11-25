@@ -7,3 +7,7 @@ __pycache__/
 .env
 .claude/
 .tools/
+
+# projetos do Ghidra (o Ghidra recusa caminho com componente iniciado por ponto,
+# por isso nao pode ficar em .tools/)
+work/

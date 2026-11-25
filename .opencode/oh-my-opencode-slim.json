@@ -1,0 +1,41 @@
+{
+  "agents": {
+    "re": {
+      "description": "Engenharia reversa da minitela GC9002: analisa binarios (PE/ELF), o app.asar, o formato .acf e imagens de firmware, sempre com evidencia por endereco/offset. Delegue aqui analise de binario ou de formato binario; nao use para editar o repo.",
+      "inheritModelFrom": "orchestrator",
+      "skills": [
+        "reverse-engineering",
+        "reverse-engineer-anything",
+        "firmware-extraction",
+        "firmware-static-analysis",
+        "ghidra-re"
+      ],
+      "mcps": [],
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "git status*": "allow",
+          "git diff*": "allow",
+          "git log*": "allow",
+          "tools/re-env.sh*": "allow",
+          "analyzeHeadless*": "allow",
+          "objdump*": "allow",
+          "readelf*": "allow",
+          "strings*": "allow",
+          "file*": "allow",
+          "minitela_ctl.py send*": "deny",
+          "minitela_ctl.py reboot*": "deny",
+          "minitela_recover.py*": "deny",
+          "pkill*": "deny"
+        },
+        "edit": "allow",
+        "webfetch": "allow"
+      }
+    },
+    "explorer": {
+      "skills_add": [
+        "reverse-engineering"
+      ]
+    }
+  }
+}
