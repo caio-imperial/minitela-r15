@@ -222,20 +222,32 @@ impl Porta {
         parse_status(&p).ok_or(Erro::Recusado("status curto".into()))
     }
 
+    /// Envia e espera um ACK curto; **não falha** se o firmware não responder.
+    /// É o comportamento do `minitela_tags.py` (o app oficial também não espera).
+    fn envia_sem_ack(&mut self, cmd: u16, content: &[u8], espera: Duration) -> Result<(), Erro> {
+        self.escreve(&build_frame(cmd, content))?;
+        let _ = self.le(espera);
+        Ok(())
+    }
+
     pub fn set_registradores(&mut self, pares: &[(u16, u32)]) -> Result<(), Erro> {
         let mut content = vec![(0b1000 << 4) | ((pares.len() as u8 - 1) & 0x0F)];
         for (reg, val) in pares {
             content.extend_from_slice(&reg.to_be_bytes());
             content.extend_from_slice(&val.to_be_bytes());
         }
-        self.request(
-            SET_REGISTER,
-            &content,
-            Some(SET_REGISTER_RESP),
-            Duration::from_secs(2),
-            3,
-        )?;
-        Ok(())
+        self.envia_sem_ack(SET_REGISTER, &content, Duration::from_millis(300))
+    }
+
+    /// Escreve uma tag de texto (`0x0090` com cabeçalho `0xD0`).
+    pub fn set_texto(&mut self, reg: u16, texto: &str) -> Result<(), Erro> {
+        let bytes = texto.as_bytes();
+        let mut content = Vec::with_capacity(5 + bytes.len());
+        content.push(0xD0);
+        content.extend_from_slice(&reg.to_be_bytes());
+        content.extend_from_slice(&(bytes.len() as u16).to_be_bytes());
+        content.extend_from_slice(bytes);
+        self.envia_sem_ack(SET_REGISTER, &content, Duration::from_millis(300))
     }
 
     pub fn pagina(&mut self, n: u32) -> Result<(), Erro> {

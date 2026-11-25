@@ -37,6 +37,8 @@
   let gravando = $state(false);
   let gravado = $state("");
   let parou = $state("");
+  let tags = $state("");
+  let daemon = $state(false);
 
   async function atualizar() {
     carregando = true;
@@ -127,6 +129,33 @@
       erro = String(e);
     } finally {
       gravando = false;
+    }
+  }
+
+  async function mandarTags() {
+    erro = "";
+    try {
+      const t = await invoke<{
+        relogio: string;
+        bateria: number | null;
+        cpu: number | null;
+        wifi: string | null;
+        enviadas: number;
+      }>("tags_uma_vez");
+      tags = `${t.relogio} · bateria ${t.bateria ?? "?"}% · cpu ${t.cpu ?? "?"}%` +
+        (t.wifi ? ` · ${t.wifi}` : "") + ` · ${t.enviadas} tags`;
+      await atualizar();
+    } catch (e) {
+      erro = String(e);
+    }
+  }
+
+  async function alternarDaemon() {
+    erro = "";
+    try {
+      daemon = await invoke<boolean>("tags_daemon", { ligar: !daemon });
+    } catch (e) {
+      erro = String(e);
     }
   }
 
@@ -226,6 +255,14 @@
     </div>
     {#if parou}<p class="dica">{parou}</p>{/if}
     {#if gravado}<p class="dica">{gravado}</p>{/if}
+
+    <div class="acoes">
+      <button onclick={mandarTags}>mandar tags</button>
+      <button onclick={alternarDaemon} class:ativo={daemon}>
+        {daemon ? "parar daemon (5 s)" : "daemon (5 s)"}
+      </button>
+    </div>
+    {#if tags}<p class="dica">{tags}</p>{/if}
   </section>
 
   <footer>
@@ -297,6 +334,11 @@
 
   button:hover:not(:disabled) {
     background: #232c3a;
+  }
+
+  button.ativo {
+    border-color: #3ddc84;
+    color: #3ddc84;
   }
 
   button:disabled {

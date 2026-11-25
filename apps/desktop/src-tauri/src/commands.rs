@@ -99,6 +99,99 @@ fn quadros_rgb(imagem: &Path, w: usize, h: usize) -> Result<Vec<Vec<u8>>, String
     Ok(saida.stdout.chunks(tam).map(|c| c.to_vec()).collect())
 }
 
+static DAEMON: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+static COLETOR: std::sync::OnceLock<crate::sysinfo::Coletor> = std::sync::OnceLock::new();
+
+fn coletor() -> &'static crate::sysinfo::Coletor {
+    COLETOR.get_or_init(crate::sysinfo::Coletor::default)
+}
+
+#[derive(Serialize)]
+pub struct TagsView {
+    pub relogio: String,
+    pub bateria: Option<u32>,
+    pub carregando: Option<u8>,
+    pub cpu: Option<u8>,
+    pub wifi: Option<String>,
+    pub sinal: Option<u8>,
+    pub enviadas: usize,
+}
+
+/// Lê o sistema e manda um round de tags (precisa da porta livre).
+#[tauri::command]
+pub fn tags_uma_vez() -> Result<TagsView, String> {
+    let caminho = crate::device::encontra_porta().ok_or("nenhum /dev/ttyACM*")?;
+    let mut p = crate::device::Porta::abre(caminho).map_err(texto)?;
+
+    let relogio = crate::sysinfo::relogio();
+    let (bat, estado) = match crate::sysinfo::bateria() {
+        Some((pct, e)) => (Some(pct), Some(e)),
+        None => (None, None),
+    };
+    let cpu = crate::sysinfo::cpu(coletor());
+    let (ssid, sinal) = crate::sysinfo::wifi();
+
+    let mut enviadas = 0usize;
+    p.set_texto(crate::sysinfo::TAG_RELOGIO, &relogio)
+        .map_err(texto)?;
+    enviadas += 1;
+    if let Some(pct) = bat {
+        p.set_registradores(&[(crate::sysinfo::TAG_BATERIA, pct)])
+            .map_err(texto)?;
+        enviadas += 1;
+    }
+    if let Some(c) = cpu {
+        p.set_registradores(&[(crate::sysinfo::TAG_CPU, c as u32)])
+            .map_err(texto)?;
+        enviadas += 1;
+    }
+    if let Some(nome) = &ssid {
+        p.set_texto(crate::sysinfo::TAG_WIFI_SSID, nome)
+            .map_err(texto)?;
+        enviadas += 1;
+    }
+    if let Some(q) = sinal {
+        p.set_registradores(&[(crate::sysinfo::TAG_WIFI_SINAL, q as u32)])
+            .map_err(texto)?;
+        enviadas += 1;
+    }
+
+    Ok(TagsView {
+        relogio,
+        bateria: bat,
+        carregando: estado,
+        cpu,
+        wifi: ssid,
+        sinal,
+        enviadas,
+    })
+}
+
+/// Liga/desliga o daemon (5 s). Ele segura a porta enquanto roda.
+#[tauri::command]
+pub fn tags_daemon(ligar: bool) -> Result<bool, String> {
+    use std::sync::atomic::Ordering;
+    if !ligar {
+        DAEMON.store(false, Ordering::SeqCst);
+        return Ok(false);
+    }
+    if DAEMON.swap(true, Ordering::SeqCst) {
+        return Ok(true); // já rodando
+    }
+    std::thread::spawn(|| {
+        while DAEMON.load(Ordering::SeqCst) {
+            let _ = tags_uma_vez();
+            for _ in 0..50 {
+                if !DAEMON.load(Ordering::SeqCst) {
+                    return;
+                }
+                std::thread::sleep(std::time::Duration::from_millis(100));
+            }
+        }
+    });
+    Ok(true)
+}
+
 #[tauri::command]
 pub fn parar_app() -> Result<bool, String> {
     if !crate::device::app_oficial_rodando() {
@@ -229,4 +322,24 @@ pub fn patch_imagem(
         mudou_tamanho: mudou,
         problemas: problemas2,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    /// Manda um round de tags no hardware. Rode com:
+    ///   cargo test --lib -- --ignored manda_tags --nocapture
+    #[test]
+    #[ignore]
+    fn manda_tags() {
+        assert!(
+            !crate::device::app_oficial_rodando(),
+            "pare o app oficial antes"
+        );
+        let v = super::tags_uma_vez().expect("mandar tags");
+        assert!(v.enviadas >= 1);
+        eprintln!(
+            "{} | bateria {:?} | cpu {:?} | wifi {:?} | {} tags",
+            v.relogio, v.bateria, v.cpu, v.wifi, v.enviadas
+        );
+    }
 }

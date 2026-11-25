@@ -26,7 +26,9 @@ Hoje o app faz três coisas:
    texturas e o diagnóstico campo a campo (`CheckCode` por página, magic, versão);
 3. **troca de imagem** — escolhe a base, a imagem e gera o `.acf` novo (estático ou GIF,
    em tamanho de slot ou tela cheia), validando antes de escrever;
-4. **gravar na tela** — protocolo AHMI sobre a serial em Rust (`termios` puro via `nix`,
+4. **tags em tempo real** — relógio, bateria, CPU e wifi, um round avulso ou um daemon de
+   5 s (`sysinfo.rs` lê `/sys`, `/proc` e `iwgetid`; envio sem exigir ACK, como o Python);
+5. **gravar na tela** — protocolo AHMI sobre a serial em Rust (`termios` puro via `nix`,
    sem `serialport`/`libudev`): handshake, troca para modo download, envio por páginas,
    fim e troca de página. Medido no hardware: **4,7 s** para o tema de fábrica.
 

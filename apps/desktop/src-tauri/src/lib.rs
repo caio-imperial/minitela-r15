@@ -7,6 +7,7 @@
 pub mod acf;
 mod commands;
 pub mod device;
+pub mod sysinfo;
 
 use serde::Serialize;
 use std::fs;
@@ -152,7 +153,9 @@ pub fn run() {
             commands::diagnostico,
             commands::patch_imagem,
             commands::gravar,
-            commands::parar_app
+            commands::parar_app,
+            commands::tags_uma_vez,
+            commands::tags_daemon
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o app");
