@@ -94,3 +94,7 @@ do bloco**, enquanto o nosso stream começa no bit 1 — por isso todo offset do
 entra com `-1` no código.
 
 Prova bit a bit contra o simulador do SDK: [`RE-acf-source.md`](../RE-acf-source.md) §2.
+
+!!! tip "Quem quiser implementar"
+    A tarefa está descrita, com fonte, distribuição medida e critério de aceite
+    reprodutível, em [#2](https://github.com/caio-imperial/minitela-r15/issues/2).
