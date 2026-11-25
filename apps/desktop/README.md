@@ -12,8 +12,9 @@ duas coisas: backend em Rust e front em Svelte, com bundler que gera `.deb` / `.
 
 ## Estado
 
-Hoje o app só roda o diagnóstico do ambiente — o equivalente ao `minitela doctor`, mas em
-Rust:
+Hoje o app faz três coisas:
+
+1. **ambiente** — o equivalente ao `minitela doctor`, em Rust:
 
 - python3 / ffmpeg / wine no `PATH`
 - `/dev/ttyACM*`
@@ -21,7 +22,13 @@ Rust:
 - temas de fábrica em `/usr/share/minitela/resources/ACF`
 - template em `~/.local/share/minitela-custom/out/minitela.acf`
 
-É o suficiente para provar a ponte Rust ↔ Svelte e a pipeline.
+2. **leitura/validação de `.acf`** — abre um arquivo e mostra tamanho, tela, páginas,
+   texturas e o diagnóstico campo a campo (`CheckCode` por página, magic, versão);
+3. **troca de imagem** — escolhe a base, a imagem e gera o `.acf` novo (estático ou GIF,
+   em tamanho de slot ou tela cheia), validando antes de escrever.
+
+O código do porte está em `src-tauri/src/acf/` (`codec.rs`, `inspect.rs`, `patch.rs`),
+validado contra os fixtures gerados pelo Python.
 
 ## Como está hoje
 

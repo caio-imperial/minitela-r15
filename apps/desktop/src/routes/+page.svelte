@@ -1,12 +1,39 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
+  import { open } from "@tauri-apps/plugin-dialog";
   import { onMount } from "svelte";
 
   type Item = { nome: string; estado: string; detalhe: string };
+  type Achado = { nivel: number; mensagem: string; dica: string };
+  type Diagnostico = {
+    caminho: string;
+    tamanho: number;
+    start: number;
+    tela: [number, number];
+    paginas: number;
+    texturas: number;
+    ok: boolean;
+    achados: Achado[];
+  };
+  type Patch = {
+    saida: string;
+    tamanho: number;
+    quadros: number;
+    tela: [number, number];
+    mudou_tamanho: boolean;
+    problemas: string[];
+  };
 
   let itens: Item[] = $state([]);
   let carregando = $state(true);
   let erro = $state("");
+
+  let acf = $state("");
+  let diag: Diagnostico | null = $state(null);
+  let imagem = $state("");
+  let telaCheia = $state(true);
+  let gerando = $state(false);
+  let gerado: Patch | null = $state(null);
 
   async function atualizar() {
     carregando = true;
@@ -19,6 +46,59 @@
       carregando = false;
     }
   }
+
+  async function escolherAcf() {
+    const p = await open({
+      multiple: false,
+      filters: [{ name: "Textura da minitela", extensions: ["acf"] }],
+    });
+    if (typeof p === "string") {
+      acf = p;
+      await analisar();
+    }
+  }
+
+  async function analisar() {
+    erro = "";
+    gerado = null;
+    try {
+      diag = await invoke<Diagnostico>("diagnostico", { caminho: acf });
+    } catch (e) {
+      diag = null;
+      erro = String(e);
+    }
+  }
+
+  async function escolherImagem() {
+    const p = await open({
+      multiple: false,
+      filters: [
+        { name: "Imagens", extensions: ["jpg", "jpeg", "png", "gif", "bmp", "webp"] },
+      ],
+    });
+    if (typeof p === "string") imagem = p;
+  }
+
+  async function gerar() {
+    if (!acf || !imagem) return;
+    gerando = true;
+    erro = "";
+    gerado = null;
+    try {
+      gerado = await invoke<Patch>("patch_imagem", {
+        caminhoAcf: acf,
+        imagem,
+        telaCheia,
+      });
+    } catch (e) {
+      erro = String(e);
+    } finally {
+      gerando = false;
+    }
+  }
+
+  const kb = (n: number) => `${Math.round(n / 1024)} KB`;
+  const base = (p: string) => p.split("/").pop() ?? p;
 
   onMount(atualizar);
 </script>
@@ -48,6 +128,66 @@
     {/each}
   </ul>
 
+  <section>
+    <div class="topo">
+      <h2>Arquivo <code>.acf</code></h2>
+      <div class="acoes">
+        <button onclick={escolherAcf}>escolher…</button>
+        <button onclick={analisar} disabled={!acf}>analisar</button>
+      </div>
+    </div>
+    {#if acf}
+      <p class="caminho">{acf}</p>
+    {/if}
+    {#if diag}
+      <div class="resumo" class:ruim={!diag.ok}>
+        <span>{kb(diag.tamanho)}</span>
+        <span>{diag.tela[0]}×{diag.tela[1]}</span>
+        <span>{diag.paginas} páginas</span>
+        <span>{diag.texturas} texturas</span>
+        <strong>{diag.ok ? "válido" : "com problema"}</strong>
+      </div>
+      {#each diag.achados as a}
+        <div class="achado" class:erro-a={a.nivel === 2} class:aviso-a={a.nivel === 1}>
+          <span class="marca">{a.nivel === 0 ? "ok" : a.nivel === 1 ? "aviso" : "erro"}</span>
+          <span>{a.mensagem}</span>
+          {#if a.dica}<small>{a.dica}</small>{/if}
+        </div>
+      {/each}
+    {/if}
+  </section>
+
+  <section>
+    <div class="topo">
+      <h2>Trocar imagem</h2>
+      <div class="acoes">
+        <button onclick={escolherImagem}>imagem…</button>
+        <button onclick={gerar} disabled={!acf || !imagem || gerando}>
+          {gerando ? "gerando…" : "gerar .acf"}
+        </button>
+      </div>
+    </div>
+    {#if imagem}
+      <p class="caminho">{base(imagem)}</p>
+    {/if}
+    <label class="check">
+      <input type="checkbox" bind:checked={telaCheia} />
+      tela cheia (240×240; sem isso usa o tamanho do slot)
+    </label>
+    {#if gerado}
+      <div class="resumo bom">
+        <span>{base(gerado.saida)}</span>
+        <span>{kb(gerado.tamanho)}</span>
+        <span>{gerado.tela[0]}×{gerado.tela[1]}</span>
+        <span>{gerado.quadros} quadro(s)</span>
+        {#if gerado.mudou_tamanho}<strong>tamanho ajustado</strong>{/if}
+      </div>
+      <p class="dica">
+        validado. Para gravar: <code>pkill -x minitela &amp;&amp; minitela ctl send "{gerado.saida}" -y</code>
+      </p>
+    {/if}
+  </section>
+
   <footer>
     <span>backend em Rust · interface em Svelte</span>
     <span class="versao">0.1.0</span>
@@ -63,21 +203,22 @@
   }
 
   main {
-    max-width: 760px;
+    max-width: 860px;
     margin: 0 auto;
-    padding: 28px 24px 20px;
+    padding: 26px 24px 18px;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
     box-sizing: border-box;
+    gap: 18px;
   }
 
-  header {
+  header,
+  .topo {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 16px;
-    margin-bottom: 22px;
   }
 
   h1 {
@@ -86,10 +227,22 @@
     letter-spacing: -0.02em;
   }
 
+  h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #cdd4e0;
+  }
+
   .sub {
     margin: 4px 0 0;
     color: #8b94a3;
     font-size: 13px;
+  }
+
+  .acoes {
+    display: flex;
+    gap: 8px;
   }
 
   button {
@@ -97,7 +250,7 @@
     color: #cfd6e2;
     border: 1px solid #2b3442;
     border-radius: 8px;
-    padding: 8px 14px;
+    padding: 7px 13px;
     font-size: 13px;
     cursor: pointer;
   }
@@ -107,7 +260,7 @@
   }
 
   button:disabled {
-    opacity: 0.6;
+    opacity: 0.55;
     cursor: default;
   }
 
@@ -126,9 +279,9 @@
     grid-template-columns: 10px 150px 1fr;
     gap: 12px;
     align-items: center;
-    padding: 11px 14px;
+    padding: 10px 14px;
     border-bottom: 1px solid #1b2230;
-    font-size: 14px;
+    font-size: 13.5px;
   }
 
   li:last-child {
@@ -157,15 +310,106 @@
     overflow-wrap: anywhere;
   }
 
+  section {
+    border: 1px solid #1f2733;
+    border-radius: 10px;
+    padding: 14px;
+    background: #121722;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .caminho {
+    margin: 0;
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    color: #8b94a3;
+    overflow-wrap: anywhere;
+  }
+
+  .resumo {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+    color: #b9c2d0;
+    align-items: baseline;
+  }
+
+  .resumo strong {
+    color: #3ddc84;
+  }
+
+  .resumo.ruim strong {
+    color: #ff7b72;
+  }
+
+  .resumo.bom strong {
+    color: #3ddc84;
+  }
+
+  .achado {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    gap: 10px;
+    font-size: 12.5px;
+    padding: 6px 0;
+    border-top: 1px solid #1b2230;
+  }
+
+  .achado small {
+    grid-column: 2;
+    color: #8b94a3;
+  }
+
+  .marca {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #3ddc84;
+  }
+
+  .erro-a .marca {
+    color: #ff7b72;
+  }
+
+  .aviso-a .marca {
+    color: #f5b73d;
+  }
+
+  .check {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 12.5px;
+    color: #aab3c2;
+  }
+
   .erro {
     color: #ff7b72;
     font-family: ui-monospace, monospace;
-    font-size: 13px;
+    font-size: 12.5px;
+    margin: 0;
+    white-space: pre-wrap;
+  }
+
+  .dica {
+    margin: 0;
+    font-size: 12px;
+    color: #8b94a3;
+  }
+
+  code {
+    background: #1b2230;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 11.5px;
   }
 
   footer {
     margin-top: auto;
-    padding-top: 18px;
+    padding-top: 10px;
     display: flex;
     justify-content: space-between;
     color: #6b7482;

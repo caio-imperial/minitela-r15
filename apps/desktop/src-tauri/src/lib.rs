@@ -5,6 +5,7 @@
 //! fixtures gerados pelo Python (ver apps/desktop/README.md).
 
 pub mod acf;
+mod commands;
 
 use serde::Serialize;
 use std::fs;
@@ -144,7 +145,12 @@ fn home() -> std::path::PathBuf {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![ambiente])
+        .plugin(tauri_plugin_dialog::init())
+        .invoke_handler(tauri::generate_handler![
+            ambiente,
+            commands::diagnostico,
+            commands::patch_imagem
+        ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o app");
 }
