@@ -14,10 +14,10 @@
       {
         "title": "Minitela",
         "width": 760,
-        "height": 560,
+        "height": 760,
         "resizable": true,
         "minWidth": 560,
-        "minHeight": 420
+        "minHeight": 560
       }
     ],
     "security": {
