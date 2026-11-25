@@ -18,7 +18,9 @@ defaults:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Compilar na distro mais antiga suportada: o binario carrega a glibc do runner.
+    # ubuntu-22.04 = glibc 2.35, roda em Debian 12 (2.36) e Ubuntu 22.04+.
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
