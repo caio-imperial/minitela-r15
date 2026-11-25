@@ -80,8 +80,6 @@ def main():
     ap.add_argument("--out", default=None, help="arquivo de saída")
     ap.add_argument("--send", action="store_true", help="grava na minitela ao terminar")
     ap.add_argument("--page", type=int, default=None, help="página a exibir depois")
-    ap.add_argument("--tela-cheia", action="store_true",
-                    help="usa a resolução da tela (240x240) em vez do tamanho do slot")
     ap.add_argument("-y", "--yes", action="store_true", help="não pergunta antes de gravar")
     a = ap.parse_args()
 
@@ -107,7 +105,7 @@ def main():
         if probs:
             sys.exit("estado intermediário inválido: " + "; ".join(probs[:2]))
         pg_i, alvo = texturas_das_imagens(info)[k]
-        w, h = (info["w"], info["h"]) if a.tela_cheia else (alvo["w"], alvo["h"])
+        w, h = alvo["w"], alvo["h"]
         quadros = rgb_quadros(img, w, h)
 
         if len(quadros) == 1 and (w, h) == (alvo["w"], alvo["h"]):
@@ -122,7 +120,7 @@ def main():
                 sys.exit(f"{os.path.basename(img)}: {len(quadros)} quadros; "
                          "o limite do trailer aqui é 96")
             quads = [codec.encode_image(q, w, h) for q in quadros]
-            mudou = "" if (w, h) == (alvo["w"], alvo["h"]) else f", era {alvo['w']}x{alvo['h']}"
+            mudou = ""
             data = bytearray(anim.monta(bytes(data), info, pg_i, alvo, quads))
             print(f"  {os.path.basename(img):<28} -> {w}x{h} @ {alvo['addr']:#08x} "
                   f"({len(quads)} quadro(s), {alvo['tipo']}{mudou})")

@@ -395,3 +395,25 @@ tela Imagens, gerado por `minitela_patch.py` sem wine.
 
 Limites práticos: até 96 quadros (tamanho do trailer) e o arquivo tem que caber na
 partição de textura (3/7/15 MB conforme a flash; ver FATO 8 e `RE-firmware.md`).
+
+A rotina também sabe **mudar o tamanho da textura** (atualiza `SingleSliceSize`,
+`TexWidth/Height`, trailer e endereços), mas isso **não basta** para a tela cheia: a
+geometria do widget mora no bloco da página e anda junto — ver FATO 12.
+
+## FATO 12 — a geometria do widget manda no recorte
+
+Comparando o bloco da página 4 de um `.acf` de fábrica (imagens 192) com o de um compilado
+com imagens 240, só **10 bytes** diferem. Dois são decisivos:
+
+| offset no bloco | fábrica | compilado com 240 | o que é |
+|---|---|---|---|
+| `+0x22c` | `0x00c0` (192) | `0x00f0` (240) | largura/altura do widget |
+| `+0x240` | `0x0280` (640) | `0x0200` (512) | escala em ponto fixo 1.9 (1,25× vs 1,0×) |
+
+Consequência prática (testada no hardware): trocar **só** a textura para 240 num tema de
+fábrica deixa o widget em 192 com escala 1,25 — o desenho vira 300 px e a tela mostra
+apenas o canto superior esquerdo. A imagem de teste com moldura e letras nos quatro cantos
+apareceu cortada exatamente assim (só "A" e as bordas de cima/esquerda).
+
+Ou seja: **tamanho da textura e geometria do widget são um par**. O compilador muda os
+dois; um patch que só mexe na textura tem de respeitar o tamanho do slot.

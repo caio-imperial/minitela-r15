@@ -7,7 +7,7 @@ do repositório.
 
 | ferramenta | o que faz | exemplo |
 |---|---|---|
-| **`minitela_patch.py`** | troca imagens e GIF num `.acf` que já funciona; valida antes de gravar; `--tela-cheia` muda o tamanho da textura | `./minitela_patch.py --template base.acf --out novo.acf foto.jpg --send` |
+| **`minitela_patch.py`** | troca imagens e GIF num `.acf` que já funciona; valida antes de gravar | `./minitela_patch.py --template base.acf --out novo.acf foto.jpg --send` |
 | **`minitela_ctl.py`** | protocolo AHMI puro: gravar, página, brilho, info, monitor | `./minitela_ctl.py info` |
 | **`minitela_tags.py`** | relógio, bateria, CPU, wifi, notificações (sem tocar na flash) | `./minitela_tags.py daemon` |
 | **`minitela_gui.py`** | painel tkinter com tudo isso | `./minitela_gui.py` |
