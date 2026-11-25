@@ -4,7 +4,7 @@ Este repositorio e a engenharia reversa da minitela do Positivo Vision R15M (chi
 
 ## Antes de analisar
 
-Leia `RE-acf.md` inteiro. Ele e o caderno de laboratorio e ja contem o que foi provado:
+Leia `docs/RE-acf.md` inteiro. Ele e o caderno de laboratorio e ja contem o que foi provado:
 formato de bloco, alinhamento de 16 KB, header, checksum (XOR de words LE, pulando o
 proprio campo e o footer 0xA55A5AA5), estrutura de alto nivel e as pendencias.
 
@@ -28,5 +28,5 @@ proprio campo e o footer 0xA55A5AA5), estrutura de alto nivel e as pendencias.
   `minitela_recover.py`, `pkill` e reboot sao operacao humana, com recuperacao armada.
 - Nao inventar formato: se nao foi provado contra arquivo real ou contra o exe, diga
   "nao documentado".
-- Escreva o que descobrir em `RE-acf.md`, na secao certa (fato x hipotese x pendencia),
+- Escreva o que descobrir em `docs/RE-acf.md`, na secao certa (fato x hipotese x pendencia),
   em vez de criar notas soltas.

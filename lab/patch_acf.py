@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-patch_acf.py — troca a imagem dentro de um .acf de produção, sem recompilar nada.
+patch_acf.py — OBSOLETO: use o minitela_patch.py na raiz.
+
+troca a imagem dentro de um .acf de produção, sem recompilar nada.
 
 Este é o caminho seguro descoberto depois do episódio de travamento: em vez de
 recompilar o projeto inteiro (o projeto-base do pacote não é o de produção e trava o
@@ -26,7 +28,8 @@ import sys
 import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-spec = importlib.util.spec_from_file_location("codec", os.path.join(HERE, "acf_codec.py"))
+BASE = HERE if os.path.exists(os.path.join(HERE, "acf_codec.py")) else os.path.dirname(HERE)
+spec = importlib.util.spec_from_file_location("codec", os.path.join(BASE, "acf_codec.py"))
 codec = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(codec)
 

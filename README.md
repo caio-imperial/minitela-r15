@@ -131,7 +131,9 @@ cd /tmp && D=/usr/share/mini"tela" && setsid env DISPLAY=:0 GDK_BACKEND=x11 "$D/
 
 - notebook Positivo Vision R15M com o pacote `minitela` instalado (o Policop já traz);
 - `ffmpeg`;
-- `wine` — **só** para o compilador de textura; todo o resto é nativo:
+- `wine` — **opcional**: só o compilador de textura usa. Necessário apenas para criar o
+  template do zero (`minitela_build.py`) ou mudar o layout pelo projeto; trocar imagens,
+  inclusive GIF animado, é nativo (`minitela_patch.py`):
 
 ```bash
 sudo dpkg --add-architecture i386 && sudo apt update
@@ -152,9 +154,9 @@ existe no pacote (só vem `zip64/`). O `setup` cria o prefixo `~/.wine-mt64` soz
 | `acf_codec.py` | codec nativo do formato de textura (encode/decode) + checksum |
 | `acf_inspect.py` | lê/valida um `.acf` com o mapa do firmware (páginas, checksums, tabela de texturas) |
 | `minitela_patch.py` | troca as 3 imagens de um `.acf` que já funciona, sem recompilar (dispensa o wine) |
-| `lab_acf.py`, `exp_bloco.py` | bancada de engenharia reversa (imagens sintéticas + diff das saídas) |
-| `patch_acf.py` | troca a imagem dentro de um `.acf` sem recompilar |
-| [`RE-acf.md`](RE-acf.md) | o caderno da engenharia reversa: protocolo, formato, provas |
+| `lab/lab_acf.py`, `lab/exp_bloco.py` | bancada de engenharia reversa (imagens sintéticas + diff das saídas) |
+| `lab/patch_acf.py` | obsoleto — o `minitela_patch.py` faz o mesmo com o mapa correto |
+| [`docs/RE-acf.md`](docs/RE-acf.md) | o caderno da engenharia reversa: protocolo, formato, provas |
 
 ## Como a coisa funciona
 
@@ -165,7 +167,7 @@ regrava a textura inteira na flash (`0x08100000`).
 
 O protocolo é `AH` … `MI` com CRC (que o firmware ignora), e o `.acf` é o pacote de
 textura compilada. Detalhes, incluindo o formato de bloco decifrado e o algoritmo do
-checksum, estão em [RE-acf.md](RE-acf.md).
+checksum, estão em [docs/RE-acf.md](docs/RE-acf.md).
 
 Velocidade real: um tema de 1,5 MB grava em ~4 s — os 115200 baud são fictícios, o
 transporte é USB.
