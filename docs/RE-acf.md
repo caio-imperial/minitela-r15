@@ -400,20 +400,24 @@ A rotina também sabe **mudar o tamanho da textura** (atualiza `SingleSliceSize`
 `TexWidth/Height`, trailer e endereços), mas isso **não basta** para a tela cheia: a
 geometria do widget mora no bloco da página e anda junto — ver FATO 12.
 
-## FATO 12 — a geometria do widget manda no recorte
+## FATO 12 — tamanho da textura, escalonador e tile boxes andam juntos
 
 Comparando o bloco da página 4 de um `.acf` de fábrica (imagens 192) com o de um compilado
-com imagens 240, só **10 bytes** diferem. Dois são decisivos:
+com imagens 240, só **10 bytes** diferem. O que o compilador muda no registro da textura:
 
-| offset no bloco | fábrica | compilado com 240 | o que é |
+| campo (registro) | fábrica (192) | compilado (240) | regra |
 |---|---|---|---|
-| `+0x22c` | `0x00c0` (192) | `0x00f0` (240) | largura/altura do widget |
-| `+0x240` | `0x0280` (640) | `0x0200` (512) | escala em ponto fixo 1.9 (1,25× vs 1,0×) |
+| `+0` `SingleSliceSize` | 36864 | 57600 | `ceil(w/4)*ceil(h/4)*16` |
+| `+16/+18` `TexWidth/Height` | 192/192 | 240/240 | o tamanho novo |
+| `+36/+38` `ScalerX/Y` (1.9 fixo) | 640 (1,25×) | 512 (1,0×) | `s_novo = s_antigo * dim_antiga / dim_nova` |
+| `+40..43` tile boxes | `(6,6,6,6)` | `(0,0,7,7)` | esquerda/topo 0, direita/baixo `w/32` |
 
-Consequência prática (testada no hardware): trocar **só** a textura para 240 num tema de
-fábrica deixa o widget em 192 com escala 1,25 — o desenho vira 300 px e a tela mostra
-apenas o canto superior esquerdo. A imagem de teste com moldura e letras nos quatro cantos
-apareceu cortada exatamente assim (só "A" e as bordas de cima/esquerda).
+O `SliceFlagsHeaderAddr` (`+8`) fica com **0** no nosso caso (1 quadro, sem trailer) e o
+compilador grava o endereço de um trailer vazio — as duas formas renderizam.
 
-Ou seja: **tamanho da textura e geometria do widget são um par**. O compilador muda os
-dois; um patch que só mexe na textura tem de respeitar o tamanho do slot.
+Sobram **2 bytes** desconhecidos em `+0x19a..0x19b` do bloco (fora do registro, na área de
+widget/canvas), que não impedem o render.
+
+Prova no hardware (25/11/2026): textura 240 num template de fábrica com esses ajustes
+mostra a imagem inteira; **sem** os ajustes de escalonador/tile boxes, só o canto superior
+esquerdo (a textura vira 240×1,25 = 300 e é recortada).

@@ -127,6 +127,19 @@ def monta(data, info, page_index, texto, quadros):
                 struct.pack_into("<I", out, o + 8, tr if n > 1 else 0)
                 struct.pack_into("<H", out, o + 16, w)          # TexWidth
                 struct.pack_into("<H", out, o + 18, h)          # TexHeight
+                # escalonador (1.9 fixo) e tile boxes acompanham o tamanho: o widget
+                # tem o tamanho da tela; a textura menor e ampliada por ScalerX/Y
+                if (w, h) != (texto["w"], texto["h"]):
+                    for c in (36, 38):
+                        antigo = struct.unpack_from("<h", out, o + c)[0]
+                        dim_ant = texto["w"] if c == 36 else texto["h"]
+                        dim_novo = w if c == 36 else h
+                        if dim_ant and dim_novo:
+                            struct.pack_into("<h", out, o + c,
+                                             int(round(antigo * dim_ant / dim_novo)))
+                    # o compilador deixa esquerda/topo em 0 e direita/baixo em w/32
+                    tb = max(1, w // 32)
+                    struct.pack_into("<BBBB", out, o + 40, 0, 0, tb, tb)
 
     # GifSliceNum no bloco do widget (vars[+11], depois de GifNowTime/GifInterval/GifNowIdx)
     blk = new_start + info["pages"][page_index]["store"]

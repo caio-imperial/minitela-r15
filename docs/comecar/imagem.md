@@ -32,18 +32,25 @@ template compilado por nós usa 240×240):
 Só o `Texture.acf` (o tema padrão) funciona como base — os `Texture1..21.acf` não têm as
 três texturas de imagem nas páginas 4/5/6.
 
-### O tamanho é o do slot (e isso enche a tela)
+### Tamanho: slot (192) ou tela cheia (240)
 
-O slot de imagem do tema de fábrica é **192×192**, mas o projeto desenha o widget com
-escala **1,25** — então a imagem já aparece em 240×240 na tela, ampliada.
+**Padrão:** a imagem é gravada no tamanho do slot — **192×192** no tema de fábrica. O
+widget tem 240 e aplica escala 1,25, então a imagem **enche a tela** já ampliada.
 
-Não tente gravar uma textura de 240×240 no tema de fábrica: o widget continua 192 e a
-escala 1,25, e o resultado é uma imagem de 300 px recortada na área do widget (aparece só
-o canto superior esquerdo). O tamanho da textura e a geometria do widget andam juntos; o
-compilador muda os dois quando você compila com imagens 240 (widget 240, escala 1,0).
+**Tela cheia de verdade (240×240):** use `--tela-cheia`. Ele grava a textura em 240 e
+ajusta o que anda junto no registro: `SingleSliceSize`, largura/altura, o escalonador
+(640 → 512, ponto fixo 1.9) e os tile boxes. Sem esse ajuste a textura 240 é ampliada
+1,25× e **corta** — só aparece o canto superior esquerdo (foi assim que descobrimos o
+acoplamento).
 
-Resumo: **grave no tamanho do slot**. Se quiser textura 240 de verdade (mais nitidez), use
-um template compilado com imagens 240 — é o único caso em que o wine ainda entra.
+```bash
+./minitela_patch.py --template /usr/share/minitela/resources/ACF/Texture.acf \
+                    --out ~/minha.acf --tela-cheia ~/foto.jpg --send
+```
+
+Testado no hardware: imagem de teste com moldura e letras nos quatro cantos aparece
+**inteira**, sem wine. As três imagens em 240 dão um arquivo de 901.128 B — o mesmo
+tamanho do template compilado pelo fabricante.
 
 ## Trocar as imagens
 
