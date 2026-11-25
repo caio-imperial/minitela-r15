@@ -47,10 +47,10 @@ fn app_oficial_rodando() -> bool {
         {
             continue;
         }
-        if let Ok(comm) = fs::read_to_string(e.path().join("comm")) {
-            if comm.trim() == "minitela" {
-                return true;
-            }
+        if let Ok(comm) = fs::read_to_string(e.path().join("comm"))
+            && comm.trim() == "minitela"
+        {
+            return true;
         }
     }
     false
