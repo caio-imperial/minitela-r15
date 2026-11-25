@@ -969,4 +969,33 @@ mod tests {
             v.relogio, v.bateria, v.cpu, v.wifi, v.enviadas
         );
     }
+
+    /// Assume o controle, troca página e brilho e (se `MINITELA_ACF` existir) grava.
+    ///   MINITELA_ACF=<arquivo.acf> cargo test --lib -- --ignored controle_na_tela --nocapture
+    #[test]
+    #[ignore]
+    fn controle_na_tela() {
+        if crate::device::encontra_porta().is_none() {
+            eprintln!("nenhuma /dev/ttyACM*: pulando");
+            return;
+        }
+        let v = super::conectar(Some(11)).expect("assumir o controle");
+        assert!(v.conectado);
+        eprintln!("no controle em {:?}", v.porta);
+
+        super::pagina(4).expect("pagina 4");
+        super::brilho(15).expect("brilho 15");
+        std::thread::sleep(std::time::Duration::from_millis(700));
+        super::brilho(100).expect("brilho 100");
+
+        if let Ok(caminho) = std::env::var("MINITELA_ACF") {
+            let dados = std::fs::read(&caminho).expect("ler acf");
+            let porta = super::grava_bloqueante(dados, Some(4)).expect("gravar");
+            eprintln!("gravado em {porta}");
+        }
+
+        assert!(super::controle_estado().conectado, "segue conectado");
+        super::desconectar();
+        assert!(!super::controle_estado().conectado, "desconectou");
+    }
 }
