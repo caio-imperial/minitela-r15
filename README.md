@@ -125,6 +125,7 @@ existe no pacote (só vem `zip64/`). O `setup` cria o prefixo `~/.wine-mt64` soz
 | `minitela_build.py` | imagem → GIF 240x240 → projeto → compilador → `.acf` → grava |
 | `minitela_recover.py` | recupera a minitela se uma gravação ruim travar o firmware |
 | `acf_codec.py` | codec nativo do formato de textura (encode/decode) + checksum |
+| `acf_inspect.py` | lê/valida um `.acf` com o mapa do firmware (páginas, checksums, tabela de texturas) |
 | `lab_acf.py`, `exp_bloco.py` | bancada de engenharia reversa (imagens sintéticas + diff das saídas) |
 | `patch_acf.py` | troca a imagem dentro de um `.acf` sem recompilar |
 | [`RE-acf.md`](RE-acf.md) | o caderno da engenharia reversa: protocolo, formato, provas |

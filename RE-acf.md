@@ -297,3 +297,60 @@ Os três slots correspondem às três imagens da tela "Personalizar Imagens" do 
   entre duas imagens em 753192), mas ficou obsoleto quando o caminho de recompilar
   funcionou. Fica registrado: há **região crítica entre 772392 e 801200** — escrever ali
   faz o firmware reiniciar em ciclo.
+
+## FATO 8 — a semântica de gravação da NOR (lado firmware da flash)
+
+Análise estática do `flash_download.elf` do pacote GC9002 (o flash algorithm do CDK),
+detalhada em [`RE-firmware.md`](./RE-firmware.md). O que muda o entendimento do `.acf`:
+
+- `0x08000000` é `CQSPI_DATA_BASE`; leitura de flash é XIP (loads normais), não comando
+  por chunk — `csi_spiflash_read @ 0x020015ba` → `qspi_direct_access_read @ 0x02002762`.
+- gravar = **erase de setor (4 KB) + page program**; não existe escrita parcial em NOR,
+  então qualquer patch de 1 byte reescreve 4 KB. Isso explica o dano colateral do FATO 7.
+- o driver **trunca o endereço de erase em 4 KB** (`addr & 0xFFFFF000`, `0x02001784`) e
+  para o laço em `(addr & 0xFFFFF000) <= offset+size`: apagar N bytes apaga
+  `ceil(N/4096)` setores inteiros. (Fato neste binário; hipótese para o firmware AHMI,
+  que usa o mesmo SDK.)
+- **16 KB do container = 4 setores exatos** — o alinhamento do FATO 2 cai certinho na
+  granularidade da flash.
+- a geometria (setor/bloco/página/opcodes) é lida da **SFDP em runtime**
+  (`SFDP_flash_read_parameter @ 0x0200107c`), não de tabela de ID. O binário não diz
+  qual é o part; no máximo o byte de capacidade sugere 8 ou 16 MB.
+- `flashChecksum @ 0x020008b0` é stub (`return 0`): **nem o caminho de gravação do
+  fabricante valida checksum**. Corrobora o FATO 7.
+
+## FATO 9 — as três imagens localizadas, com o mapa do firmware
+
+O `acf_inspect.py` lê o `.acf` com o mapa do código-fonte (`RE-acf-source.md` §3) e
+valida o que o firmware valida: `StartOfConfigdata % 16384`, magic `0x494d4841`,
+`AHMIInfo.Version == 0x5A010a13` e o `CheckCode` de cada página
+(`0xA55A5AA5 ^ XOR(words)`).
+
+**Os 22 `.acf` de fábrica do pacote passam sem um único problema** (11 ou 9 páginas,
+94–98 texturas cada). Isso fecha a lacuna de validação que a bancada anterior não tinha:
+agora dá para provar que um arquivo gerado é aceitável *antes* de gravar.
+
+### Onde ficam as 3 imagens
+
+São as páginas **4, 5 e 6 (0-based)** — as telas GIF 1/2/3. Cada uma tem duas texturas:
+
+| página | # | tipo | dimensão | endereço (fábrica) | endereço (compilado por nós) |
+|---|---|---|---|---|---|
+| 4 | 0 | PURECOLOR | 240x240 | `0xff000000` (fundo preto) | `0xff000000` |
+| 4 | 1 | STCRGBA888 | fábrica **192x192**, nosso **240x240** | `0x000a77b0` | `0x000a77b0` |
+| 5 | 1 | STCRGBA888 | idem | `0x000b07c0` | `0x000b58c0` |
+| 6 | 1 | STCRGBA888 | idem | `0x000b97d0` | `0x000c39d0` |
+
+Duas provas de consistência:
+
+- a textura da imagem 1 começa em **`0x000a77b0` nos dois arquivos** — o layout até ali
+  é determinístico;
+- os tamanhos fecham: `0xA77B0 + 36864 = 0xB07C0` e `0xB07C0 + 36864 = 0xB97D0`
+  (fábrica, 192x192 RGBA = 36864 B), e `0xA77B0 + 57600 = 0xB58C0`,
+  `0xB58C0 + 57600 = 0xC39D0` (nosso, 240x240 RGBA = 57600 B, com 16 B de alinhamento
+  entre fatias).
+
+Consequência: o slot aceita as duas dimensões, e o tamanho de cada fatia é
+`ceil(w/4)*ceil(h/4)*16` — o que o `RE-acf-source.md` §2.1 já tinha derivado. A "região
+crítica" que travava o render no FATO 7 é a config a partir de `StartOfConfigdata`
+(802816 aqui), não a região das imagens.

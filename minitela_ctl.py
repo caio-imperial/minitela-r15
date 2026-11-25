@@ -49,6 +49,11 @@ CMD = {
     "DOWNLOAD_DATA_RESPONSE": 0x00C2,
     "DOWNLOAD_COMPLETE": 0x008F,
     "DOWNLOAD_COMPLETE_RESPONSE": 0x00CF,
+    # Leitura de flash. Documentado no "GC9002串口升级协议" v0.2 (planilha do fabricante),
+    # mas o app oficial nunca usa. O codigo de resposta nao esta na planilha: 0x00C3 e
+    # inferido do padrao (0x0080->0x00C0, 0x0081->0x00C1, ...), a confirmar no hardware.
+    "UPLOAD_DATA": 0x0083,
+    "UPLOAD_DATA_RESPONSE": 0x00C3,
     "SWITCH_STATE": 0x0071,
     "SWITCH_STATE_RESPONSE": 0x00B1,
     "REBOOT": 0x0070,
@@ -234,6 +239,50 @@ class Minitela:
     def show_page(self, page_id):
         return self.set_num_tags([(SYSTEM_TAG["page"], page_id)])
 
+    def read_flash(self, addr, size, chunk=1024, progress=None):
+        """Le `size` bytes da flash a partir de `addr` (CMD 0x0083).
+
+        Frame de resposta da planilha do fabricante: Res(4) | Offset(4) | Data(n).
+        `Res == 0xFFFFFFFF` significa "processando", a mesma convencao do download.
+
+        TESTADO no hardware em 25/11/2026, duas vezes: com a UI travada (tela
+        "Information") e depois de um reboot, com a tela normal. O firmware NAO
+        respondeu a 0x0083 em nenhuma das duas, nem com outro codigo de resposta
+        (a sonda escutou qualquer frame por 3 s). Conclusao: o comando nao existe
+        no firmware de aplicacao da minitela — a planilha documenta o protocolo do
+        firmware de upgrade (uartTool/EVB). Para dumpar a flash da minitela ainda
+        nao ha caminho conhecido; o codigo fica aqui como referencia.
+        """
+        out = bytearray()
+        while len(out) < size:
+            n = min(chunk, size - len(out))
+            content = struct.pack(">II", addr + len(out), n)
+            payload = self.request(CMD["UPLOAD_DATA"], content,
+                                   CMD["UPLOAD_DATA_RESPONSE"], timeout=5.0, retries=3)
+            code, off = struct.unpack(">II", payload[:8])
+            if code == 0xFFFFFFFF:
+                got = None
+                deadline = time.monotonic() + 5
+                while time.monotonic() < deadline and got is None:
+                    for ct, p in self.ser.poll(0.1):
+                        if ct == CMD["UPLOAD_DATA_RESPONSE"]:
+                            got = p
+                            break
+                if got is None:
+                    raise TimeoutError(f"timeout esperando a leitura em {addr + len(out):#010x}")
+                payload = got
+                code, off = struct.unpack(">II", payload[:8])
+            if code != 0:
+                raise RuntimeError(f"leitura recusada em {addr + len(out):#010x}: code={code:#x}")
+            data = payload[8:]
+            if not data:
+                raise RuntimeError(f"resposta sem dados (code={code:#x}, offset={off}) "
+                                   "— use -v para inspecionar o frame")
+            out += data[:n]
+            if progress:
+                progress(100 * len(out) // size)
+        return bytes(out)
+
     def set_brightness(self, value):
         return self.set_num_tags([(SYSTEM_TAG["backlight"], max(0, min(100, value)))])
 
@@ -409,6 +458,26 @@ def cmd_reboot(mt, args):
     print("reboot enviado")
 
 
+def cmd_read(mt, args):
+    """Le a flash e salva em arquivo. Nao escreve nada no dispositivo."""
+    out = args.out or f"dump_{args.addr:08x}.bin"
+    t0 = time.monotonic()
+    last = [-1]
+
+    def prog(pct):
+        if pct == last[0]:
+            return
+        last[0] = pct
+        bar = "#" * (pct // 4) + "." * (25 - pct // 4)
+        print(f"\r[{bar}] {pct:3d}%  {time.monotonic() - t0:5.1f}s", end="", flush=True)
+
+    data = mt.read_flash(args.addr, args.size, args.chunk, progress=prog)
+    with open(out, "wb") as f:
+        f.write(data)
+    print(f"\nlido {len(data)} bytes de {args.addr:#010x} -> {out} "
+          f"({time.monotonic() - t0:.1f}s, md5 {hashlib.md5(data).hexdigest()})")
+
+
 def cmd_monitor(mt, args):
     print("escutando (ctrl-c para sair)…")
     while True:
@@ -446,6 +515,19 @@ def main():
     s.set_defaults(fn=cmd_brightness)
 
     sub.add_parser("reboot", help="reinicia a minitela").set_defaults(fn=cmd_reboot)
+
+    s = sub.add_parser("read", help="le a flash e salva em arquivo (CMD 0x0083, experimental:")
+    s.description = ("Le a flash pela planilha oficial do protocolo (CMD 0x0083). "
+                     "ATENCAO: o firmware da minitela nao respondeu a este comando no "
+                     "hardware; deve existir apenas no firmware de upgrade do EVB.")
+    s.add_argument("--addr", required=True, type=lambda x: int(x, 0),
+                   help="endereco inicial (ex: 0x08040000)")
+    s.add_argument("--size", required=True, type=lambda x: int(x, 0),
+                   help="quantidade de bytes (ex: 0x96000 para os 600 KB de cpu1)")
+    s.add_argument("--out", default=None, help="arquivo de saida (padrao: dump_<addr>.bin)")
+    s.add_argument("--chunk", type=int, default=1024, help="bytes por requisicao (max 1024)")
+    s.set_defaults(fn=cmd_read)
+
     sub.add_parser("monitor", help="dump dos frames recebidos").set_defaults(fn=cmd_monitor)
 
     args = p.parse_args()
