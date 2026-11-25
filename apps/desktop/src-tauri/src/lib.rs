@@ -39,7 +39,12 @@ fn app_oficial_rodando() -> bool {
         return false;
     };
     for e in entradas.flatten() {
-        if !e.file_name().to_string_lossy().chars().all(|c| c.is_ascii_digit()) {
+        if !e
+            .file_name()
+            .to_string_lossy()
+            .chars()
+            .all(|c| c.is_ascii_digit())
+        {
             continue;
         }
         if let Ok(comm) = fs::read_to_string(e.path().join("comm")) {
@@ -69,7 +74,11 @@ fn portas_acm() -> Vec<String> {
 fn ambiente() -> Vec<Item> {
     let mut itens = Vec::new();
 
-    for (nome, bin) in [("python3", "python3"), ("ffmpeg", "ffmpeg"), ("wine", "wine")] {
+    for (nome, bin) in [
+        ("python3", "python3"),
+        ("ffmpeg", "ffmpeg"),
+        ("wine", "wine"),
+    ] {
         match no_path(bin) {
             Some(p) => itens.push(item(nome, true, p)),
             None => itens.push(item(
