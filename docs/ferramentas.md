@@ -35,6 +35,18 @@ Um arquivo bom imprime `OK` e nenhum problema. É exatamente o que o firmware va
 `StartOfConfigdata % 16384`, magic `0x494d4841`, versão e o `CheckCode` de cada página
 (`0xA55A5AA5 ^ XOR(words)`).
 
+Quando o problema é só de **invariante derivada** (checksum de página, `TotalSize`, `@8`),
+`--fix` recalcula e grava uma cópia — sem mexer em estrutura:
+
+```bash
+./acf_inspect.py --fix arquivo.acf --out corrigido.acf
+#   ~ pg4: CheckCode 0xd0691422 -> 0xd0d91492
+#   diagnostico depois: OK
+```
+
+Ele **não** conserta magic, versão, tamanho ou textura fora da área — só o que é função
+dos bytes.
+
 Quando algo falha, `--diagnostico` diz **o quê** e **por quê**:
 
 ```bash

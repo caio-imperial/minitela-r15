@@ -22,6 +22,7 @@ Referencia: RE-acf-source.md (§3), RE-acf.md.
 
 import argparse
 import glob
+import os
 import struct
 import sys
 
@@ -294,12 +295,57 @@ def diagnostico(data, nome="<mem>"):
     return achados
 
 
+def conserta(data):
+    """Recalcula o que o firmware valida: CheckCode das páginas, TotalSize, @8 e checksum.
+
+    NÃO conserta estrutura (tamanho, magic, versão, texturas fora da área): só as
+    invariantes derivadas. Devolve (bytes, lista de mudanças).
+    """
+    out = bytearray(data)
+    info, problems = parse_bytes(bytes(out))
+    if "erro" in info:
+        raise ValueError(info["erro"])
+    mudancas = []
+    base = CONFIG_INFO_SIZE + u16(out, info["start"] + 72)
+    for pg in info["pages"]:
+        b = info["start"] + pg["store"]
+        calc = PAGE_XOR_SEED ^ xor_words(out[b:b + pg["size"]])
+        if calc != pg["check"]:
+            struct.pack_into("<I", out, info["start"] + base + pg["i"] * 56 + 8, calc)
+            mudancas.append(f"pg{pg['i']}: CheckCode {pg['check']:#010x} -> {calc:#010x}")
+
+    total_size = len(out) - 8
+    if u32(out, info["start"] + 36) != total_size:
+        mudancas.append(f"TotalSize {u32(out, info['start'] + 36)} -> {total_size}")
+        struct.pack_into("<I", out, info["start"] + 36, total_size)
+
+    texto = u32(out, info["start"] + 40)
+    if u32(out, 8) != texto // 2:
+        mudancas.append(f"@8 {u32(out, 8)} -> {texto // 2}")
+        struct.pack_into("<I", out, 8, texto // 2)
+
+    cks_antigo = u32(out, 4)
+    total = 0
+    n_words = len(out) // 4
+    for i in range(n_words):
+        if i == 1 or i == n_words - 1:
+            continue
+        total ^= u32(out, i * 4)
+    if cks_antigo != total:
+        mudancas.append(f"checksum {cks_antigo:#010x} -> {total:#010x}")
+        struct.pack_into("<I", out, 4, total)
+    return bytes(out), mudancas
+
+
 def main():
     ap = argparse.ArgumentParser(description="Le e valida um Texture.acf pelo mapa do firmware")
     ap.add_argument("acf", nargs="+")
     ap.add_argument("--textures", action="store_true", help="lista cada textura")
     ap.add_argument("--diagnostico", action="store_true",
                     help="explica por que um arquivo seria rejeitado (campo a campo)")
+    ap.add_argument("--fix", action="store_true",
+                    help="recalcula CheckCode das paginas, TotalSize e checksums")
+    ap.add_argument("--out", default=None, help="saida do --fix (padrao: <nome>-fix.acf)")
     a = ap.parse_args()
 
     files = []
@@ -308,6 +354,31 @@ def main():
 
     ruins = 0
     for f in files:
+        if a.fix:
+            dados = open(f, "rb").read()
+            try:
+                novo, mudancas = conserta(dados)
+            except Exception as e:
+                print(f"{f}: nao consegui consertar: {e}")
+                ruins += 1
+                continue
+            saida = a.out or (os.path.splitext(os.path.basename(f))[0] + "-fix.acf")
+            try:
+                open(saida, "wb").write(novo)
+            except OSError as e:
+                print(f"{f}: nao consegui escrever {saida}: {e} (use --out)")
+                ruins += 1
+                continue
+            print(f"{f} -> {saida}")
+            for m in mudancas:
+                print(f"  ~ {m}")
+            if not mudancas:
+                print("  (nada a corrigir)")
+            else:
+                _, restam = parse(saida)
+                print("  diagnostico depois:", "OK" if not restam else "; ".join(restam[:3]))
+                ruins += 1 if restam else 0
+            continue
         if a.diagnostico:
             print(f)
             ruins += sum(1 for nivel, _, _ in diagnostico(open(f, "rb").read(), f) if nivel == 2)
