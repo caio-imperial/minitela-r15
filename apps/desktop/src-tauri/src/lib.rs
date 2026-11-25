@@ -4,6 +4,8 @@
 //! faz em Python. O porte do protocolo e do codec vem depois, validado contra os
 //! fixtures gerados pelo Python (ver apps/desktop/README.md).
 
+pub mod acf;
+
 use serde::Serialize;
 use std::fs;
 use std::path::Path;
