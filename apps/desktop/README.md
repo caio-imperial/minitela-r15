@@ -23,6 +23,13 @@ Rust:
 
 É o suficiente para provar a ponte Rust ↔ Svelte e a pipeline.
 
+## Como está hoje
+
+![app rodando](docs/app.png)
+
+Artefato do CI (AppImage compilado em `ubuntu-22.04`), rodando num Debian 12: o backend
+Rust leu o ambiente e a interface listou cada item.
+
 ## Como rodar
 
 ```bash
