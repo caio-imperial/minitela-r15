@@ -2,3 +2,8 @@ __pycache__/
 *.pyc
 *.acf
 *.raw
+
+# segredos e estado local
+.env
+.claude/
+.tools/

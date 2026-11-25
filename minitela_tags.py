@@ -38,52 +38,45 @@ STR_HEADER = 0b11010000
 
 # (id, tipo). Os ids vêm do tagUtils.js do MiniPanel; os marcados com * foram capturados
 # dos frames que o app oficial manda de verdade (são tags do projeto, não do SDK).
+# Mapa das tags REAIS deste projeto, extraído do `tagList` do data.json (campo
+# `indexOfRegister`, que é o id no firmware). O tagUtils.js do MiniPanel lista um
+# conjunto maior, mas boa parte não está ligada neste projeto — só vale o que está aqui.
+#
+# (id, tipo, tela onde aparece)
 TAGS = {
     # sistema
-    "pagina":        (2, "num"),
-    "brilho":        (7, "num"),
-    # máquina
-    "cpu":           (1080, "num"),
-    "gpu":           (1081, "num"),
-    "bateria":       (1082, "num"),
-    "bateria_tipo":  (1150, "num"),
-    "wifi_ssid":     (1083, "str"),
-    "wifi_sinal":    (1084, "num"),
-    "wifi_status":   (1087, "num"),
-    "bt_nome":       (1085, "str"),
-    "bt_status":     (1086, "num"),
-    # lembretes
-    "nota1":         (1090, "str"),
-    "nota1_hora":    (1091, "str"),
-    "nota2":         (1092, "str"),
-    "nota2_hora":    (1093, "str"),
-    "nota3":         (1094, "str"),
-    "nota3_hora":    (1095, "str"),
-    # mídia
-    "midia":         (1100, "str"),
-    "midia_total":   (1101, "num"),
-    "midia_pos":     (1102, "num"),
-    "midia_play":    (2003, "num"),
-    # notificações (whatsapp)
-    "notif1_de":     (1140, "str"),
-    "notif1_texto":  (1141, "str"),
-    "notif2_de":     (1142, "str"),
-    "notif2_texto":  (1143, "str"),
-    "notif3_de":     (1144, "str"),
-    "notif3_texto":  (1145, "str"),
-    # clima (dia 1 = hoje)
-    "clima1_tipo":   (1110, "num"),
-    "clima1_temp":   (1111, "num"),
-    "clima2_tipo":   (1115, "num"),
-    "clima2_desc":   (1119, "str"),
-    "clima3_tipo":   (1120, "num"),
-    "clima3_desc":   (1124, "str"),
-    # capturadas do app oficial (*)
-    "relogio":       (2006, "str"),   # "23/08 22:02"
-    "cidade":        (2027, "str"),   # "Linhares"
-    "temp_hoje":     (2030, "str"),   # "19°/26°"
-    "temp_amanha":   (2031, "str"),
-    "temp_depois":   (2032, "str"),
+    "pagina":        (2, "num", "—"),
+    "brilho":        (7, "num", "—"),
+    "tema_animacao": (65, "num", "—"),
+    # topo de todas as telas
+    "relogio":       (2006, "str", "todas"),
+    "whatsapp_logo": (2005, "num", "todas"),
+    # tela WhatsApp: duas linhas de texto
+    "notif_de":      (1140, "str", "WhatsApp"),
+    "notif_texto":   (1141, "str", "WhatsApp"),
+    "msg_fundo1":    (2025, "num", "WhatsApp"),
+    "msg_fundo2":    (2026, "num", "WhatsApp"),
+    # tela Notas: uma linha só
+    "nota":          (1090, "str", "Notas"),
+    # tela Monitor
+    "bateria":       (1082, "num", "Monitor"),
+    "bateria_tipo":  (1150, "num", "Monitor"),
+    "wifi_ssid":     (1083, "str", "Monitor"),
+    "bt_nome":       (1085, "str", "Monitor"),
+    # tela Clima: SEIS campos de texto — a mais generosa para dados próprios
+    "cidade":        (2027, "str", "Clima"),
+    "temp_agora":    (2030, "str", "Clima"),
+    "temp_prev1":    (2031, "str", "Clima"),
+    "temp_prev2":    (2032, "str", "Clima"),
+    "clima1_tipo":   (1110, "num", "Clima"),
+    "clima2_tipo":   (1115, "num", "Clima"),
+    "clima2_desc":   (1119, "str", "Clima"),
+    "clima3_tipo":   (1120, "num", "Clima"),
+    "clima3_desc":   (1124, "str", "Clima"),
+    # animação de transição
+    "move_x":        (2001, "num", "—"),
+    "move_y":        (2002, "num", "—"),
+    "move_trigger":  (2000, "num", "—"),
 }
 
 
@@ -127,7 +120,7 @@ class Tags:
     def set(self, nome, valor):
         if nome not in TAGS:
             sys.exit(f"tag desconhecida: {nome} (veja: ./minitela_tags.py list)")
-        reg, tipo = TAGS[nome]
+        reg, tipo = TAGS[nome][0], TAGS[nome][1]
         if tipo == "str":
             r = self._envia(frame_string(reg, str(valor)))
         else:
@@ -142,7 +135,7 @@ class Tags:
         for nome, valor in itens.items():
             if nome not in TAGS:
                 continue
-            reg, tipo = TAGS[nome]
+            reg, tipo = TAGS[nome][0], TAGS[nome][1]
             if tipo == "num":
                 nums.append((reg, int(valor)))
             else:
@@ -210,10 +203,10 @@ def wifi():
 # --------------------------------------------------------------------- CLI
 
 def cmd_list(t, args):
-    print(f"{'tag':<15} {'id':>5}  tipo")
-    for nome, (reg, tipo) in sorted(TAGS.items(), key=lambda kv: kv[1][0]):
-        print(f"{nome:<15} {reg:>5}  {tipo}")
-    print("\nvalores de exemplo: relogio '23/08 22:02' | bateria 87 | cidade 'Linhares'")
+    print(f"{'tag':<15} {'id':>5}  {'tipo':<5} tela")
+    for nome, (reg, tipo, tela) in sorted(TAGS.items(), key=lambda kv: (kv[1][2], kv[1][0])):
+        print(f"{nome:<15} {reg:>5}  {tipo:<5} {tela}")
+    print("\nexemplos: nota 'oi' | bateria 87 | cidade 'Linhares' | notif_de 'Fulano'")
 
 
 def cmd_set(t, args):
@@ -222,8 +215,8 @@ def cmd_set(t, args):
 
 
 def cmd_notify(t, args):
-    t.set("notif1_de", args.de)
-    t.set("notif1_texto", args.texto)
+    t.set("notif_de", args.de)
+    t.set("notif_texto", args.texto)
     print(f"notificação enviada: {args.de}: {args.texto}")
 
 

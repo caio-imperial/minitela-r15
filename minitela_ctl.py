@@ -360,6 +360,13 @@ def cmd_info(mt, args):
 
 def cmd_send(mt, args):
     data = open(args.file, "rb").read()
+    if args.pad_to and args.pad_to > len(data):
+        # Gravar um .acf menor por cima de um maior deixa o excedente antigo na flash, e o
+        # firmware acaba lendo esse lixo como conteúdo (tela suja, e às vezes travamento).
+        # O header diz quantos blocos valem; o resto vira zeros.
+        falta = args.pad_to - len(data)
+        data += b"\x00" * falta
+        print(f"padding : +{falta} bytes de zeros (limpa o resíduo até {args.pad_to})")
     if args.type in BLOCKED:
         sys.exit(f"recusado: '{args.type}' é uma região crítica (risco de inutilizar a minitela)")
     print(f"arquivo : {args.file} ({len(data)} bytes, md5 {hashlib.md5(data).hexdigest()})")
@@ -425,6 +432,9 @@ def main():
     s.add_argument("--page", type=int, default=None, help="página a exibir depois de gravar")
     s.add_argument("--dry-run", action="store_true")
     s.add_argument("-y", "--yes", action="store_true")
+    s.add_argument("--pad-to", type=int, default=0, metavar="BYTES",
+                   help="preenche com zeros até esse tamanho, para apagar o resíduo de uma "
+                        "gravação anterior maior (o checksum é XOR: zeros não o alteram)")
     s.set_defaults(fn=cmd_send)
 
     s = sub.add_parser("page", help="troca a página exibida")

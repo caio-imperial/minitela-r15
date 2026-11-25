@@ -147,8 +147,11 @@ def cmd_build(args):
         marca = "  <- sua imagem" if i - 1 < len(args.imagens) else "  (de fábrica)"
         print(f"   {i}: {os.path.basename(src):<28} {os.path.getsize(gifs[i]):>7} B{marca}")
 
+    base = getattr(args, "projeto", None) or PROJETO
+    if base != PROJETO:
+        print(f"projeto base: {base}")
     proj = os.path.join(build_dir, "file.zip")
-    shutil.copy2(PROJETO, proj)
+    shutil.copy2(base, proj)
     tmp = proj + ".tmp"
     inv = {v: k for k, v in SLOTS.items()}
     with zipfile.ZipFile(proj) as zin, zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zout:
@@ -203,6 +206,8 @@ def main():
     b.add_argument("imagens", nargs="+", help="1 a 3 imagens (as que faltarem ficam as de fábrica)")
     b.add_argument("--send", action="store_true", help="grava na minitela ao terminar")
     b.add_argument("--no-dither", dest="dither", action="store_false")
+    b.add_argument("--projeto", default=None,
+                   help="projeto .zip alternativo (ex: o gerado por criar_tela.py)")
     b.set_defaults(fn=cmd_build)
     a = p.parse_args()
     if a.cmd == "build" and len(a.imagens) > 3:
