@@ -255,18 +255,41 @@ class Painel:
         def st(txt):
             self.root.after(0, lambda: self.lbl_img_st.config(text=txt))
         try:
-            # a porta precisa estar livre para o build gravar
+            # a porta precisa estar livre para gravar
             if self.tags:
                 self.tags.close(); self.tags = None
-            st("compilando a textura (wine)…")
-            args = [os.path.join(HERE, "minitela_build.py"), "build"]
-            args += [c for c in self.imgs if c]
-            r = subprocess.run(args, capture_output=True, text=True, timeout=600)
-            if "pronto:" not in r.stdout:
-                st("falha ao compilar — veja o terminal")
-                print(r.stdout[-1500:], r.stderr[-500:])
-                return
-            acf = os.path.expanduser("~/.local/share/minitela-custom/out/minitela.acf")
+
+            imgs = [c for c in self.imgs if c]
+            out_dir = os.path.expanduser("~/.local/share/minitela-custom/out")
+            template = os.path.join(out_dir, "minitela.acf")
+            acf = None
+
+            # Caminho sem wine: troca só as texturas de um .acf que já funciona.
+            # Se o template não existir (ou não validar), cai para o compilador.
+            if os.path.exists(template):
+                st("trocando as imagens (sem wine)…")
+                destino = os.path.join(out_dir, "minitela-patch.acf")
+                r = subprocess.run(
+                    [os.path.join(HERE, "minitela_patch.py"),
+                     "--template", template, "--out", destino] + imgs,
+                    capture_output=True, text=True, timeout=300)
+                if "validação OK" in r.stdout:
+                    acf = destino
+                else:
+                    print(r.stdout[-1500:], r.stderr[-800:])
+                    st("o patch não validou — caindo para o compilador (wine)")
+
+            if acf is None:
+                st("compilando a textura (wine)…")
+                r = subprocess.run(
+                    [os.path.join(HERE, "minitela_build.py"), "build"] + imgs,
+                    capture_output=True, text=True, timeout=600)
+                if "pronto:" not in r.stdout:
+                    st("falha ao compilar — veja o terminal")
+                    print(r.stdout[-1500:], r.stderr[-500:])
+                    return
+                acf = template
+
             ctl = os.path.join(HERE, "minitela_ctl.py")
             subprocess.run(["pkill", "-x", "minitela"])
             time.sleep(2)
