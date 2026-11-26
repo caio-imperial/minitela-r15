@@ -53,6 +53,28 @@ Hoje o app faz isto:
 O código do porte está em `src-tauri/src/acf/` (`codec.rs`, `inspect.rs`, `patch.rs`) e em
 `src-tauri/src/device.rs`, validados contra os fixtures gerados pelo Python e no hardware.
 
+## Perfis e o que fica no disco
+
+Cada perfil é um "save" da tela: o `.acf` que vai para o aparelho **mais** o que é
+preciso para reeditar e mostrar sem decodificar de novo.
+
+```
+~/.local/share/minitela/perfis/meu-tema/
+├── perfil.json      metadados + caminhos relativos (nome, datas, base, página, slots)
+├── tema.acf         o que a tela recebe (fonte da verdade)
+├── thumbs/          PNG decodificado do próprio .acf (é o que o aparelho desenha)
+│   ├── slot-1.png   no tamanho nativo (192 ou 240)
+│   └── ...
+└── originais/       cópia do arquivo escolhido, para reeditar recorte/zoom depois
+```
+
+- O perfil **de fábrica** não tem pasta: aponta para `/usr/share/minitela/.../Texture.acf`.
+- Ao assumir o controle, o app compara o **md5** que o firmware guardou (`fileId` do
+  `0x0085`) com o do tema do perfil ativo; se for outro, regrava o perfil e volta para a
+  página dele.
+- Um patch parcial atualiza só os slots gravados — os metadados dos outros ficam.
+- A árvore antiga (`~/.local/share/minitela-custom/perfis`) é migrada na primeira execução.
+
 ## Como está hoje
 
 ![app rodando](docs/app.png)

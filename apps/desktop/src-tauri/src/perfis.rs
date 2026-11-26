@@ -11,6 +11,24 @@ use std::path::{Path, PathBuf};
 pub const ID_FABRICA: &str = "fabrica";
 pub const TEMA_DE_FABRICA: &str = "/usr/share/minitela/resources/ACF/Texture.acf";
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct SlotDoPerfil {
+    pub indice: usize,
+    pub pagina: u32,
+    pub largura: u16,
+    pub altura: u16,
+    pub quadros: usize,
+    /// cópia do arquivo que o usuário escolheu (caminho relativo ao perfil)
+    pub origem: Option<String>,
+    /// PNG decodificado do `tema.acf` (caminho relativo ao perfil)
+    pub thumb: Option<String>,
+    pub ajuste: String,
+    pub zoom: f64,
+    pub px: f64,
+    pub py: f64,
+    pub tela_cheia: bool,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Perfil {
     pub id: String,
@@ -19,14 +37,116 @@ pub struct Perfil {
     /// `None` = perfil de fábrica (usa o tema instalado)
     pub arquivo: Option<String>,
     pub atualizado: Option<String>,
+    #[serde(default)]
+    pub criado: Option<String>,
+    #[serde(default)]
+    pub base: Option<String>,
+    #[serde(default)]
+    pub thumb: Option<String>,
+    #[serde(default)]
+    pub slots: Vec<SlotDoPerfil>,
 }
 
 fn home() -> Option<PathBuf> {
     std::env::var_os("HOME").map(PathBuf::from)
 }
 
+/// Raiz nova: `~/.local/share/minitela/perfis` (a antiga `minitela-custom` é do ODM).
 pub fn dir_perfis() -> Option<PathBuf> {
-    Some(home()?.join(".local/share/minitela-custom/perfis"))
+    let novo = home()?.join(".local/share/minitela/perfis");
+    migra_se_preciso(&novo);
+    Some(novo)
+}
+
+/// Move os perfis da árvore antiga na primeira vez que rodar.
+fn migra_se_preciso(novo: &Path) {
+    if novo.exists() {
+        return;
+    }
+    let Some(antigo) = home().map(|h| h.join(".local/share/minitela-custom/perfis")) else {
+        return;
+    };
+    if !antigo.exists() {
+        return;
+    }
+    let _ = std::fs::create_dir_all(novo);
+    if let Ok(entradas) = std::fs::read_dir(&antigo) {
+        for e in entradas.flatten() {
+            let destino = novo.join(e.file_name());
+            if !destino.exists() {
+                let _ = std::fs::rename(e.path(), destino);
+            }
+        }
+    }
+    let _ = std::fs::remove_dir(&antigo);
+}
+
+pub fn dir_perfil(id: &str) -> Option<PathBuf> {
+    Some(dir_perfis()?.join(id))
+}
+
+/// Copia o arquivo escolhido para `originais/` e devolve o caminho relativo.
+pub fn copia_original(id: &str, slot: usize, origem: &Path) -> Result<String, String> {
+    let dir = dir_perfil(id).ok_or("HOME nao definido")?.join("originais");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let ext = origem
+        .extension()
+        .map(|e| e.to_string_lossy().to_lowercase())
+        .unwrap_or_else(|| "bin".into());
+    let nome = format!("slot-{}.{}", slot + 1, ext);
+    let destino = dir.join(&nome);
+    std::fs::copy(origem, &destino).map_err(|e| e.to_string())?;
+    Ok(format!("originais/{nome}"))
+}
+
+/// Grava um PNG de miniatura (tamanho nativo) e devolve o caminho relativo.
+pub fn grava_thumb(id: &str, nome: &str, w: u16, h: u16, rgb: &[u8]) -> Result<String, String> {
+    let dir = dir_perfil(id).ok_or("HOME nao definido")?.join("thumbs");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let mut bytes = Vec::new();
+    {
+        let mut enc = png::Encoder::new(&mut bytes, w as u32, h as u32);
+        enc.set_color(png::ColorType::Rgb);
+        enc.set_depth(png::BitDepth::Eight);
+        enc.write_header()
+            .map_err(|e| e.to_string())?
+            .write_image_data(rgb)
+            .map_err(|e| e.to_string())?;
+    }
+    let arquivo = format!("{nome}.png");
+    std::fs::write(dir.join(&arquivo), bytes).map_err(|e| e.to_string())?;
+    Ok(format!("thumbs/{arquivo}"))
+}
+
+/// Caminho absoluto de um arquivo relativo do perfil (para servir à interface).
+pub fn caminho_absoluto(id: &str, relativo: &str) -> Option<PathBuf> {
+    let p = dir_perfil(id)?.join(relativo);
+    p.exists().then_some(p)
+}
+
+/// Atualiza os slots informados **sem apagar** os que não vieram nesta gravação
+/// (um patch de um slot só não pode esquecer os outros).
+pub fn define_slots(id: &str, novos: Vec<SlotDoPerfil>) -> Result<(), String> {
+    let mut p = lista()
+        .into_iter()
+        .find(|p| p.id == id)
+        .ok_or(format!("perfil {id} nao existe"))?;
+    for novo in novos {
+        match p.slots.iter_mut().find(|s| s.indice == novo.indice) {
+            Some(atual) => *atual = novo,
+            None => p.slots.push(novo),
+        }
+    }
+    p.slots.sort_by_key(|s| s.indice);
+    p.thumb = p.slots.first().and_then(|s| s.thumb.clone());
+    if p.base.is_none() {
+        p.base = Some(TEMA_DE_FABRICA.into());
+    }
+    if p.criado.is_none() {
+        p.criado = Some(chrono::Local::now().format("%Y-%m-%dT%H:%M:%S").to_string());
+    }
+    p.atualizado = Some(chrono::Local::now().format("%d/%m %H:%M").to_string());
+    salva(&p)
 }
 
 fn arquivo_ativo() -> Option<PathBuf> {
@@ -54,6 +174,10 @@ pub fn de_fabrica() -> Perfil {
         pagina: 1,
         arquivo: None,
         atualizado: None,
+        criado: None,
+        base: Some(TEMA_DE_FABRICA.into()),
+        thumb: None,
+        slots: Vec::new(),
     }
 }
 
@@ -130,12 +254,17 @@ pub fn cria(nome: &str) -> Result<Perfil, String> {
     if let Some(p) = lista().into_iter().find(|p| p.id == id) {
         return Ok(p);
     }
+    let agora = chrono::Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
     let p = Perfil {
         id,
         nome: nome.to_string(),
         pagina: 5,
         arquivo: None,
         atualizado: None,
+        criado: Some(agora),
+        base: Some(TEMA_DE_FABRICA.into()),
+        thumb: None,
+        slots: Vec::new(),
     };
     salva(&p)?;
     Ok(p)
@@ -159,8 +288,12 @@ pub fn grava_tema(id: &str, dados: &[u8], pagina: u32) -> Result<PathBuf, String
             pagina,
             arquivo: None,
             atualizado: None,
+            criado: Some(chrono::Local::now().format("%Y-%m-%dT%H:%M:%S").to_string()),
+            base: Some(TEMA_DE_FABRICA.into()),
+            thumb: None,
+            slots: Vec::new(),
         });
-    p.arquivo = Some(caminho.display().to_string());
+    p.arquivo = Some("tema.acf".into());
     p.pagina = pagina;
     p.atualizado = Some(chrono::Local::now().format("%d/%m %H:%M").to_string());
     salva(&p)?;

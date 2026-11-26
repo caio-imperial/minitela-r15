@@ -943,6 +943,7 @@ pub fn patch_imagens(caminho_acf: String, pedacos: Vec<Pedaco>) -> Result<PatchV
 
     let mut data = data0;
     let mut quadros_total = 0usize;
+    let mut quadros_por_slot: Vec<(usize, usize)> = Vec::new();
     let mut mudou = false;
     let mut tela = [resumo0.w, resumo0.h];
     let mut paginas = Vec::new();
@@ -985,6 +986,7 @@ pub fn patch_imagens(caminho_acf: String, pedacos: Vec<Pedaco>) -> Result<PatchV
         } else {
             patch::monta(&data, &resumo, pagina, tex_idx, &quads).map_err(texto)?
         };
+        quadros_por_slot.push((p.slot, quads.len()));
         quadros_total += quads.len();
         mudou |= mudou_este;
         tela = [w as u16, h as u16];
@@ -1006,6 +1008,53 @@ pub fn patch_imagens(caminho_acf: String, pedacos: Vec<Pedaco>) -> Result<PatchV
     }
     let saida =
         crate::perfis::grava_tema(&perfil.id, &data, *(paginas.first().unwrap_or(&5)) as u32)?;
+
+    // miniaturas decodificadas do próprio .acf (é o que a tela vai desenhar) e
+    // cópia dos originais, para o perfil poder ser reeditado depois
+    if let Ok(resumo_novo) = inspect::parse(&data) {
+        let mut metas = Vec::new();
+        for p in &pedacos {
+            let Some((_, _, tex)) = acha_slot(&resumo_novo, p.slot) else {
+                continue;
+            };
+            let (w, h) = (tex.w as usize, tex.h as usize);
+            let ini = tex.addr as usize;
+            let fim = (ini + tex.slice as usize).min(data.len());
+            let rgb = codec::decode_image(&data[ini..fim], w, h);
+            let thumb = crate::perfis::grava_thumb(
+                &perfil.id,
+                &format!("slot-{}", p.slot + 1),
+                tex.w,
+                tex.h,
+                &rgb,
+            )
+            .ok();
+            let origem =
+                crate::perfis::copia_original(&perfil.id, p.slot, Path::new(&p.imagem)).ok();
+            metas.push(crate::perfis::SlotDoPerfil {
+                indice: p.slot,
+                pagina: *(PAGINAS_IMAGENS.get(p.slot).unwrap_or(&0)) as u32 + 1,
+                largura: tex.w,
+                altura: tex.h,
+                quadros: quadros_por_slot
+                    .iter()
+                    .find(|(s, _)| *s == p.slot)
+                    .map(|(_, q)| *q)
+                    .unwrap_or(1),
+                origem,
+                thumb,
+                ajuste: match p.ajuste {
+                    Ajuste::Cobrir => "cobrir".into(),
+                    Ajuste::Conter => "conter".into(),
+                },
+                zoom: p.zoom,
+                px: p.px,
+                py: p.py,
+                tela_cheia: p.tela_cheia,
+            });
+        }
+        let _ = crate::perfis::define_slots(&perfil.id, metas);
+    }
 
     Ok(PatchView {
         saida: saida.display().to_string(),
