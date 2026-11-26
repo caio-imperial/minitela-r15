@@ -149,6 +149,7 @@ fn texto_de_slot(rgb: &[u8], w: usize, h: usize) -> String {
 #[derive(Serialize)]
 pub struct SlotView {
     pub indice: usize,
+    /// página **como o firmware conta**: 1-based. O índice do `.acf` é `pagina - 1`.
     pub pagina: usize,
     pub w: u16,
     pub h: u16,
@@ -175,7 +176,8 @@ pub fn slots(caminho: String) -> Result<Vec<SlotView>, String> {
         };
         itens.push(SlotView {
             indice,
-            pagina,
+            // o tag de página é 1-based: índice 4 do .acf aparece como página 5
+            pagina: pagina + 1,
             w: tex.w,
             h: tex.h,
             previa,
@@ -267,7 +269,6 @@ pub fn abrir_imagem(imagem: String) -> Result<String, String> {
     Ok(format!("data:image/jpeg;base64,{b64}"))
 }
 
-static DAEMON: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 static COLETOR: std::sync::OnceLock<crate::sysinfo::Coletor> = std::sync::OnceLock::new();
 
 fn coletor() -> &'static crate::sysinfo::Coletor {
@@ -335,21 +336,57 @@ pub fn tags_uma_vez() -> Result<TagsView, String> {
     })
 }
 
-/// Liga/desliga o daemon (5 s). Ele segura a porta enquanto roda.
-#[tauri::command]
-pub fn tags_daemon(ligar: bool) -> Result<bool, String> {
-    use std::sync::atomic::Ordering;
-    if !ligar {
-        DAEMON.store(false, Ordering::SeqCst);
-        return Ok(false);
+/// Enquanto o app está no controle, as páginas de sistema (relógio, bateria, cpu, wifi)
+/// são atualizadas sozinhas — não há botão para isso.
+static DAEMON: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+static GRAVANDO: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+static ULTIMA_TAG: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
+
+const INTERVALO_TAGS: std::time::Duration = std::time::Duration::from_secs(15);
+
+fn anota_tag(linha: String) {
+    if let Ok(mut g) = ULTIMA_TAG.lock() {
+        *g = Some(linha);
     }
+}
+
+/// Uma linha com o que foi mandado por último (ou o erro), para a interface mostrar.
+#[tauri::command]
+pub fn tags_estado() -> Option<String> {
+    ULTIMA_TAG.lock().ok().and_then(|g| g.clone())
+}
+
+fn toca_tags() {
+    use std::sync::atomic::Ordering;
+    if GRAVANDO.load(Ordering::SeqCst) {
+        return; // a gravação está com a porta
+    }
+    let agora = crate::sysinfo::relogio();
+    match tags_uma_vez() {
+        Ok(t) => anota_tag(format!(
+            "{} · bateria {}% · cpu {}%{} · {} tags",
+            t.relogio,
+            t.bateria
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| "?".into()),
+            t.cpu.map(|v| v.to_string()).unwrap_or_else(|| "?".into()),
+            t.wifi.map(|w| format!(" · {w}")).unwrap_or_default(),
+            t.enviadas
+        )),
+        Err(e) => anota_tag(format!("{agora} · tags: {e}")),
+    }
+}
+
+/// Começa a atualizar as tags; idempotente.
+fn inicia_ticker() {
+    use std::sync::atomic::Ordering;
     if DAEMON.swap(true, Ordering::SeqCst) {
-        return Ok(true); // já rodando
+        return;
     }
     std::thread::spawn(|| {
         while DAEMON.load(Ordering::SeqCst) {
-            let _ = tags_uma_vez();
-            for _ in 0..50 {
+            toca_tags();
+            for _ in 0..INTERVALO_TAGS.as_millis() / 100 {
                 if !DAEMON.load(Ordering::SeqCst) {
                     return;
                 }
@@ -357,7 +394,10 @@ pub fn tags_daemon(ligar: bool) -> Result<bool, String> {
             }
         }
     });
-    Ok(true)
+}
+
+fn para_ticker() {
+    DAEMON.store(false, std::sync::atomic::Ordering::SeqCst);
 }
 
 #[tauri::command]
@@ -407,6 +447,7 @@ fn descarta(sessao: Sessao) {
 }
 
 fn solta() {
+    para_ticker();
     if let Ok(mut g) = trava()
         && let Some(s) = g.take()
     {
@@ -479,7 +520,10 @@ pub fn controle_estado() -> ControleView {
 #[tauri::command]
 pub fn conectar(paginas: Option<u16>) -> Result<ControleView, String> {
     let g = sessao(paginas)?;
-    Ok(vista(g.as_ref()))
+    let v = vista(g.as_ref());
+    drop(g);
+    inicia_ticker();
+    Ok(v)
 }
 
 #[tauri::command]
@@ -493,20 +537,27 @@ pub fn desconectar() -> ControleView {
 pub fn devolver_ao_app() -> ControleView {
     solta();
     let _ = std::fs::remove_file("/tmp/minitela_socket");
-    let _ = Command::new("setsid").arg(APP_OFICIAL).spawn();
+    // sem redirecionar o stdio, a saída do app oficial cai no nosso terminal
+    let _ = Command::new("setsid")
+        .arg(APP_OFICIAL)
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .spawn();
     std::thread::sleep(std::time::Duration::from_millis(500));
     controle_estado()
 }
 
-/// Troca a página exibida (0..npages-1).
+/// Troca a página exibida. **1-based**, como o firmware conta: a página 1 é a
+/// primeira do `.acf` e as três imagens costumam ser 5, 6 e 7.
 #[tauri::command]
 pub fn pagina(n: u32) -> Result<(), String> {
     let mut g = sessao(None)?;
-    g.as_mut()
-        .ok_or("sem conexao com a tela")?
-        .porta
-        .pagina(n)
-        .map_err(texto)
+    let s = g.as_mut().ok_or("sem conexao com a tela")?;
+    if s.paginas > 0 && (n == 0 || n > s.paginas as u32) {
+        return Err(format!("pagina {n} fora da faixa 1..{}", s.paginas));
+    }
+    s.porta.pagina(n).map_err(texto)
 }
 
 /// Brilho do backlight (0-100).
@@ -554,6 +605,14 @@ pub async fn gravar(caminho: String, pagina: Option<u32>) -> Result<GravacaoView
 
 /// Grava pelo app e devolve a conexão depois que o firmware reenumera o USB.
 fn grava_bloqueante(dados: Vec<u8>, pagina_alvo: Option<u32>) -> Result<String, String> {
+    use std::sync::atomic::Ordering;
+    GRAVANDO.store(true, Ordering::SeqCst);
+    let resultado = grava_bloqueante_interno(dados, pagina_alvo);
+    GRAVANDO.store(false, Ordering::SeqCst);
+    resultado
+}
+
+fn grava_bloqueante_interno(dados: Vec<u8>, pagina_alvo: Option<u32>) -> Result<String, String> {
     let mut g = sessao(None)?;
     let (caminho, paginas) = {
         let s = g.as_mut().ok_or("sem conexao com a tela")?;
@@ -598,7 +657,7 @@ pub struct PatchView {
     pub tela: [u16; 2],
     pub mudou_tamanho: bool,
     pub problemas: Vec<String>,
-    /// página de cada slot editado (para exibir a imagem depois de gravar)
+    /// página (1-based, como o firmware conta) de cada slot editado
     pub paginas: Vec<usize>,
 }
 
@@ -695,7 +754,7 @@ pub fn patch_imagens(caminho_acf: String, pedacos: Vec<Pedaco>) -> Result<PatchV
         quadros_total += quads.len();
         mudou |= mudou_este;
         tela = [w as u16, h as u16];
-        paginas.push(pagina);
+        paginas.push(pagina + 1);
     }
 
     let resumo2 = inspect::parse(&data).map_err(|e| format!("resultado invalido: {e}"))?;
@@ -810,7 +869,7 @@ mod tests {
             }],
         )
         .expect("gerar");
-        assert_eq!(v.paginas, vec![5]);
+        assert_eq!(v.paginas, vec![6]);
         assert!(!v.mudou_tamanho);
         assert_eq!(v.tela, [192, 192]);
         assert!(v.problemas.is_empty());
@@ -877,7 +936,7 @@ mod tests {
         assert_eq!(lista.len(), 3, "o tema de fabrica tem 3 imagens");
         assert_eq!(
             lista.iter().map(|s| s.pagina).collect::<Vec<_>>(),
-            vec![4, 5, 6]
+            vec![5, 6, 7]
         );
         assert!(lista.iter().all(|s| s.previa.starts_with("data:image/png")));
         assert_ne!(lista[0].previa, lista[1].previa, "miniaturas distintas");
@@ -901,7 +960,7 @@ mod tests {
             py: 0.5,
         };
         let v = super::patch_imagens(base.clone(), vec![pedaco(0), pedaco(2)]).expect("gerar");
-        assert_eq!(v.paginas, vec![4, 6]);
+        assert_eq!(v.paginas, vec![5, 7]);
         assert_eq!(v.quadros, 2);
         assert_eq!(v.tela, [240, 240]);
         assert!(v.mudou_tamanho, "192 -> 240");
@@ -983,7 +1042,14 @@ mod tests {
         assert!(v.conectado);
         eprintln!("no controle em {:?}", v.porta);
 
-        super::pagina(4).expect("pagina 4");
+        std::thread::sleep(std::time::Duration::from_secs(2));
+        eprintln!("tags: {:?}", super::tags_estado());
+        assert!(
+            super::tags_estado().is_some(),
+            "o ticker tem de mandar as tags"
+        );
+
+        super::pagina(5).expect("pagina 5");
         super::brilho(15).expect("brilho 15");
         std::thread::sleep(std::time::Duration::from_millis(700));
         super::brilho(100).expect("brilho 100");

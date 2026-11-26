@@ -117,6 +117,8 @@ pub fn parse_status(payload: &[u8]) -> Option<Status> {
 pub struct Porta {
     file: File,
     pub caminho: PathBuf,
+    /// frames recebidos que chegaram junto com outro e ainda não foram consumidos
+    buf: Vec<u8>,
 }
 
 impl Porta {
@@ -131,7 +133,11 @@ impl Porta {
         cfsetispeed(&mut t, BaudRate::B115200).map_err(|e| Erro::Io(e.to_string()))?;
         cfsetospeed(&mut t, BaudRate::B115200).map_err(|e| Erro::Io(e.to_string()))?;
         tcsetattr(&file, SetArg::TCSANOW, &t).map_err(|e| Erro::Io(e.to_string()))?;
-        Ok(Self { file, caminho })
+        Ok(Self {
+            file,
+            caminho,
+            buf: Vec::new(),
+        })
     }
 
     fn escreve(&mut self, dados: &[u8]) -> Result<(), Erro> {
@@ -141,12 +147,15 @@ impl Porta {
     }
 
     /// Lê até `dur`, mas devolve assim que tiver um frame completo.
+    ///
+    /// O que sobra no buffer **fica** para a próxima chamada: o firmware manda dois
+    /// `C1` seguidos no erase (0xFFFFFFFF e depois 0) e, se vierem no mesmo pacote,
+    /// descartar o resto faz o download travar esperando o segundo.
     fn le(&mut self, dur: Duration) -> Vec<(u16, Vec<u8>)> {
-        let mut buf = Vec::new();
         let mut chunk = [0u8; 4096];
         let fim = Instant::now() + dur;
         loop {
-            let frames = parse_frames(&mut buf);
+            let frames = parse_frames(&mut self.buf);
             if !frames.is_empty() {
                 return frames;
             }
@@ -163,11 +172,11 @@ impl Porta {
                     .unwrap_or(PollFlags::empty())
                     .contains(PollFlags::POLLIN)
             };
-            if pronto && let Ok(n) = self.file.read(&mut chunk) {
-                if n == 0 {
-                    return Vec::new();
+            if pronto {
+                match self.file.read(&mut chunk) {
+                    Ok(0) | Err(_) => return Vec::new(),
+                    Ok(n) => self.buf.extend_from_slice(&chunk[..n]),
                 }
-                buf.extend_from_slice(&chunk[..n]);
             }
         }
     }

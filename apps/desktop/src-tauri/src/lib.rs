@@ -165,7 +165,7 @@ pub fn run() {
             commands::brilho,
             commands::parar_app,
             commands::tags_uma_vez,
-            commands::tags_daemon
+            commands::tags_estado
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o app");

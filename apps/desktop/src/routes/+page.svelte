@@ -48,8 +48,7 @@
   let gravando = $state(false);
   let gravado = $state("");
   let parou = $state("");
-  let tags = $state("");
-  let daemon = $state(false);
+  let estadoTags = $state<string | null>(null);
 
   let controle: Controle = $state({
     conectado: false,
@@ -58,7 +57,8 @@
     app_oficial: false,
   });
   let assumindo = $state(false);
-  let paginaAtual = $state(4);
+  // 1-based, como o firmware conta: as três imagens são 5, 6 e 7
+  let paginaAtual = $state(5);
   let brilhoAtual = $state(100);
   let brilhoTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -71,9 +71,9 @@
     return d?.paginas || c.paginas || 0;
   }
   const paginasTotal = $derived(totalPaginas(diag, controle));
-  const podeVoltar = $derived(controle.conectado && paginaAtual > 0);
+  const podeVoltar = $derived(controle.conectado && paginaAtual > 1);
   const podeAvancar = $derived(
-    controle.conectado && paginasTotal > 0 && paginaAtual < paginasTotal - 1,
+    controle.conectado && paginasTotal > 0 && paginaAtual < paginasTotal,
   );
 
   const edicaoAtiva = $derived(edicoes[ativo] as Edicao | undefined);
@@ -251,7 +251,7 @@
   }
 
   async function irPara(n: number) {
-    if (n < 0 || (paginasTotal > 0 && n >= paginasTotal)) return;
+    if (n < 1 || (paginasTotal > 0 && n > paginasTotal)) return;
     erro = "";
     try {
       await invoke("pagina", { n });
@@ -300,35 +300,6 @@
     }
   }
 
-  async function mandarTags() {
-    erro = "";
-    try {
-      const t = await invoke<{
-        relogio: string;
-        bateria: number | null;
-        cpu: number | null;
-        wifi: string | null;
-        enviadas: number;
-      }>("tags_uma_vez");
-      tags =
-        `${t.relogio} · bateria ${t.bateria ?? "?"}% · cpu ${t.cpu ?? "?"}%` +
-        (t.wifi ? ` · ${t.wifi}` : "") +
-        ` · ${t.enviadas} tags`;
-      await atualizar();
-    } catch (e) {
-      erro = String(e);
-    }
-  }
-
-  async function alternarDaemon() {
-    erro = "";
-    try {
-      daemon = await invoke<boolean>("tags_daemon", { ligar: !daemon });
-    } catch (e) {
-      erro = String(e);
-    }
-  }
-
   async function carregar() {
     await atualizar();
     await atualizarControle();
@@ -344,6 +315,26 @@
   }
 
   onMount(carregar);
+
+  // as tags são mandadas pelo backend a cada 15 s enquanto o app está no controle;
+  // aqui só lemos a última linha para mostrar o que foi para a tela
+  $effect(() => {
+    let timer: ReturnType<typeof setInterval> | undefined;
+    if (!controle.conectado) {
+      estadoTags = null;
+      return;
+    }
+    const ler = async () => {
+      try {
+        estadoTags = await invoke<string | null>("tags_estado");
+      } catch {
+        /* informativo */
+      }
+    };
+    ler();
+    timer = setInterval(ler, 5000);
+    return () => clearInterval(timer);
+  });
 </script>
 
 <main>
@@ -440,9 +431,9 @@
       <div class="paginas">
         <button onclick={() => irPara(paginaAtual - 1)} disabled={!podeVoltar}>◀</button>
         <span>
-          página {paginaAtual}
-          {#if paginaAtual >= 4 && paginaAtual <= 6}
-            <small>· slot {paginaAtual - 3}</small>
+          página {paginaAtual}{paginasTotal > 0 ? ` de ${paginasTotal}` : ""}
+          {#if paginaAtual >= 5 && paginaAtual <= 7}
+            <small>· slot {paginaAtual - 4}</small>
           {/if}
         </span>
         <button onclick={() => irPara(paginaAtual + 1)} disabled={!podeAvancar}>▶</button>
@@ -456,6 +447,10 @@
           </button>
         {/each}
       </div>
+
+      <p class="dica">
+        relógio, bateria, cpu e wifi na tela: {estadoTags ?? "atualizando…"}
+      </p>
 
       <label class="brilho">
         <span class="rotulo">brilho</span>
@@ -572,13 +567,6 @@
     {/if}
     {#if gravado}<p class="dica">{gravado}</p>{/if}
 
-    <div class="acoes">
-      <button onclick={mandarTags}>mandar tags</button>
-      <button onclick={alternarDaemon} class:ativo={daemon}>
-        {daemon ? "parar daemon (5 s)" : "daemon (5 s)"}
-      </button>
-    </div>
-    {#if tags}<p class="dica">{tags}</p>{/if}
   </section>
 
   <footer>
@@ -651,11 +639,6 @@
 
   button:hover:not(:disabled) {
     background: #232c3a;
-  }
-
-  button.ativo {
-    border-color: #3ddc84;
-    color: #3ddc84;
   }
 
   button:disabled {
