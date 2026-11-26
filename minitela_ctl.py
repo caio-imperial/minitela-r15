@@ -17,7 +17,8 @@ Protocolo (extraído de MiniPanel-0.1.6.AppImage, src/utils/command.js + port.js
 Uso:
     ./minitela_ctl.py info                     # handshake + status (só leitura)
     ./minitela_ctl.py send Texture.acf         # grava .acf na flash de textura
-    ./minitela_ctl.py page 5                   # troca a página exibida
+    ./minitela_ctl.py page 5                   # troca a página exibida (1-based;
+                                               #   as três imagens são 5, 6 e 7)
     ./minitela_ctl.py brightness 100           # 0-100
     ./minitela_ctl.py monitor                  # dump dos frames recebidos
 """
@@ -513,7 +514,8 @@ def main():
     s = sub.add_parser("send", help="grava um .acf na flash")
     s.add_argument("file")
     s.add_argument("--type", default="texture", choices=sorted(FILE_TYPE_ADDR))
-    s.add_argument("--page", type=int, default=None, help="página a exibir depois de gravar")
+    s.add_argument("--page", type=int, default=None,
+                   help="página a exibir depois de gravar (1-based: imagens em 5, 6, 7)")
     s.add_argument("--dry-run", action="store_true")
     s.add_argument("-y", "--yes", action="store_true")
     s.add_argument("--pad-to", type=int, default=0, metavar="BYTES",
