@@ -16,7 +16,7 @@ Uso:
     ./minitela_tags.py set relogio "23/08 22:02"
     ./minitela_tags.py set bateria 87
     ./minitela_tags.py notify "Fulano" "oi, tudo bem?"
-    ./minitela_tags.py daemon                      # relógio + bateria + cpu + wifi
+    ./minitela_tags.py daemon                      # relógio + bateria + wifi + bt
 """
 
 import argparse
@@ -254,7 +254,6 @@ def cmd_notify(t, args):
 
 def cmd_daemon(t, args):
     print(f"atualizando a cada {args.interval}s (ctrl-c para sair). porta {t.port}")
-    cpu_uso()          # primeira leitura só estabelece a base
     while True:
         agora = datetime.now()
         dados = {"relogio": agora.strftime("%d/%m %H:%M")}
@@ -264,9 +263,7 @@ def cmd_daemon(t, args):
             # a barra do ícone é separada: 0..3 desenha 1..4 pauzinhos
             dados["bateria_tipo"] = max(1, min(4, -(-pct // 25))) - 1
         dados["bt_nome"] = bluetooth() or "Desconectado"
-        c = cpu_uso()
-        if c is not None:
-            dados["cpu"] = c
+        # este tema nao tem tag de CPU: mandar um id inventado pode travar a tela
         ssid, qual = wifi()
         if ssid:
             dados["wifi_ssid"] = ssid
@@ -291,7 +288,7 @@ def main():
     s.add_argument("tag"); s.add_argument("valor"); s.set_defaults(fn=cmd_set, precisa_porta=True)
     s = sub.add_parser("notify", help="manda uma notificação (remetente + texto)")
     s.add_argument("de"); s.add_argument("texto"); s.set_defaults(fn=cmd_notify, precisa_porta=True)
-    s = sub.add_parser("daemon", help="atualiza relógio, bateria, cpu e wifi continuamente")
+    s = sub.add_parser("daemon", help="atualiza relógio, bateria, wifi e bluetooth continuamente")
     s.add_argument("--interval", type=int, default=5); s.set_defaults(fn=cmd_daemon, precisa_porta=True)
 
     args = p.parse_args()

@@ -101,7 +101,8 @@ o valor, a tela atualiza na hora. Risco zero — dá para testar à vontade.
 ```
 
 Há tags para três lembretes, três notificações, cinco dias de previsão, mídia (nome,
-posição, play/pause), CPU, GPU, bateria, wifi e Bluetooth.
+posição, play/pause), bateria, wifi e Bluetooth. **Não há tag de CPU neste tema** — a
+lista de tags do projeto não tem esse registrador.
 
 **Importante:** o app oficial reescreve todas as tags a cada poucos segundos com os dados
 dele — as suas somem quase na hora. Para valer, pare o app (`pkill -x minitela`); um
@@ -114,7 +115,8 @@ texto:  AH | ctrl | 0090 | 0xD0 | regId(2,BE) | tamanho(2,BE) | UTF-8 | crc | MI
 número: AH | ctrl | 0090 | 0x8N | [regId(2,BE) valor(4,BE)] x (N+1)  | crc | MI
 ```
 
-Os ids de CPU, bateria, wifi, notificações e lembretes vêm do `tagUtils.js` do MiniPanel.
+Os ids de bateria, wifi, notificações e lembretes vêm do `tagList` do projeto (o mesmo
+que o app oficial usa).
 Os de relógio (2006), cidade (2027) e temperatura (2030–2032) não estão no SDK — foram
 capturados dos frames que o app da Positivo manda de verdade.
 
