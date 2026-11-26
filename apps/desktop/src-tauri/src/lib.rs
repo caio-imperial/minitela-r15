@@ -8,6 +8,7 @@ pub mod acf;
 pub mod clima;
 mod commands;
 pub mod device;
+pub mod perfis;
 pub mod sysinfo;
 pub mod tecla;
 
@@ -174,6 +175,10 @@ pub fn run() {
             commands::desconectar,
             commands::devolver_ao_app,
             commands::tema_de_fabrica,
+            commands::perfis_lista,
+            commands::novo_perfil,
+            commands::usar_perfil,
+            commands::apagar_perfil,
             commands::pagina,
             commands::brilho,
             commands::desativadas,

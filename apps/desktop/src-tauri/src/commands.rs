@@ -368,43 +368,47 @@ static ULTIMA_TAG: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None
 /// previsao em cache (a cidade fica em `~/.config/minitela/clima.txt`)
 static CLIMA: std::sync::Mutex<Option<Clima>> = std::sync::Mutex::new(None);
 
-/// último `.acf` que o app gerou (a "customização" da tela)
-fn arquivo_ultimo_acf() -> Option<PathBuf> {
-    let home = std::env::var_os("HOME").map(PathBuf::from)?;
-    Some(home.join(".config/minitela/ultimo-acf.txt"))
+// ------------------------------------------------------------------- perfis
+
+#[derive(Serialize)]
+pub struct PerfisView {
+    pub ativo: String,
+    pub lista: Vec<crate::perfis::Perfil>,
 }
 
-/// última página exibida junto com esse `.acf`
-fn arquivo_ultima_pagina() -> Option<PathBuf> {
-    let home = std::env::var_os("HOME").map(PathBuf::from)?;
-    Some(home.join(".config/minitela/ultima-pagina.txt"))
-}
-
-fn salva_customizacao(caminho: &str, pagina: usize) {
-    if let Some(arq) = arquivo_ultimo_acf() {
-        if let Some(dir) = arq.parent() {
-            let _ = std::fs::create_dir_all(dir);
-        }
-        let _ = std::fs::write(&arq, caminho);
-    }
-    if let Some(arq) = arquivo_ultima_pagina() {
-        let _ = std::fs::write(arq, pagina.to_string());
+fn vista_perfis() -> PerfisView {
+    let ativo = crate::perfis::ativo_id();
+    PerfisView {
+        lista: crate::perfis::lista(),
+        ativo,
     }
 }
 
-fn customizacao_salva() -> Option<(String, u32)> {
-    let caminho = std::fs::read_to_string(arquivo_ultimo_acf()?)
-        .ok()?
-        .trim()
-        .to_string();
-    if caminho.is_empty() || !std::path::Path::new(&caminho).exists() {
-        return None;
+#[tauri::command]
+pub fn perfis_lista() -> PerfisView {
+    vista_perfis()
+}
+
+#[tauri::command]
+pub fn novo_perfil(nome: String) -> Result<PerfisView, String> {
+    let p = crate::perfis::cria(&nome)?;
+    crate::perfis::define_ativo(&p.id)?;
+    Ok(vista_perfis())
+}
+
+#[tauri::command]
+pub fn usar_perfil(id: String) -> Result<PerfisView, String> {
+    if !crate::perfis::existe(&id) {
+        return Err(format!("perfil {id} nao existe"));
     }
-    let pagina = std::fs::read_to_string(arquivo_ultima_pagina().unwrap_or_default())
-        .ok()
-        .and_then(|v| v.trim().parse::<u32>().ok())
-        .unwrap_or(5);
-    Some((caminho, pagina))
+    crate::perfis::define_ativo(&id)?;
+    Ok(vista_perfis())
+}
+
+#[tauri::command]
+pub fn apagar_perfil(id: String) -> Result<PerfisView, String> {
+    crate::perfis::apaga(&id)?;
+    Ok(vista_perfis())
 }
 
 fn arquivo_cidade() -> Option<PathBuf> {
@@ -632,11 +636,12 @@ pub fn controle_estado() -> ControleView {
 pub fn conectar(paginas: Option<u16>) -> Result<ControleView, String> {
     let mut g = sessao(paginas)?;
 
-    // a tela guarda o md5 do último arquivo gravado: dá para saber se o que está
-    // rodando é a nossa customização ou o tema do app oficial
-    let mut tema = "sem customizacao".to_string();
+    // a tela guarda o md5 do último arquivo gravado: com ele sabemos se o que está
+    // rodando é o tema do perfil ativo ou outro (o app oficial, por exemplo)
+    let perfil = crate::perfis::ativo();
+    let mut tema = format!("{} (sem tema gravado)", perfil.nome);
     let mut restaurar: Option<(Vec<u8>, u32)> = None;
-    if let Some((caminho, pagina)) = customizacao_salva() {
+    if let Some(caminho) = crate::perfis::caminho_tema(&perfil.id) {
         let nosso = std::fs::read(&caminho).map_err(texto)?;
         let igual = g
             .as_mut()
@@ -646,17 +651,17 @@ pub fn conectar(paginas: Option<u16>) -> Result<ControleView, String> {
             .map(|st| st.file_id == crate::device::md5(&nosso))
             .unwrap_or(false);
         if igual {
-            tema = "o seu".into();
+            tema = format!("{} (o seu)", perfil.nome);
         } else {
-            tema = "outro".into();
-            restaurar = Some((nosso, pagina));
+            tema = format!("{} (outro)", perfil.nome);
+            restaurar = Some((nosso, perfil.pagina));
         }
     }
     drop(g);
 
     if let Some((dados, pagina)) = restaurar {
         match grava_bloqueante(dados, Some(pagina)) {
-            Ok(_) => tema = "o seu (restaurado)".into(),
+            Ok(_) => tema = format!("{} (restaurado)", perfil.nome),
             Err(e) => tema = format!("falha ao restaurar: {e}"),
         }
         PAGINA_ATUAL.store(pagina, std::sync::atomic::Ordering::SeqCst);
@@ -688,9 +693,7 @@ pub async fn tema_de_fabrica() -> Result<String, String> {
     tauri::async_runtime::spawn_blocking(move || grava_bloqueante(dados, Some(1)))
         .await
         .map_err(texto)??;
-    if let Some(arq) = arquivo_ultimo_acf() {
-        let _ = std::fs::remove_file(arq);
-    }
+    crate::perfis::define_ativo(crate::perfis::ID_FABRICA)?;
     Ok("tema de fábrica gravado (página 1)".into())
 }
 
@@ -817,11 +820,13 @@ pub async fn gravar(caminho: String, pagina: Option<u32>) -> Result<GravacaoView
     }
     let tamanho = dados.len();
     let inicio = std::time::Instant::now();
-    let caminho_lembrado = caminho.clone();
+    let perfil = crate::perfis::ativo();
+    if perfil.id != crate::perfis::ID_FABRICA {
+        let _ = crate::perfis::grava_tema(&perfil.id, &dados, pagina.unwrap_or(5));
+    }
     let porta = tauri::async_runtime::spawn_blocking(move || grava_bloqueante(dados, pagina))
         .await
         .map_err(texto)??;
-    salva_customizacao(&caminho_lembrado, pagina.unwrap_or(5) as usize);
     Ok(GravacaoView {
         porta,
         tamanho,
@@ -992,22 +997,15 @@ pub fn patch_imagens(caminho_acf: String, pedacos: Vec<Pedaco>) -> Result<PatchV
     }
 
     // A base costuma ser /usr/share/minitela/... (do root): o resultado vai para o
-    // diretorio do usuario, nunca ao lado da base.
-    let dir = std::env::var_os("HOME")
-        .map(PathBuf::from)
-        .ok_or("HOME nao definido")?
-        .join(".local/share/minitela-custom/out");
-    std::fs::create_dir_all(&dir).map_err(texto)?;
-    let saida = dir.join(format!(
-        "{}-patch.acf",
-        Path::new(&caminho_acf)
-            .file_stem()
-            .map(|s| s.to_string_lossy().to_string())
-            .unwrap_or_else(|| "novo".into())
-    ));
-    std::fs::write(&saida, &data).map_err(texto)?;
-    // lembra qual é a "nossa" tela, para restaurar quando assumirmos o controle
-    salva_customizacao(&saida.display().to_string(), *paginas.first().unwrap_or(&5));
+    // o resultado vai para o perfil ativo (nunca ao lado da base, que é do root);
+    // se o ativo é o de fábrica, a customização ganha um perfil próprio
+    let mut perfil = crate::perfis::ativo();
+    if perfil.id == crate::perfis::ID_FABRICA {
+        perfil = crate::perfis::cria("meu tema")?;
+        crate::perfis::define_ativo(&perfil.id)?;
+    }
+    let saida =
+        crate::perfis::grava_tema(&perfil.id, &data, *(paginas.first().unwrap_or(&5)) as u32)?;
 
     Ok(PatchView {
         saida: saida.display().to_string(),

@@ -28,6 +28,14 @@
     paginas: number[];
   };
   type Clima = { cidade: string; dias: { rotulo: string; faixa: string }[] };
+  type Perfil = {
+    id: string;
+    nome: string;
+    pagina: number;
+    arquivo: string | null;
+    atualizado: string | null;
+  };
+  type Perfis = { ativo: string; lista: Perfil[] };
   type Controle = {
     conectado: boolean;
     porta: string | null;
@@ -54,6 +62,8 @@
   let parou = $state("");
   let estadoTags = $state<string | null>(null);
   let fabricaMsg = $state("");
+  let perfis: Perfis = $state({ ativo: "fabrica", lista: [] });
+  let novoNome = $state("");
   let clima: Clima | null = $state(null);
   let cidade = $state("");
   let buscandoClima = $state(false);
@@ -243,6 +253,7 @@
       }
       previasNovas = novas;
       gerado = novo;
+      await carregarPerfis();
     } catch (e) {
       erro = String(e);
     } finally {
@@ -299,6 +310,43 @@
     try {
       controle = await invoke<Controle>("devolver_ao_app");
       await atualizar();
+    } catch (e) {
+      erro = String(e);
+    }
+  }
+
+  async function carregarPerfis() {
+    try {
+      perfis = await invoke<Perfis>("perfis_lista");
+    } catch {
+      /* informativo */
+    }
+  }
+
+  async function usarPerfil(id: string) {
+    erro = "";
+    try {
+      perfis = await invoke<Perfis>("usar_perfil", { id });
+    } catch (e) {
+      erro = String(e);
+    }
+  }
+
+  async function criarPerfil() {
+    if (!novoNome.trim()) return;
+    erro = "";
+    try {
+      perfis = await invoke<Perfis>("novo_perfil", { nome: novoNome });
+      novoNome = "";
+    } catch (e) {
+      erro = String(e);
+    }
+  }
+
+  async function apagarPerfilAtivo() {
+    erro = "";
+    try {
+      perfis = await invoke<Perfis>("apagar_perfil", { id: perfis.ativo });
     } catch (e) {
       erro = String(e);
     }
@@ -383,6 +431,7 @@
   async function carregar() {
     await atualizar();
     await atualizarControle();
+    carregarPerfis();
     carregarClima();
     try {
       const b = await invoke<string | null>("sugestao_base");
@@ -558,6 +607,27 @@
       </div>
 
       {#if fabricaMsg}<p class="dica">{fabricaMsg}</p>{/if}
+      <div class="perfis">
+        <span class="rotulo">perfil</span>
+        <select value={perfis.ativo} onchange={(e) => usarPerfil(e.currentTarget.value)}>
+          {#each perfis.lista as p (p.id)}
+            <option value={p.id}>
+              {p.nome}{p.atualizado ? ` · ${p.atualizado}` : ""}
+            </option>
+          {/each}
+        </select>
+        <input
+          type="text"
+          placeholder="novo perfil"
+          bind:value={novoNome}
+          onkeydown={(e) => e.key === "Enter" && criarPerfil()}
+        />
+        <button onclick={criarPerfil} disabled={!novoNome.trim()}>criar</button>
+        {#if perfis.ativo !== "fabrica"}
+          <button onclick={apagarPerfilAtivo}>apagar</button>
+        {/if}
+      </div>
+
       <p class="dica">
         tema na tela: <strong>{controle.tema}</strong> · relógio, bateria e wifi:
         {estadoTags ?? "atualizando…"}
@@ -1027,6 +1097,32 @@
 
   .paginas small {
     color: #6b7482;
+  }
+
+  .perfis {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+  }
+
+  .perfis select,
+  .perfis input {
+    background: #121722;
+    border: 1px solid #2b3442;
+    border-radius: 7px;
+    color: #e6e9ef;
+    padding: 5px 8px;
+    font-size: 12.5px;
+  }
+
+  .perfis input {
+    width: 140px;
+  }
+
+  .perfis .rotulo {
+    color: #aab3c2;
   }
 
   .clima {
