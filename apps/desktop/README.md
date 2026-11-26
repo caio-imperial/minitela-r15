@@ -74,6 +74,9 @@ preciso para reeditar e mostrar sem decodificar de novo.
   página dele.
 - Um patch parcial atualiza só os slots gravados — os metadados dos outros ficam.
 - A árvore antiga (`~/.local/share/minitela-custom/perfis`) é migrada na primeira execução.
+- Ao abrir o app (ou trocar de perfil), as miniaturas salvas ocupam o lugar das do `.acf`
+  e o editor reabre com o **enquadramento gravado** de cada slot — dá para ajustar o
+  recorte e gerar de novo sem reescolher os arquivos.
 
 ## Como está hoje
 

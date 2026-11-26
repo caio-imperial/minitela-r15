@@ -384,6 +384,80 @@ fn vista_perfis() -> PerfisView {
     }
 }
 
+#[derive(Serialize)]
+pub struct SlotSalvo {
+    pub indice: usize,
+    /// caminho absoluto da cópia do original (para reeditar)
+    pub origem: Option<String>,
+    /// PNG do que o aparelho desenha, em data URL
+    pub thumb: Option<String>,
+    pub largura: u16,
+    pub altura: u16,
+    pub quadros: usize,
+    pub ajuste: String,
+    pub zoom: f64,
+    pub px: f64,
+    pub py: f64,
+    pub tela_cheia: bool,
+}
+
+#[derive(Serialize)]
+pub struct PerfilDetalhe {
+    pub id: String,
+    pub nome: String,
+    pub pagina: u32,
+    /// miniatura principal (a do primeiro slot), em data URL
+    pub thumb: Option<String>,
+    pub slots: Vec<SlotSalvo>,
+}
+
+fn data_url_png(caminho: &Path) -> Option<String> {
+    let bytes = std::fs::read(caminho).ok()?;
+    let b64 = base64::engine::general_purpose::STANDARD.encode(bytes);
+    Some(format!("data:image/png;base64,{b64}"))
+}
+
+#[tauri::command]
+pub fn perfil_detalhe(id: String) -> Result<PerfilDetalhe, String> {
+    let p = crate::perfis::lista()
+        .into_iter()
+        .find(|p| p.id == id)
+        .ok_or_else(|| format!("perfil {id} nao existe"))?;
+    let mut slots = Vec::new();
+    for s in &p.slots {
+        let thumb = s
+            .thumb
+            .as_ref()
+            .and_then(|rel| crate::perfis::caminho_absoluto(&id, rel))
+            .and_then(|c| data_url_png(&c));
+        let origem = s
+            .origem
+            .as_ref()
+            .and_then(|rel| crate::perfis::caminho_absoluto(&id, rel))
+            .map(|c| c.display().to_string());
+        slots.push(SlotSalvo {
+            indice: s.indice,
+            origem,
+            thumb,
+            largura: s.largura,
+            altura: s.altura,
+            quadros: s.quadros,
+            ajuste: s.ajuste.clone(),
+            zoom: s.zoom,
+            px: s.px,
+            py: s.py,
+            tela_cheia: s.tela_cheia,
+        });
+    }
+    Ok(PerfilDetalhe {
+        thumb: slots.first().and_then(|s| s.thumb.clone()),
+        id: p.id,
+        nome: p.nome,
+        pagina: p.pagina,
+        slots,
+    })
+}
+
 #[tauri::command]
 pub fn perfis_lista() -> PerfisView {
     vista_perfis()

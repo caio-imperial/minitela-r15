@@ -36,6 +36,26 @@
     atualizado: string | null;
   };
   type Perfis = { ativo: string; lista: Perfil[] };
+  type SlotSalvo = {
+    indice: number;
+    origem: string | null;
+    thumb: string | null;
+    largura: number;
+    altura: number;
+    quadros: number;
+    ajuste: "cobrir" | "conter";
+    zoom: number;
+    px: number;
+    py: number;
+    tela_cheia: boolean;
+  };
+  type PerfilDetalhe = {
+    id: string;
+    nome: string;
+    pagina: number;
+    thumb: string | null;
+    slots: SlotSalvo[];
+  };
   type Controle = {
     conectado: boolean;
     porta: string | null;
@@ -64,6 +84,7 @@
   let fabricaMsg = $state("");
   let perfis: Perfis = $state({ ativo: "fabrica", lista: [] });
   let novoNome = $state("");
+  let perfilThumb = $state<string | null>(null);
   let clima: Clima | null = $state(null);
   let cidade = $state("");
   let buscandoClima = $state(false);
@@ -323,10 +344,50 @@
     }
   }
 
+  async function carregarDetalhePerfil(id: string) {
+    perfilThumb = null;
+    if (id === "fabrica") {
+      // o perfil de fábrica não tem save próprio: as miniaturas vêm do .acf
+      return;
+    }
+    try {
+      const d = await invoke<PerfilDetalhe>("perfil_detalhe", { id });
+      perfilThumb = d.thumb;
+      const novasEdicoes: Record<number, Edicao> = {};
+      const novasPrevias: Record<number, string> = {};
+      for (const s of d.slots) {
+        if (s.thumb) novasPrevias[s.indice] = s.thumb;
+        if (!s.origem) continue;
+        let fonte = "";
+        try {
+          fonte = await invoke<string>("abrir_imagem", { imagem: s.origem });
+        } catch {
+          /* original sumiu: mostra a miniatura salva, mas não deixa reeditar */
+        }
+        if (!fonte) continue;
+        novasEdicoes[s.indice] = {
+          imagem: s.origem,
+          fonte,
+          telaCheia: s.tela_cheia,
+          ajuste: s.ajuste,
+          zoom: s.zoom,
+          px: s.px,
+          py: s.py,
+        };
+      }
+      edicoes = novasEdicoes;
+      previasNovas = novasPrevias;
+      gerado = null;
+    } catch (e) {
+      erro = String(e);
+    }
+  }
+
   async function usarPerfil(id: string) {
     erro = "";
     try {
       perfis = await invoke<Perfis>("usar_perfil", { id });
+      await carregarDetalhePerfil(id);
     } catch (e) {
       erro = String(e);
     }
@@ -431,7 +492,7 @@
   async function carregar() {
     await atualizar();
     await atualizarControle();
-    carregarPerfis();
+    await carregarPerfis();
     carregarClima();
     try {
       const b = await invoke<string | null>("sugestao_base");
@@ -442,6 +503,8 @@
     } catch (e) {
       erro = String(e);
     }
+    // depois do `analisar()` (que zera as prévias): o perfil ativo manda nas miniaturas
+    await carregarDetalhePerfil(perfis.ativo);
   }
 
   onMount(carregar);
@@ -578,6 +641,9 @@
           bind:value={novoNome}
           onkeydown={(e) => e.key === "Enter" && criarPerfil()}
         />
+        {#if perfilThumb}
+          <img class="perfil-thumb" src={perfilThumb} alt="miniatura do perfil" />
+        {/if}
         <button onclick={criarPerfil} disabled={!novoNome.trim()}>criar</button>
         {#if perfis.ativo !== "fabrica"}
           <button onclick={apagarPerfilAtivo}>apagar</button>
@@ -1131,6 +1197,15 @@
 
   .perfis input {
     width: 140px;
+  }
+
+  .perfil-thumb {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid #2b3442;
+    image-rendering: pixelated;
+    object-fit: cover;
   }
 
   .perfis .rotulo {

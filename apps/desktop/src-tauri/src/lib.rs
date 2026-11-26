@@ -176,6 +176,7 @@ pub fn run() {
             commands::devolver_ao_app,
             commands::tema_de_fabrica,
             commands::perfis_lista,
+            commands::perfil_detalhe,
             commands::novo_perfil,
             commands::usar_perfil,
             commands::apagar_perfil,
