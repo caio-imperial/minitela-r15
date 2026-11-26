@@ -1,6 +1,7 @@
 //! Comandos expostos à interface.
 
 use crate::acf::{codec, inspect, patch};
+use crate::clima::Clima;
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -317,6 +318,29 @@ pub fn tags_uma_vez() -> Result<TagsView, String> {
         .map_err(texto)?;
     enviadas += 1;
 
+    // clima, se alguma cidade ja foi configurada (ver definir_cidade)
+    let previsao = CLIMA.lock().ok().and_then(|g| g.clone());
+    if let Some(c) = previsao {
+        p.set_texto(crate::sysinfo::TAG_CIDADE, &c.cidade)
+            .map_err(texto)?;
+        enviadas += 1;
+        let dias = [
+            (crate::sysinfo::TAG_DIA1, None),
+            (crate::sysinfo::TAG_DIA2, Some(crate::sysinfo::TAG_ROTULO2)),
+            (crate::sysinfo::TAG_DIA3, Some(crate::sysinfo::TAG_ROTULO3)),
+        ];
+        for (i, (reg_faixa, reg_rotulo)) in dias.iter().enumerate() {
+            if let Some(d) = c.dias.get(i) {
+                p.set_texto(*reg_faixa, &d.faixa).map_err(texto)?;
+                enviadas += 1;
+                if let Some(r) = reg_rotulo {
+                    p.set_texto(*r, &d.rotulo).map_err(texto)?;
+                    enviadas += 1;
+                }
+            }
+        }
+    }
+
     Ok(TagsView {
         relogio,
         bateria: bat,
@@ -331,6 +355,45 @@ pub fn tags_uma_vez() -> Result<TagsView, String> {
 static DAEMON: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 static GRAVANDO: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 static ULTIMA_TAG: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
+/// previsao em cache (a cidade fica em `~/.config/minitela/clima.txt`)
+static CLIMA: std::sync::Mutex<Option<Clima>> = std::sync::Mutex::new(None);
+
+fn arquivo_cidade() -> Option<PathBuf> {
+    let home = std::env::var_os("HOME").map(PathBuf::from)?;
+    Some(home.join(".config/minitela/clima.txt"))
+}
+
+/// Define a cidade e busca a previsao agora; a cidade fica salva para a proxima vez.
+#[tauri::command]
+pub fn definir_cidade(cidade: String) -> Result<Clima, String> {
+    let c = crate::clima::busca(&cidade)?;
+    if let Some(arq) = arquivo_cidade() {
+        if let Some(dir) = arq.parent() {
+            let _ = std::fs::create_dir_all(dir);
+        }
+        let _ = std::fs::write(&arq, &c.cidade);
+    }
+    if let Ok(mut g) = CLIMA.lock() {
+        *g = Some(c.clone());
+    }
+    Ok(c)
+}
+
+/// Previsao em cache; se ainda nao houver, busca a cidade salva no disco.
+#[tauri::command]
+pub fn clima_configurado() -> Option<Clima> {
+    if let Ok(g) = CLIMA.lock()
+        && let Some(c) = g.as_ref()
+    {
+        return Some(c.clone());
+    }
+    let cidade = std::fs::read_to_string(arquivo_cidade()?).ok()?;
+    let c = crate::clima::busca(cidade.trim()).ok()?;
+    if let Ok(mut g) = CLIMA.lock() {
+        *g = Some(c.clone());
+    }
+    Some(c)
+}
 
 const INTERVALO_TAGS: std::time::Duration = std::time::Duration::from_secs(15);
 
@@ -1034,6 +1097,18 @@ mod tests {
             "{} | bateria {:?} | carregando {:?} | wifi {:?} | {} tags",
             v.relogio, v.bateria, v.carregando, v.wifi, v.enviadas
         );
+    }
+
+    /// Busca a previsao e manda as tags: so precisa da tela conectada.
+    ///   cargo test --lib -- --ignored clima_na_tela --nocapture
+    #[test]
+    #[ignore]
+    fn clima_na_tela() {
+        let c = super::definir_cidade("Linhares".into()).expect("buscar clima");
+        eprintln!("{}: {:?}", c.cidade, c.dias);
+        let v = super::tags_uma_vez().expect("mandar tags");
+        eprintln!("{} tags envidadas", v.enviadas);
+        assert!(v.enviadas >= 4);
     }
 
     /// Assume o controle, troca página e brilho e (se `MINITELA_ACF` existir) grava.

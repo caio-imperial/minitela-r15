@@ -18,6 +18,13 @@ pub const TAG_BATERIA_NIVEL: u16 = 1150;
 pub const TAG_WIFI_SSID: u16 = 1083;
 pub const TAG_BT_NOME: u16 = 1085;
 pub const TAG_RELOGIO: u16 = 2006;
+// clima (tela do Clima) — frames capturados do app oficial
+pub const TAG_CIDADE: u16 = 2027;
+pub const TAG_DIA1: u16 = 2030;
+pub const TAG_DIA2: u16 = 2031;
+pub const TAG_DIA3: u16 = 2032;
+pub const TAG_ROTULO2: u16 = 1119;
+pub const TAG_ROTULO3: u16 = 1124;
 
 /// Amostra de CPU entre duas leituras de `/proc/stat`.
 #[derive(Default)]

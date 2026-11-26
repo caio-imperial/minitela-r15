@@ -5,6 +5,7 @@
 //! fixtures gerados pelo Python (ver apps/desktop/README.md).
 
 pub mod acf;
+pub mod clima;
 mod commands;
 pub mod device;
 pub mod sysinfo;
@@ -165,7 +166,9 @@ pub fn run() {
             commands::brilho,
             commands::parar_app,
             commands::tags_uma_vez,
-            commands::tags_estado
+            commands::tags_estado,
+            commands::definir_cidade,
+            commands::clima_configurado
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o app");

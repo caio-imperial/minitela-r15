@@ -27,6 +27,7 @@
     problemas: string[];
     paginas: number[];
   };
+  type Clima = { cidade: string; dias: { rotulo: string; faixa: string }[] };
   type Controle = {
     conectado: boolean;
     porta: string | null;
@@ -50,6 +51,9 @@
   let gravado = $state("");
   let parou = $state("");
   let estadoTags = $state<string | null>(null);
+  let clima: Clima | null = $state(null);
+  let cidade = $state("");
+  let buscandoClima = $state(false);
   /** páginas desativadas só neste app (não mexe no .acf nem no firmware) */
   let desativadas = $state<number[]>([]);
 
@@ -285,6 +289,32 @@
     }
   }
 
+  async function buscarClima() {
+    if (!cidade.trim()) return;
+    buscandoClima = true;
+    erro = "";
+    try {
+      clima = await invoke<Clima>("definir_cidade", { cidade });
+      cidade = clima.cidade;
+    } catch (e) {
+      erro = String(e);
+    } finally {
+      buscandoClima = false;
+    }
+  }
+
+  async function carregarClima() {
+    try {
+      const c = await invoke<Clima | null>("clima_configurado");
+      if (c) {
+        clima = c;
+        cidade = c.cidade;
+      }
+    } catch {
+      /* sem rede ou cidade nunca configurada: a seção fica vazia */
+    }
+  }
+
   async function irPara(n: number) {
     if (n < 1 || (paginasTotal > 0 && n > paginasTotal)) return;
     erro = "";
@@ -338,6 +368,7 @@
   async function carregar() {
     await atualizar();
     await atualizarControle();
+    carregarClima();
     try {
       const b = await invoke<string | null>("sugestao_base");
       if (b) {
@@ -507,6 +538,28 @@
       <p class="dica">
         relógio, bateria, cpu e wifi na tela: {estadoTags ?? "atualizando…"}
       </p>
+
+      <div class="clima">
+        <input
+          type="text"
+          placeholder="cidade do clima"
+          bind:value={cidade}
+          onkeydown={(e) => e.key === "Enter" && buscarClima()}
+        />
+        <button onclick={buscarClima} disabled={buscandoClima || !cidade.trim()}>
+          {buscandoClima ? "buscando…" : "buscar clima"}
+        </button>
+        {#if clima}
+          {#each clima.dias as d, i}
+            <span class="dia">
+              <small>{i === 0 ? "hoje" : d.rotulo}</small>
+              {d.faixa}
+            </span>
+          {/each}
+        {:else}
+          <span class="dica">sem cidade configurada</span>
+        {/if}
+      </div>
 
       <label class="brilho">
         <span class="rotulo">brilho</span>
@@ -950,6 +1003,39 @@
 
   .paginas small {
     color: #6b7482;
+  }
+
+  .clima {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+  }
+
+  .clima input {
+    background: #121722;
+    border: 1px solid #2b3442;
+    border-radius: 7px;
+    color: #e6e9ef;
+    padding: 5px 8px;
+    font-size: 12.5px;
+    width: 170px;
+  }
+
+  .clima .dia {
+    color: #cdd4e0;
+    border: 1px solid #1f2733;
+    border-radius: 7px;
+    padding: 2px 8px;
+    display: inline-flex;
+    gap: 6px;
+    align-items: baseline;
+  }
+
+  .clima .dia small {
+    color: #6b7482;
+    text-transform: lowercase;
   }
 
   .brilho {
