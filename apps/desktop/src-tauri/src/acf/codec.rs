@@ -53,7 +53,128 @@ pub fn interp(a0: u8, a1: u8, w: u8) -> u8 {
     (a0 as i32 + t).clamp(0, 255) as u8
 }
 
-pub fn decode_block_at(buf: &[u8], base: usize) -> [[u8; 4]; BLOCK_PX] {
+/// Endereço absoluto do bit `n` **do bloco**: `block_base(i)` aponta o bit 1, então
+/// o bit 0 (flag de partição) fica em `base - 1`.
+fn bit_do_bloco(base: usize, n: usize) -> usize {
+    base - 1 + n
+}
+
+/// Lê `n` bits (até 128) a partir do bit `base`.
+fn rd128(buf: &[u8], base: usize, n: usize) -> u128 {
+    let mut v = 0u128;
+    for k in 0..n {
+        let b = base + k;
+        let bit = (buf[b >> 3] >> (b & 7)) & 1;
+        v |= (bit as u128) << k;
+    }
+    v
+}
+
+/// Expande o peso de 2 bits do formato para a escala de 4 bits do interpolador.
+fn peso16(w: u8) -> u8 {
+    match w & 3 {
+        0 => 0,
+        1 => 4,
+        2 => 11,
+        _ => 15,
+    }
+}
+
+fn hash52(mut p: u32) -> u32 {
+    p ^= p >> 15;
+    p = p.wrapping_sub(p << 17);
+    p = p.wrapping_add(p << 7);
+    p = p.wrapping_add(p << 4);
+    p ^= p >> 5;
+    p = p.wrapping_add(p << 16);
+    p ^= p >> 7;
+    p ^= p >> 3;
+    p ^= p << 6;
+    p ^= p >> 17;
+    p
+}
+
+/// `select_partition()` de `hash52.cpp:146`: decide de qual partição o pixel é.
+fn particao(seed: i32, x: i32, y: i32, z: i32, n_part: i32, bloco_pequeno: bool) -> i32 {
+    let (mut x, mut y, mut z) = (x, y, z);
+    if bloco_pequeno {
+        x <<= 1;
+        y <<= 1;
+        z <<= 1;
+    }
+    let seed = seed + (n_part - 1) * 1024;
+    let rnum = hash52(seed as u32);
+    let campo = |sh: u32| ((rnum >> sh) & 0xF) as i32;
+    let mut s = [
+        campo(0),
+        campo(4),
+        campo(8),
+        campo(12),
+        campo(16),
+        campo(20),
+        campo(24),
+        campo(28),
+        campo(18),
+        campo(22),
+        campo(26),
+        ((rnum.rotate_left(2)) & 0xF) as i32,
+    ];
+    for v in s.iter_mut() {
+        *v *= *v;
+    }
+    let (sh1, sh2) = if seed & 1 != 0 {
+        (
+            if seed & 2 != 0 { 4 } else { 5 },
+            if n_part == 3 { 6 } else { 5 },
+        )
+    } else {
+        (
+            if n_part == 3 { 6 } else { 5 },
+            if seed & 2 != 0 { 4 } else { 5 },
+        )
+    };
+    let sh3 = if seed & 0x10 != 0 { sh1 } else { sh2 };
+    for (v, h) in s
+        .iter_mut()
+        .zip([sh1, sh2, sh1, sh2, sh1, sh2, sh1, sh2, sh3, sh3, sh3, sh3])
+    {
+        *v >>= h;
+    }
+    let mut a = s[0] * x + s[1] * y + s[10] * z + ((rnum >> 14) as i32);
+    let mut b = s[2] * x + s[3] * y + s[11] * z + ((rnum >> 10) as i32);
+    let mut c = s[4] * x + s[5] * y + s[8] * z + ((rnum >> 6) as i32);
+    let mut d = s[6] * x + s[7] * y + s[9] * z + ((rnum >> 2) as i32);
+    a &= 0x3F;
+    b &= 0x3F;
+    c &= 0x3F;
+    d &= 0x3F;
+    if n_part < 4 {
+        d = 0;
+    }
+    if n_part < 3 {
+        c = 0;
+    }
+    if a >= b && a >= c && a >= d {
+        0
+    } else if b >= c && b >= d {
+        1
+    } else if c >= d {
+        2
+    } else {
+        3
+    }
+}
+
+fn interp4(a: [u8; 4], b: [u8; 4], w: u8) -> [u8; 4] {
+    let mut o = [0u8; 4];
+    for c in 0..4 {
+        o[c] = interp(a[c], b[c], w);
+    }
+    o
+}
+
+/// Modo `0` — uma partição (`stc_rgba_one_partition_dec`, `stc.cpp:629`).
+fn decode_uma_particao(buf: &[u8], base: usize) -> [[u8; 4]; BLOCK_PX] {
     let mut e0 = [0u8; 4];
     let mut e1 = [0u8; 4];
     for c in 0..4 {
@@ -63,11 +184,116 @@ pub fn decode_block_at(buf: &[u8], base: usize) -> [[u8; 4]; BLOCK_PX] {
     let mut px = [[0u8; 4]; BLOCK_PX];
     for (p, item) in px.iter_mut().enumerate() {
         let w = rd(buf, base + 64 + 4 * p, 4) as u8;
+        *item = interp4(e0, e1, w);
+    }
+    px
+}
+
+/// Modo `01` — duas partições (`stc_rgba_two_partition_dec`, `stc.cpp:64`).
+fn decode_duas_particoes(buf: &[u8], base: usize) -> [[u8; 4]; BLOCK_PX] {
+    let seed = (rd128(buf, bit_do_bloco(base, 86), 10) % 1024) as i32;
+    let cor = |v: u128| {
+        let v = v as u8;
+        v * 4 + v / 16
+    };
+    let alfa = |v: u128| {
+        let v = v as u8;
+        v * 32 + v * 4 + v / 2
+    };
+    // partição 0: primeiro e segundo extremos
+    let p0a = [
+        cor(rd128(buf, bit_do_bloco(base, 2), 6)),
+        cor(rd128(buf, bit_do_bloco(base, 14), 6)),
+        cor(rd128(buf, bit_do_bloco(base, 26), 6)),
+        alfa(rd128(buf, bit_do_bloco(base, 38), 3)),
+    ];
+    let p0b = [
+        cor(rd128(buf, bit_do_bloco(base, 8), 6)),
+        cor(rd128(buf, bit_do_bloco(base, 20), 6)),
+        cor(rd128(buf, bit_do_bloco(base, 32), 6)),
+        alfa(rd128(buf, bit_do_bloco(base, 41), 3)),
+    ];
+    // partição 1
+    let p1a = [
+        cor(rd128(buf, bit_do_bloco(base, 44), 6)),
+        cor(rd128(buf, bit_do_bloco(base, 56), 6)),
+        cor(rd128(buf, bit_do_bloco(base, 68), 6)),
+        alfa(rd128(buf, bit_do_bloco(base, 80), 3)),
+    ];
+    let p1b = [
+        cor(rd128(buf, bit_do_bloco(base, 50), 6)),
+        cor(rd128(buf, bit_do_bloco(base, 62), 6)),
+        cor(rd128(buf, bit_do_bloco(base, 74), 6)),
+        alfa(rd128(buf, bit_do_bloco(base, 83), 3)),
+    ];
+
+    let mut px = [[0u8; 4]; BLOCK_PX];
+    for (i, item) in px.iter_mut().enumerate() {
+        let (x, y) = ((i % 4) as i32, (i / 4) as i32);
+        let w = peso16(rd128(buf, bit_do_bloco(base, 96 + 2 * i), 2) as u8);
+        let (a, b) = if particao(seed, x, y, 0, 2, true) == 0 {
+            (p0a, p0b)
+        } else {
+            (p1a, p1b)
+        };
+        *item = interp4(a, b, w);
+    }
+    px
+}
+
+/// Modo `0111` — uma partição, dois planos
+/// (`stc_rgba_one_partition_two_plane_dec`, `stc.cpp:660`).
+fn decode_uma_particao_dois_planos(buf: &[u8], base: usize) -> [[u8; 4]; BLOCK_PX] {
+    let mut c0 = [0u8; 4];
+    let mut c1 = [0u8; 4];
+    for (canal, desloca) in [(0usize, 6usize), (1, 22), (2, 38)] {
+        c0[canal] = rd128(buf, bit_do_bloco(base, desloca), 8) as u8;
+        c1[canal] = rd128(buf, bit_do_bloco(base, desloca + 8), 8) as u8;
+    }
+    let a0 = (rd128(buf, bit_do_bloco(base, 54), 6) as u32) * 4;
+    let a1 = (rd128(buf, bit_do_bloco(base, 60), 6) as u32) * 4;
+    c0[3] = (a0 + a0 / 64) as u8;
+    c1[3] = (a1 + a1 / 64) as u8;
+    let tipo = rd128(buf, bit_do_bloco(base, 4), 2) as u8;
+
+    let mut px = [[0u8; 4]; BLOCK_PX];
+    for (i, item) in px.iter_mut().enumerate() {
+        let mut w = rd128(buf, bit_do_bloco(base, 66 + 4 * i), 4) as u8;
+        if i == BLOCK_PX - 1 {
+            w = w / 2 * 4 + (w % 2);
+        }
+        let w0 = peso16(w % 4);
+        let w1 = peso16(w / 4);
+        let pesos = [
+            if tipo == 3 { w0 } else { w1 },
+            if tipo == 2 { w0 } else { w1 },
+            if tipo == 1 { w0 } else { w1 },
+            if tipo == 0 { w0 } else { w1 },
+        ];
         for c in 0..4 {
-            item[c] = interp(e0[c], e1[c], w);
+            item[c] = interp(c0[c], c1[c], pesos[c]);
         }
     }
     px
+}
+
+/// Decodifica um bloco escolhendo o sub-formato pelos bits baixos
+/// (`stc_rgba_dec`, `stc.cpp:706`).
+pub fn decode_block_at(buf: &[u8], base: usize) -> [[u8; 4]; BLOCK_PX] {
+    let modo = rd128(buf, bit_do_bloco(base, 0), 4) as u8;
+    if modo & 1 == 0 {
+        decode_uma_particao(buf, base)
+    } else if modo & 3 == 1 {
+        decode_duas_particoes(buf, base)
+    } else if modo & 7 == 3 {
+        // duas partições / dois planos: ainda não portado
+        decode_uma_particao(buf, base)
+    } else if modo & 0xf == 7 {
+        decode_uma_particao_dois_planos(buf, base)
+    } else {
+        // três partições: ainda não portado
+        decode_uma_particao(buf, base)
+    }
 }
 
 fn erro(c0: &[u8; 4], c1: &[u8; 4], pesos: &[u8; BLOCK_PX], px: &[[u8; 4]; BLOCK_PX]) -> i64 {
@@ -266,6 +492,78 @@ mod tests {
             .max()
             .unwrap_or(0);
         assert!(erro_max <= 4, "erro maximo {erro_max}");
+    }
+
+    /// Fixtures geradas pelo `stc.cpp` do fabricante (`tests/gerar_fixtures_stc.py`).
+    /// É o teste que vale: o decodificador do SDK é o oráculo.
+    #[test]
+    fn decodificador_bate_com_o_simulador_do_sdk() {
+        let caminho = concat!(env!("CARGO_MANIFEST_DIR"), "/../tests/fixtures/stc.json");
+        let texto = std::fs::read_to_string(caminho).expect("ler stc.json");
+        let doc: Value = serde_json::from_str(&texto).expect("stc.json invalido");
+        let casos = doc["casos"].as_array().expect("casos");
+        assert!(!casos.is_empty());
+        let mut modos = std::collections::BTreeSet::new();
+        for caso in casos {
+            let modo = caso["modo"].as_str().expect("modo").to_string();
+            modos.insert(modo.clone());
+            let hex = caso["bloco_hex"].as_str().expect("bloco_hex");
+            let bloco: Vec<u8> = (0..hex.len() / 2)
+                .map(|i| u8::from_str_radix(&hex[i * 2..i * 2 + 2], 16).expect("hex"))
+                .collect();
+            let mut buf = bloco.clone();
+            buf.push(0);
+            let px = decode_block_at(&buf, block_base(0));
+            for (i, esperado) in caso["pixels"]
+                .as_array()
+                .expect("pixels")
+                .iter()
+                .enumerate()
+            {
+                for c in 0..3 {
+                    assert_eq!(
+                        px[i][c] as u64,
+                        esperado[c].as_u64().expect("canal"),
+                        "modo {modo}, bloco {hex}, pixel {i}, canal {c}"
+                    );
+                }
+            }
+        }
+        assert!(modos.len() >= 3, "esperava os tres modos, veio {modos:?}");
+    }
+
+    /// Salva a decodificacao de uma pagina em PNG para conferir no olho.
+    ///   cargo test --lib -- --ignored salva_previa --nocapture
+    #[test]
+    #[ignore]
+    fn salva_previa() {
+        let caminho = "/usr/share/minitela/resources/ACF/Texture.acf";
+        let dados = std::fs::read(caminho).expect("acf");
+        let r = crate::acf::inspect::parse(&dados).expect("parse");
+        let pg: usize = std::env::var("MINITELA_PAGINA")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(3);
+        let tex = r.paginas[pg]
+            .texturas
+            .iter()
+            .find(|t| t.w >= 100 && (t.addr as usize) < r.start as usize)
+            .expect("textura grande");
+        let (w, h) = (tex.w as usize, tex.h as usize);
+        let rgb = decode_image(&dados[tex.addr as usize..][..tex.slice as usize], w, h);
+        let saida = format!("/tmp/opencode/previa-pagina{pg}.png");
+        let mut bytes = Vec::new();
+        {
+            let mut enc = png::Encoder::new(&mut bytes, w as u32, h as u32);
+            enc.set_color(png::ColorType::Rgb);
+            enc.set_depth(png::BitDepth::Eight);
+            enc.write_header()
+                .expect("header")
+                .write_image_data(&rgb)
+                .expect("pixels");
+        }
+        std::fs::write(&saida, bytes).expect("gravar");
+        eprintln!("{saida} ({w}x{h})");
     }
 
     #[test]
