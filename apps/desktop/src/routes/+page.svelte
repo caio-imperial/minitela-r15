@@ -931,12 +931,20 @@
     color: #b9c2d0;
   }
 
+  /* sem appearance: none o WebKitGTK desenha o select com o tema do GTK
+     (fundo claro) e o texto claro do app some */
   .paginas select {
-    background: #1d2430;
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: #1d2430;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%23cfd6e2'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
     color: #cfd6e2;
+    color-scheme: dark;
     border: 1px solid #2b3442;
     border-radius: 7px;
-    padding: 4px 8px;
+    padding: 4px 24px 4px 8px;
     font-size: 12px;
   }
 
