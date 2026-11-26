@@ -173,6 +173,7 @@ pub fn run() {
             commands::conectar,
             commands::desconectar,
             commands::devolver_ao_app,
+            commands::tema_de_fabrica,
             commands::pagina,
             commands::brilho,
             commands::desativadas,

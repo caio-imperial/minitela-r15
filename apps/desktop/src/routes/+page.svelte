@@ -53,6 +53,7 @@
   let gravado = $state("");
   let parou = $state("");
   let estadoTags = $state<string | null>(null);
+  let fabricaMsg = $state("");
   let clima: Clima | null = $state(null);
   let cidade = $state("");
   let buscandoClima = $state(false);
@@ -282,6 +283,17 @@
     }
   }
 
+  async function voltarFabrica() {
+    erro = "";
+    fabricaMsg = "";
+    try {
+      fabricaMsg = await invoke<string>("tema_de_fabrica");
+      await atualizarControle();
+    } catch (e) {
+      erro = String(e);
+    }
+  }
+
   async function devolver() {
     erro = "";
     try {
@@ -475,6 +487,7 @@
       <h2>Controle da tela</h2>
       <div class="acoes">
         {#if controle.conectado}
+          <button onclick={voltarFabrica}>tema de fábrica</button>
           <button onclick={devolver}>devolver ao app oficial</button>
         {:else}
           {#if controle.app_oficial}
@@ -544,6 +557,7 @@
         </select>
       </div>
 
+      {#if fabricaMsg}<p class="dica">{fabricaMsg}</p>{/if}
       <p class="dica">
         tema na tela: <strong>{controle.tema}</strong> · relógio, bateria e wifi:
         {estadoTags ?? "atualizando…"}

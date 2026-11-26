@@ -676,6 +676,24 @@ pub fn desconectar() -> ControleView {
     controle_estado()
 }
 
+/// Volta a tela para o tema de fábrica da Positivo (e esquece a customização, para
+/// não restaurá-la em cima no próximo controle).
+#[tauri::command]
+pub async fn tema_de_fabrica() -> Result<String, String> {
+    let caminho = "/usr/share/minitela/resources/ACF/Texture.acf".to_string();
+    if !std::path::Path::new(&caminho).exists() {
+        return Err("o tema de fábrica não está instalado (/usr/share/minitela)".into());
+    }
+    let dados = std::fs::read(&caminho).map_err(texto)?;
+    tauri::async_runtime::spawn_blocking(move || grava_bloqueante(dados, Some(1)))
+        .await
+        .map_err(texto)??;
+    if let Some(arq) = arquivo_ultimo_acf() {
+        let _ = std::fs::remove_file(arq);
+    }
+    Ok("tema de fábrica gravado (página 1)".into())
+}
+
 /// Solta a porta e religa o app oficial.
 #[tauri::command]
 pub fn devolver_ao_app() -> ControleView {
@@ -1289,9 +1307,15 @@ mod tests {
         }
         let v = super::conectar(Some(11)).expect("assumir o controle");
         assert!(v.conectado);
-        eprintln!("no controle em {:?}", v.porta);
+        eprintln!("no controle em {:?} — tema: {}", v.porta, v.tema);
 
-        std::thread::sleep(std::time::Duration::from_secs(2));
+        // a primeira rodada do ticker manda ~10 tags texto, cada uma com 300 ms
+        for _ in 0..20 {
+            if super::tags_estado().is_some() {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(500));
+        }
         eprintln!("tags: {:?}", super::tags_estado());
         assert!(
             super::tags_estado().is_some(),
