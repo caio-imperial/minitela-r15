@@ -279,7 +279,6 @@ pub struct TagsView {
     /// 1 = carregando/cheia, 0 = descarregando, 2 = desconhecido
     pub carregando: Option<u8>,
     pub wifi: Option<String>,
-    pub sinal: Option<u8>,
     pub enviadas: usize,
 }
 
@@ -294,7 +293,7 @@ pub fn tags_uma_vez() -> Result<TagsView, String> {
         Some((pct, e)) => (Some(pct), Some(e)),
         None => (None, None),
     };
-    let (ssid, sinal) = crate::sysinfo::wifi();
+    let (ssid, _sinal) = crate::sysinfo::wifi();
 
     let mut enviadas = 0usize;
     p.set_texto(crate::sysinfo::TAG_RELOGIO, &relogio)
@@ -313,18 +312,12 @@ pub fn tags_uma_vez() -> Result<TagsView, String> {
             .map_err(texto)?;
         enviadas += 1;
     }
-    if let Some(q) = sinal {
-        p.set_registradores(&[(crate::sysinfo::TAG_WIFI_SINAL, q as u32)])
-            .map_err(texto)?;
-        enviadas += 1;
-    }
 
     Ok(TagsView {
         relogio,
         bateria: bat,
         carregando: estado,
         wifi: ssid,
-        sinal,
         enviadas,
     })
 }

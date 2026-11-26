@@ -19,6 +19,25 @@ pub const END: &[u8; 2] = b"MI";
 pub const TEXTURE_ADDR: u32 = 0x0810_0000;
 pub const TAG_PAGE: u16 = 2;
 pub const TAG_BACKLIGHT: u16 = 7;
+
+/// Registradores que este projeto realmente tem (`docs/referencia/tags.md`).
+/// Escrever num id fora desta lista já deixou a tela muda: o firmware não tem
+/// destino para ele. Antes de acrescentar um id aqui, ele precisa existir no
+/// `tagList` do tema (não invente vizinhos do tipo 1080/1081/1084).
+pub const REGISTRADORES: [u16; 26] = [
+    2, 7, 65, 1082, 1083, 1085, 1090, 1110, 1115, 1119, 1120, 1124, 1140, 1141, 1150, 2000, 2001,
+    2002, 2005, 2006, 2025, 2026, 2027, 2030, 2031, 2032,
+];
+
+fn confere(reg: u16) -> Result<(), Erro> {
+    if REGISTRADORES.contains(&reg) {
+        Ok(())
+    } else {
+        Err(Erro::Recusado(format!(
+            "registrador {reg} nao existe neste tema (ver docs/referencia/tags.md)"
+        )))
+    }
+}
 pub const MAX_FILE: usize = 6436 * 1024;
 
 pub const HANDSHAKE: u16 = 0x0080;
@@ -240,6 +259,9 @@ impl Porta {
     }
 
     pub fn set_registradores(&mut self, pares: &[(u16, u32)]) -> Result<(), Erro> {
+        for (reg, _) in pares {
+            confere(*reg)?;
+        }
         let mut content = vec![(0b1000 << 4) | ((pares.len() as u8 - 1) & 0x0F)];
         for (reg, val) in pares {
             content.extend_from_slice(&reg.to_be_bytes());
@@ -250,6 +272,7 @@ impl Porta {
 
     /// Escreve uma tag de texto (`0x0090` com cabeçalho `0xD0`).
     pub fn set_texto(&mut self, reg: u16, texto: &str) -> Result<(), Erro> {
+        confere(reg)?;
         let bytes = texto.as_bytes();
         let mut content = Vec::with_capacity(5 + bytes.len());
         content.push(0xD0);
@@ -523,6 +546,24 @@ mod tests {
             }
         })
         .expect("enviar textura");
+    }
+
+    #[test]
+    fn registrador_desconhecido_e_recusado() {
+        assert!(confere(1081).is_err(), "1081 nao existe no tema");
+        assert!(
+            confere(1084).is_err(),
+            "1084 (wifi_sinal) nao existe no tema"
+        );
+        assert!(confere(1082).is_ok(), "bateria");
+        assert!(confere(2006).is_ok(), "relogio");
+    }
+
+    #[test]
+    fn lista_de_registradores_tem_os_que_usamos() {
+        for id in [TAG_PAGE, TAG_BACKLIGHT] {
+            assert!(REGISTRADORES.contains(&id), "{id} precisa estar na lista");
+        }
     }
 
     #[test]

@@ -488,18 +488,20 @@
           }}
           disabled={!podeAvancar}>▶</button
         >
-        {#each slots as s (s.indice)}
-          <button
-            class="atalho"
-            class:on={paginaAtual === s.pagina}
-            class:pulada={puladas.has(s.pagina)}
-            onclick={() => irPara(s.pagina)}
-            disabled={puladas.has(s.pagina)}
-            title={puladas.has(s.pagina) ? "slot desativado no app" : ""}
-          >
-            slot {s.indice + 1}
-          </button>
-        {/each}
+        <select
+          value={paginaAtual}
+          onchange={(e) => irPara(Number(e.currentTarget.value))}
+          title="ir direto para uma página"
+        >
+          {#each Array.from({ length: paginasTotal }, (_, i) => i + 1) as n (n)}
+            {@const slot = slots.find((s) => s.pagina === n)}
+            <option value={n} disabled={puladas.has(n)}>
+              página {n}{slot ? ` · slot ${slot.indice + 1}` : ""}{puladas.has(n)
+                ? " (desativada)"
+                : ""}
+            </option>
+          {/each}
+        </select>
       </div>
 
       <p class="dica">
@@ -853,10 +855,6 @@
     color: #ff7b72;
   }
 
-  .atalho.pulada {
-    opacity: 0.4;
-  }
-
   .slot.ativo .painel {
     border-color: #3ddc84;
     box-shadow: 0 0 0 1px #3ddc84 inset;
@@ -933,14 +931,13 @@
     color: #b9c2d0;
   }
 
-  .paginas .atalho {
-    padding: 4px 10px;
+  .paginas select {
+    background: #1d2430;
+    color: #cfd6e2;
+    border: 1px solid #2b3442;
+    border-radius: 7px;
+    padding: 4px 8px;
     font-size: 12px;
-  }
-
-  .paginas .atalho.on {
-    border-color: #3ddc84;
-    color: #3ddc84;
   }
 
   .paginas small {

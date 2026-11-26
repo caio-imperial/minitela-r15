@@ -5,10 +5,11 @@
 use std::sync::Mutex;
 use std::time::Instant;
 
-pub const TAG_CPU: u16 = 1080;
+// Só registradores que existem no tagList deste projeto (`docs/referencia/tags.md`).
+// NÃO invente ids "vizinhos" (1080, 1081, 1084): o firmware não tem destino para eles
+// e já travou a tela mandando 1081. Ids de texto também ficam de fora daqui.
 pub const TAG_BATERIA: u16 = 1082;
 pub const TAG_WIFI_SSID: u16 = 1083;
-pub const TAG_WIFI_SINAL: u16 = 1084;
 pub const TAG_BATERIA_TIPO: u16 = 1150;
 pub const TAG_RELOGIO: u16 = 2006;
 
