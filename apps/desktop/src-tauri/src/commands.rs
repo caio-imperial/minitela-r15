@@ -326,8 +326,16 @@ pub fn tags_uma_vez() -> Result<TagsView, String> {
         enviadas += 1;
         let dias = [
             (crate::sysinfo::TAG_DIA1, crate::sysinfo::TAG_ICONE1, None),
-            (crate::sysinfo::TAG_DIA2, crate::sysinfo::TAG_ICONE2, Some(crate::sysinfo::TAG_ROTULO2)),
-            (crate::sysinfo::TAG_DIA3, crate::sysinfo::TAG_ICONE3, Some(crate::sysinfo::TAG_ROTULO3)),
+            (
+                crate::sysinfo::TAG_DIA2,
+                crate::sysinfo::TAG_ICONE2,
+                Some(crate::sysinfo::TAG_ROTULO2),
+            ),
+            (
+                crate::sysinfo::TAG_DIA3,
+                crate::sysinfo::TAG_ICONE3,
+                Some(crate::sysinfo::TAG_ROTULO3),
+            ),
         ];
         for (i, (reg_faixa, reg_icone, reg_rotulo)) in dias.iter().enumerate() {
             if let Some(d) = c.dias.get(i) {

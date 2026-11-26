@@ -81,24 +81,15 @@ fn portas_acm() -> Vec<String> {
 fn ambiente() -> Vec<Item> {
     let mut itens = Vec::new();
 
-    for (nome, bin) in [
-        ("python3", "python3"),
-        ("ffmpeg", "ffmpeg"),
-        ("wine", "wine"),
-    ] {
-        match no_path(bin) {
-            Some(p) => itens.push(item(nome, true, p)),
-            None => itens.push(item(
-                nome,
-                false,
-                if nome == "wine" {
-                    "ausente — só necessário para build/layout".into()
-                } else {
-                    "não encontrado no PATH".into()
-                },
-            )),
-        }
-    }
+    // Só o que o app usa de verdade: python3 e wine ficaram na fase Python/ODM.
+    itens.push(match no_path("ffmpeg") {
+        Some(p) => item("ffmpeg", true, p),
+        None => item(
+            "ffmpeg",
+            false,
+            "não encontrado no PATH — sem ele não lê imagem".into(),
+        ),
+    });
 
     let portas = portas_acm();
     itens.push(item(
@@ -135,6 +126,25 @@ fn ambiente() -> Vec<Item> {
         template.exists(),
         template.display().to_string(),
     ));
+
+    // rede e bluetooth degradam sem travar: a tela mostra "Desconectado"
+    for (nome, bin, dica) in [
+        (
+            "wifi (nmcli)",
+            "nmcli",
+            "sem ele o SSID não vai para a tela",
+        ),
+        (
+            "bluetooth (bluetoothctl)",
+            "bluetoothctl",
+            "sem ele o bluetooth fica sempre como Desconectado",
+        ),
+    ] {
+        itens.push(match no_path(bin) {
+            Some(p) => item(nome, true, p),
+            None => item(nome, false, format!("ausente — {dica}")),
+        });
+    }
 
     itens
 }
