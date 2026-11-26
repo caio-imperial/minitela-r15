@@ -33,6 +33,8 @@
     porta: string | null;
     paginas: number;
     app_oficial: boolean;
+    /** "o seu", "outro", "sem customizacao", "o seu (restaurado)" */
+    tema: string;
   };
 
   let itens: Item[] = $state([]);
@@ -62,6 +64,7 @@
     porta: null,
     paginas: 0,
     app_oficial: false,
+    tema: "—",
   });
   let assumindo = $state(false);
   // 1-based, como o firmware conta: as três imagens são 5, 6 e 7
@@ -542,7 +545,8 @@
       </div>
 
       <p class="dica">
-        relógio, bateria, cpu e wifi na tela: {estadoTags ?? "atualizando…"}
+        tema na tela: <strong>{controle.tema}</strong> · relógio, bateria e wifi:
+        {estadoTags ?? "atualizando…"}
       </p>
 
       <div class="clima">

@@ -3,7 +3,7 @@
 
 O oráculo é o próprio `stc.cpp` do fabricante (`.tools/vendor/.../Simulator`), compilado
 com `unsigned __int128` num binário temporário — nada do nosso código entra na resposta.
-Só entram os blocos cujo sub-formato já portamos (`0`, `01`, `0111`).
+Só entram os blocos cujo sub-formato já portamos (`0`, `01`, `011`, `0111`, `01111`).
 
 Uso:
     python3 apps/desktop/tests/gerar_fixtures_stc.py
@@ -87,7 +87,7 @@ def main():
                 ini = t["addr"] + i * 16
                 bloco = dados[ini : ini + 16]
                 m = modo(bloco[0])
-                if m in ("0", "01", "0111"):
+                if m in ("0", "01", "011", "0111", "01111"):
                     blocos.append((m, bloco))
 
     # amostra equilibrada: até 40 de cada modo

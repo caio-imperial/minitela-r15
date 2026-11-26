@@ -277,6 +277,236 @@ fn decode_uma_particao_dois_planos(buf: &[u8], base: usize) -> [[u8; 4]; BLOCK_P
     px
 }
 
+/// Lê `largura` bits do bloco em `desloca` como `(block_data >> desloca) % 2^largura`.
+/// O `block_data` do C é um `u128`, então bits além do 127 são zero.
+fn campo(buf: &[u8], base: usize, desloca: usize, largura: usize) -> u32 {
+    let n = largura.min(128usize.saturating_sub(desloca));
+    rd128(buf, bit_do_bloco(base, desloca), n) as u32
+}
+
+/// Deslocamento de 3 bits com sinal (`s8`) usado nos modos de plano
+/// (`stc.cpp:192`): 0..3 positivo, 4..7 vira -4..-1.
+fn offset_sinal(buf: &[u8], base: usize, desloca: usize) -> i32 {
+    let u = campo(buf, base, desloca, 3) as i32;
+    if u & 4 != 0 { u - 8 } else { u }
+}
+
+/// Escala uma cor de 4 bits: `v*16+v` (`stc.cpp:177`).
+fn escala_cor4(v: u32) -> u8 {
+    (v * 16 + v) as u8
+}
+
+/// Escala uma cor de 5 bits: `v*8+v/4` (`stc.cpp:204`).
+fn escala_cor5(v: u8) -> u8 {
+    (v as u32 * 8 + v as u32 / 4) as u8
+}
+
+/// Escala um alfa: `v*32+v*4+v/2` (`stc.cpp:462`).
+fn escala_alfa(v: u32) -> u8 {
+    (v * 32 + v * 4 + v / 2) as u8
+}
+
+/// Expande os 12 nós de peso para os 16 pixels do bloco
+/// (`stc.cpp:307` e `stc.cpp:567`): média arredondada para cima.
+fn pesos_dos_nos(w: &[u8; 12]) -> [u8; 16] {
+    let meio = |a: u8, b: u8| -> u8 {
+        let s = a as u32 + b as u32;
+        (s / 2 + s % 2) as u8
+    };
+    [
+        w[0],
+        meio(w[0], w[1]),
+        meio(w[1], w[2]),
+        w[2],
+        w[3],
+        meio(w[3], w[4]),
+        meio(w[4], w[5]),
+        w[5],
+        w[6],
+        meio(w[6], w[7]),
+        meio(w[7], w[8]),
+        w[8],
+        w[9],
+        meio(w[9], w[10]),
+        meio(w[10], w[11]),
+        w[11],
+    ]
+}
+
+/// Modo `011` — duas partições, dois planos
+/// (`stc_rgba_two_partition_two_plane_dec`, `stc.cpp:143`).
+fn decode_duas_particoes_dois_planos(buf: &[u8], base: usize) -> [[u8; 4]; BLOCK_PX] {
+    let seed = campo(buf, base, 71, 10) as i32;
+    let offset_p0 = campo(buf, base, 3, 1);
+    let offset_p1 = campo(buf, base, 4, 1);
+
+    // Extremos de uma partição. Com offset 0 os dois são independentes de
+    // 4 bits; com offset 1 o segundo é o primeiro de 5 bits mais um
+    // deslocamento de 3 bits com sinal.
+    let extremos = |p: usize, offset: u32| -> ([u8; 4], [u8; 4]) {
+        let (r, g, b, a, dr, dg, db, da) = if p == 0 {
+            (7, 15, 23, 31, 12, 20, 28, 36)
+        } else {
+            (39, 47, 55, 63, 44, 52, 60, 68)
+        };
+        if offset == 0 {
+            (
+                [
+                    escala_cor4(campo(buf, base, r, 4)),
+                    escala_cor4(campo(buf, base, g, 4)),
+                    escala_cor4(campo(buf, base, b, 4)),
+                    escala_cor4(campo(buf, base, a, 4)),
+                ],
+                [
+                    escala_cor4(campo(buf, base, r + 4, 4)),
+                    escala_cor4(campo(buf, base, g + 4, 4)),
+                    escala_cor4(campo(buf, base, b + 4, 4)),
+                    escala_cor4(campo(buf, base, a + 4, 4)),
+                ],
+            )
+        } else {
+            let c0 = [
+                campo(buf, base, r, 5) as u8,
+                campo(buf, base, g, 5) as u8,
+                campo(buf, base, b, 5) as u8,
+                campo(buf, base, a, 5) as u8,
+            ];
+            let off = [
+                offset_sinal(buf, base, dr),
+                offset_sinal(buf, base, dg),
+                offset_sinal(buf, base, db),
+                offset_sinal(buf, base, da),
+            ];
+            let mut c0s = [0u8; 4];
+            let mut c1 = [0u8; 4];
+            for c in 0..4 {
+                c0s[c] = escala_cor5(c0[c]);
+                c1[c] = escala_cor5((c0[c] as i32 + off[c]) as u8);
+            }
+            (c0s, c1)
+        }
+    };
+
+    let (p0a, p0b) = extremos(0, offset_p0);
+    let (p1a, p1b) = extremos(1, offset_p1);
+
+    // 12 nós de 4 bits: 2 bits baixos = plano 0, 2 altos = plano 1.
+    let nos4: [u8; 12] = std::array::from_fn(|i| campo(buf, base, 81 + 4 * i, 4) as u8);
+    let pes_p0 = pesos_dos_nos(&nos4.map(|v| v & 3));
+    let pes_p1 = pesos_dos_nos(&nos4.map(|v| v / 4));
+    let tipo = campo(buf, base, 5, 2);
+
+    let mut px = [[0u8; 4]; BLOCK_PX];
+    for (i, item) in px.iter_mut().enumerate() {
+        let (x, y) = ((i % 4) as i32, (i / 4) as i32);
+        let (a, b) = if particao(seed, x, y, 0, 2, true) == 0 {
+            (p0a, p0b)
+        } else {
+            (p1a, p1b)
+        };
+        let pesos = [
+            peso16(if tipo == 3 { pes_p0[i] } else { pes_p1[i] }),
+            peso16(if tipo == 2 { pes_p0[i] } else { pes_p1[i] }),
+            peso16(if tipo == 1 { pes_p0[i] } else { pes_p1[i] }),
+            peso16(if tipo == 0 { pes_p0[i] } else { pes_p1[i] }),
+        ];
+        for c in 0..4 {
+            item[c] = interp(a[c], b[c], pesos[c]);
+        }
+    }
+    px
+}
+
+/// Modo `01111` — três partições (`stc_rgba_three_partition_dec`, `stc.cpp:399`).
+fn decode_tres_particoes(buf: &[u8], base: usize) -> [[u8; 4]; BLOCK_PX] {
+    let seed = campo(buf, base, 95, 10) as i32;
+    let offset_mode = campo(buf, base, 4, 1);
+
+    let (p0a, p0b, p1a, p1b, p2a, p2b);
+    if offset_mode == 0 {
+        p0a = [
+            escala_cor4(campo(buf, base, 5, 4)),
+            escala_cor4(campo(buf, base, 13, 4)),
+            escala_cor4(campo(buf, base, 21, 4)),
+            escala_alfa(campo(buf, base, 29, 3)),
+        ];
+        p0b = [
+            escala_cor4(campo(buf, base, 9, 4)),
+            escala_cor4(campo(buf, base, 17, 4)),
+            escala_cor4(campo(buf, base, 25, 4)),
+            escala_alfa(campo(buf, base, 32, 3)),
+        ];
+        p1a = [
+            escala_cor4(campo(buf, base, 35, 4)),
+            escala_cor4(campo(buf, base, 43, 4)),
+            escala_cor4(campo(buf, base, 51, 4)),
+            escala_alfa(campo(buf, base, 59, 3)),
+        ];
+        p1b = [
+            escala_cor4(campo(buf, base, 39, 4)),
+            escala_cor4(campo(buf, base, 47, 4)),
+            escala_cor4(campo(buf, base, 55, 4)),
+            escala_alfa(campo(buf, base, 62, 3)),
+        ];
+        p2a = [
+            escala_cor4(campo(buf, base, 65, 4)),
+            escala_cor4(campo(buf, base, 73, 4)),
+            escala_cor4(campo(buf, base, 81, 4)),
+            escala_alfa(campo(buf, base, 89, 3)),
+        ];
+        p2b = [
+            escala_cor4(campo(buf, base, 69, 4)),
+            escala_cor4(campo(buf, base, 77, 4)),
+            escala_cor4(campo(buf, base, 85, 4)),
+            escala_alfa(campo(buf, base, 92, 3)),
+        ];
+    } else {
+        // Curioso: as três partições reutilizam os MESMOS deslocamentos de
+        // R/G/B (bits 10/18/26), como em `stc.cpp:483`.
+        let off = [
+            offset_sinal(buf, base, 10),
+            offset_sinal(buf, base, 18),
+            offset_sinal(buf, base, 26),
+        ];
+        let extremos = |r: usize, g: usize, b: usize, a0: usize, a1: usize| {
+            let c0 = [
+                escala_cor5(campo(buf, base, r, 5) as u8),
+                escala_cor5(campo(buf, base, g, 5) as u8),
+                escala_cor5(campo(buf, base, b, 5) as u8),
+                escala_alfa(campo(buf, base, a0, 3)),
+            ];
+            let c1 = [
+                escala_cor5((campo(buf, base, r, 5) as i32 + off[0]) as u8),
+                escala_cor5((campo(buf, base, g, 5) as i32 + off[1]) as u8),
+                escala_cor5((campo(buf, base, b, 5) as i32 + off[2]) as u8),
+                escala_alfa(campo(buf, base, a1, 3)),
+            ];
+            (c0, c1)
+        };
+        (p0a, p0b) = extremos(5, 13, 21, 29, 32);
+        (p1a, p1b) = extremos(35, 43, 51, 59, 62);
+        (p2a, p2b) = extremos(65, 73, 81, 89, 92);
+    }
+
+    let nos2: [u8; 12] = std::array::from_fn(|i| campo(buf, base, 105 + 2 * i, 2) as u8);
+    let pesos = pesos_dos_nos(&nos2);
+
+    let mut px = [[0u8; 4]; BLOCK_PX];
+    for (i, item) in px.iter_mut().enumerate() {
+        let (x, y) = ((i % 4) as i32, (i / 4) as i32);
+        let (a, b) = match particao(seed, x, y, 0, 3, true) {
+            0 => (p0a, p0b),
+            1 => (p1a, p1b),
+            _ => (p2a, p2b),
+        };
+        let w = peso16(pesos[i]);
+        for c in 0..4 {
+            item[c] = interp(a[c], b[c], w);
+        }
+    }
+    px
+}
+
 /// Decodifica um bloco escolhendo o sub-formato pelos bits baixos
 /// (`stc_rgba_dec`, `stc.cpp:706`).
 pub fn decode_block_at(buf: &[u8], base: usize) -> [[u8; 4]; BLOCK_PX] {
@@ -286,13 +516,11 @@ pub fn decode_block_at(buf: &[u8], base: usize) -> [[u8; 4]; BLOCK_PX] {
     } else if modo & 3 == 1 {
         decode_duas_particoes(buf, base)
     } else if modo & 7 == 3 {
-        // duas partições / dois planos: ainda não portado
-        decode_uma_particao(buf, base)
+        decode_duas_particoes_dois_planos(buf, base)
     } else if modo & 0xf == 7 {
         decode_uma_particao_dois_planos(buf, base)
     } else {
-        // três partições: ainda não portado
-        decode_uma_particao(buf, base)
+        decode_tres_particoes(buf, base)
     }
 }
 
@@ -530,6 +758,83 @@ mod tests {
             }
         }
         assert!(modos.len() >= 3, "esperava os tres modos, veio {modos:?}");
+    }
+
+    /// Compara TODOS os blocos de uma pagina com o oraculo do SDK e agrupa as
+    /// divergencias por modo.
+    ///   MINITELA_PAGINA=6 cargo test --lib -- --ignored compara_com_oraculo --nocapture
+    #[test]
+    #[ignore]
+    fn compara_com_oraculo() {
+        use std::process::{Command, Stdio};
+        let oraculo = std::env::var("MINITELA_ORACULO")
+            .unwrap_or_else(|_| "/tmp/stc-oraculo/oraculo".to_string());
+        if !std::path::Path::new(&oraculo).exists() {
+            eprintln!("sem oraculo em {oraculo}");
+            return;
+        }
+        let caminho = "/usr/share/minitela/resources/ACF/Texture.acf";
+        let dados = std::fs::read(caminho).expect("acf");
+        let r = crate::acf::inspect::parse(&dados).expect("parse");
+        let pg: usize = std::env::var("MINITELA_PAGINA")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(6);
+        let tex = r.paginas[pg]
+            .texturas
+            .iter()
+            .find(|t| t.w >= 100 && (t.addr as usize) < r.start as usize)
+            .expect("textura");
+        let n = tex.slice as usize / 16;
+        let mut por_modo: std::collections::BTreeMap<u8, (usize, usize)> = Default::default();
+        let mut exemplos = Vec::new();
+        for i in 0..n {
+            let ini = tex.addr as usize + i * 16;
+            let bloco = &dados[ini..ini + 16];
+            let modo = bloco[0] & 0x0f;
+            let saida = Command::new(&oraculo)
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .spawn()
+                .and_then(|mut c| {
+                    std::io::Write::write_all(c.stdin.as_mut().unwrap(), bloco)?;
+                    c.wait_with_output()
+                })
+                .expect("oraculo");
+            let texto = String::from_utf8_lossy(&saida.stdout);
+            let dele: Vec<[u8; 3]> = texto
+                .split_whitespace()
+                .map(|v| {
+                    [
+                        u8::from_str_radix(&v[0..2], 16).unwrap(),
+                        u8::from_str_radix(&v[2..4], 16).unwrap(),
+                        u8::from_str_radix(&v[4..6], 16).unwrap(),
+                    ]
+                })
+                .collect();
+            let mut buf = bloco.to_vec();
+            buf.push(0);
+            let nosso = decode_block_at(&buf, block_base(0));
+            let igual = (0..16).all(|p| (0..3).all(|c| nosso[p][c] == dele[p][c]));
+            let e = por_modo.entry(modo).or_insert((0, 0));
+            if igual {
+                e.0 += 1;
+            } else {
+                e.1 += 1;
+                if exemplos.len() < 5 {
+                    let p = (0..16)
+                        .find(|p| (0..3).any(|c| nosso[*p][c] != dele[*p][c]))
+                        .unwrap();
+                    exemplos.push((i, modo, format!("{:?} != {:?}", nosso[p], dele[p])));
+                }
+            }
+        }
+        for (modo, (ok, ruim)) in &por_modo {
+            eprintln!("modo {modo:04b}: {ok} iguais, {ruim} diferentes");
+        }
+        for (i, modo, ex) in exemplos {
+            eprintln!("  bloco {i} (modo {modo:04b}): {ex}");
+        }
     }
 
     /// Salva a decodificacao de uma pagina em PNG para conferir no olho.

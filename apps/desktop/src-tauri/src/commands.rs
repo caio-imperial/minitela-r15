@@ -368,6 +368,45 @@ static ULTIMA_TAG: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None
 /// previsao em cache (a cidade fica em `~/.config/minitela/clima.txt`)
 static CLIMA: std::sync::Mutex<Option<Clima>> = std::sync::Mutex::new(None);
 
+/// último `.acf` que o app gerou (a "customização" da tela)
+fn arquivo_ultimo_acf() -> Option<PathBuf> {
+    let home = std::env::var_os("HOME").map(PathBuf::from)?;
+    Some(home.join(".config/minitela/ultimo-acf.txt"))
+}
+
+/// última página exibida junto com esse `.acf`
+fn arquivo_ultima_pagina() -> Option<PathBuf> {
+    let home = std::env::var_os("HOME").map(PathBuf::from)?;
+    Some(home.join(".config/minitela/ultima-pagina.txt"))
+}
+
+fn salva_customizacao(caminho: &str, pagina: usize) {
+    if let Some(arq) = arquivo_ultimo_acf() {
+        if let Some(dir) = arq.parent() {
+            let _ = std::fs::create_dir_all(dir);
+        }
+        let _ = std::fs::write(&arq, caminho);
+    }
+    if let Some(arq) = arquivo_ultima_pagina() {
+        let _ = std::fs::write(arq, pagina.to_string());
+    }
+}
+
+fn customizacao_salva() -> Option<(String, u32)> {
+    let caminho = std::fs::read_to_string(arquivo_ultimo_acf()?)
+        .ok()?
+        .trim()
+        .to_string();
+    if caminho.is_empty() || !std::path::Path::new(&caminho).exists() {
+        return None;
+    }
+    let pagina = std::fs::read_to_string(arquivo_ultima_pagina().unwrap_or_default())
+        .ok()
+        .and_then(|v| v.trim().parse::<u32>().ok())
+        .unwrap_or(5);
+    Some((caminho, pagina))
+}
+
 fn arquivo_cidade() -> Option<PathBuf> {
     let home = std::env::var_os("HOME").map(PathBuf::from)?;
     Some(home.join(".config/minitela/clima.txt"))
@@ -501,6 +540,8 @@ pub struct ControleView {
     pub porta: Option<String>,
     pub paginas: u16,
     pub app_oficial: bool,
+    /// "o seu", "outro", "sem customizacao" — o que está gravado na tela
+    pub tema: String,
 }
 
 fn trava() -> Result<std::sync::MutexGuard<'static, Option<Sessao>>, String> {
@@ -524,12 +565,13 @@ fn solta() {
     }
 }
 
-fn vista(g: Option<&Sessao>) -> ControleView {
+fn vista(g: Option<&Sessao>, tema: &str) -> ControleView {
     ControleView {
         conectado: g.is_some(),
         porta: g.map(|s| s.caminho.clone()),
         paginas: g.map(|s| s.paginas).unwrap_or(0),
         app_oficial: crate::device::app_oficial_rodando(),
+        tema: tema.to_string(),
     }
 }
 
@@ -580,16 +622,48 @@ fn sessao(paginas: Option<u16>) -> Result<std::sync::MutexGuard<'static, Option<
 #[tauri::command]
 pub fn controle_estado() -> ControleView {
     match trava() {
-        Ok(g) => vista(g.as_ref()),
-        Err(_) => vista(None),
+        Ok(g) => vista(g.as_ref(), "—"),
+        Err(_) => vista(None, "—"),
     }
 }
 
 /// Assume o controle: para o app oficial e mantém a serial aberta com este app.
 #[tauri::command]
 pub fn conectar(paginas: Option<u16>) -> Result<ControleView, String> {
-    let g = sessao(paginas)?;
-    let v = vista(g.as_ref());
+    let mut g = sessao(paginas)?;
+
+    // a tela guarda o md5 do último arquivo gravado: dá para saber se o que está
+    // rodando é a nossa customização ou o tema do app oficial
+    let mut tema = "sem customizacao".to_string();
+    let mut restaurar: Option<(Vec<u8>, u32)> = None;
+    if let Some((caminho, pagina)) = customizacao_salva() {
+        let nosso = std::fs::read(&caminho).map_err(texto)?;
+        let igual = g
+            .as_mut()
+            .ok_or("sem conexao com a tela")?
+            .porta
+            .status()
+            .map(|st| st.file_id == crate::device::md5(&nosso))
+            .unwrap_or(false);
+        if igual {
+            tema = "o seu".into();
+        } else {
+            tema = "outro".into();
+            restaurar = Some((nosso, pagina));
+        }
+    }
+    drop(g);
+
+    if let Some((dados, pagina)) = restaurar {
+        match grava_bloqueante(dados, Some(pagina)) {
+            Ok(_) => tema = "o seu (restaurado)".into(),
+            Err(e) => tema = format!("falha ao restaurar: {e}"),
+        }
+        PAGINA_ATUAL.store(pagina, std::sync::atomic::Ordering::SeqCst);
+    }
+
+    let g = trava()?;
+    let v = vista(g.as_ref(), &tema);
     drop(g);
     inicia_ticker();
     inicia_tecla();
@@ -725,9 +799,11 @@ pub async fn gravar(caminho: String, pagina: Option<u32>) -> Result<GravacaoView
     }
     let tamanho = dados.len();
     let inicio = std::time::Instant::now();
+    let caminho_lembrado = caminho.clone();
     let porta = tauri::async_runtime::spawn_blocking(move || grava_bloqueante(dados, pagina))
         .await
         .map_err(texto)??;
+    salva_customizacao(&caminho_lembrado, pagina.unwrap_or(5) as usize);
     Ok(GravacaoView {
         porta,
         tamanho,
@@ -766,6 +842,9 @@ fn grava_bloqueante_interno(dados: Vec<u8>, pagina_alvo: Option<u32>) -> Result<
                 None => p2.handshake().map(|_| ()),
             };
             if ok.is_ok() {
+                if let Some(n) = pagina_alvo {
+                    PAGINA_ATUAL.store(n, std::sync::atomic::Ordering::SeqCst);
+                }
                 let mut g2 = trava()?;
                 *g2 = Some(Sessao {
                     porta: p2,
@@ -909,6 +988,8 @@ pub fn patch_imagens(caminho_acf: String, pedacos: Vec<Pedaco>) -> Result<PatchV
             .unwrap_or_else(|| "novo".into())
     ));
     std::fs::write(&saida, &data).map_err(texto)?;
+    // lembra qual é a "nossa" tela, para restaurar quando assumirmos o controle
+    salva_customizacao(&saida.display().to_string(), *paginas.first().unwrap_or(&5));
 
     Ok(PatchView {
         saida: saida.display().to_string(),

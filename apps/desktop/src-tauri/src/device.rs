@@ -142,6 +142,8 @@ pub fn parse_frames(buf: &mut Vec<u8>) -> Vec<(u16, Vec<u8>)> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Status {
     pub status: u8,
+    /// md5 do arquivo que o firmware guardou (o último download)
+    pub file_id: [u8; 16],
     pub offset: u32,
 }
 
@@ -149,10 +151,18 @@ pub fn parse_status(payload: &[u8]) -> Option<Status> {
     if payload.len() < 21 {
         return None;
     }
+    let mut file_id = [0u8; 16];
+    file_id.copy_from_slice(&payload[1..17]);
     Some(Status {
         status: payload[0],
+        file_id,
         offset: u32::from_be_bytes([payload[17], payload[18], payload[19], payload[20]]),
     })
+}
+
+/// md5 do arquivo, como o firmware guarda em `fileId`.
+pub fn md5(dados: &[u8]) -> [u8; 16] {
+    Md5::digest(dados).into()
 }
 
 pub struct Porta {
