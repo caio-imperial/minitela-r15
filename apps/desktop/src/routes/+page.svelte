@@ -49,6 +49,8 @@
   let gravado = $state("");
   let parou = $state("");
   let estadoTags = $state<string | null>(null);
+  /** páginas desativadas só neste app (não mexe no .acf nem no firmware) */
+  let desativadas = $state<number[]>([]);
 
   let controle: Controle = $state({
     conectado: false,
@@ -71,10 +73,41 @@
     return d?.paginas || c.paginas || 0;
   }
   const paginasTotal = $derived(totalPaginas(diag, controle));
-  const podeVoltar = $derived(controle.conectado && paginaAtual > 1);
-  const podeAvancar = $derived(
-    controle.conectado && paginasTotal > 0 && paginaAtual < paginasTotal,
-  );
+  const puladas = $derived(new Set(desativadas));
+  const podeVoltar = $derived(controle.conectado && proxima(paginaAtual, -1) !== null);
+  const podeAvancar = $derived(controle.conectado && proxima(paginaAtual, 1) !== null);
+
+  const chaveDesativadas = () => `minitela.desativadas:${acf}`;
+
+  function carregaDesativadas() {
+    try {
+      const bruto = localStorage.getItem(chaveDesativadas());
+      desativadas = bruto ? JSON.parse(bruto) : [];
+    } catch {
+      desativadas = [];
+    }
+  }
+
+  function alternarDesativada(n: number) {
+    desativadas = desativadas.includes(n)
+      ? desativadas.filter((x) => x !== n)
+      : [...desativadas, n];
+    try {
+      localStorage.setItem(chaveDesativadas(), JSON.stringify(desativadas));
+    } catch {
+      /* sem localStorage: vale só nesta sessão */
+    }
+  }
+
+  /** próxima página na direção pedida, pulando as desativadas */
+  function proxima(n: number, dir: 1 | -1): number | null {
+    let p = n + dir;
+    while (p >= 1 && p <= paginasTotal) {
+      if (!puladas.has(p)) return p;
+      p += dir;
+    }
+    return null;
+  }
 
   const edicaoAtiva = $derived(edicoes[ativo] as Edicao | undefined);
   const slotAtivo = $derived(slots.find((s) => s.indice === ativo));
@@ -119,6 +152,7 @@
     try {
       diag = await invoke<Diagnostico>("diagnostico", { caminho: acf });
       slots = await invoke<Slot[]>("slots", { caminho: acf });
+      carregaDesativadas();
       if (slots.length && !slots.some((s) => s.indice === ativo)) {
         ativo = slots[0].indice;
       }
@@ -429,19 +463,34 @@
       </p>
     {:else}
       <div class="paginas">
-        <button onclick={() => irPara(paginaAtual - 1)} disabled={!podeVoltar}>◀</button>
+        <button
+          onclick={() => {
+            const p = proxima(paginaAtual, -1);
+            if (p) irPara(p);
+          }}
+          disabled={!podeVoltar}>◀</button
+        >
         <span>
           página {paginaAtual}{paginasTotal > 0 ? ` de ${paginasTotal}` : ""}
           {#if paginaAtual >= 5 && paginaAtual <= 7}
             <small>· slot {paginaAtual - 4}</small>
           {/if}
         </span>
-        <button onclick={() => irPara(paginaAtual + 1)} disabled={!podeAvancar}>▶</button>
+        <button
+          onclick={() => {
+            const p = proxima(paginaAtual, 1);
+            if (p) irPara(p);
+          }}
+          disabled={!podeAvancar}>▶</button
+        >
         {#each slots as s (s.indice)}
           <button
             class="atalho"
             class:on={paginaAtual === s.pagina}
+            class:pulada={puladas.has(s.pagina)}
             onclick={() => irPara(s.pagina)}
+            disabled={puladas.has(s.pagina)}
+            title={puladas.has(s.pagina) ? "slot desativado no app" : ""}
           >
             slot {s.indice + 1}
           </button>
@@ -488,7 +537,8 @@
       <div class="slots">
         {#each slots as s (s.indice)}
           {@const mini = previasNovas[s.indice] ?? s.previa}
-          <figure class="slot" class:ativo={s.indice === ativo}>
+          {@const pulada = puladas.has(s.pagina)}
+          <figure class="slot" class:ativo={s.indice === ativo} class:pulada>
             <button
               class="painel"
               onclick={() => (ativo = s.indice)}
@@ -500,10 +550,20 @@
               {:else}
                 <span class="vazio">—</span>
               {/if}
+              {#if pulada}<span class="selo">desativada</span>{/if}
             </button>
             <figcaption>
               <span class="nome">slot {s.indice + 1}</span>
               <small>{s.w}×{s.h}</small>
+              <button
+                class="pular"
+                onclick={() => alternarDesativada(s.pagina)}
+                title={pulada
+                  ? "voltar a mostrar esta página na navegação"
+                  : "pular esta página na navegação do app"}
+              >
+                {pulada ? "ativar" : "desativar"}
+              </button>
               {#if edicoes[s.indice]}
                 <span class="marca-nova">nova</span>
                 <button
@@ -754,6 +814,42 @@
     background: #000;
     display: grid;
     place-items: center;
+  }
+
+  .slot.pulada .painel img,
+  .slot.pulada .painel .vazio {
+    opacity: 0.35;
+    filter: grayscale(0.7);
+  }
+
+  .selo {
+    position: absolute;
+    inset: auto 6px 6px 6px;
+    text-align: center;
+    font-size: 10.5px;
+    color: #ff7b72;
+    background: rgba(14, 17, 22, 0.8);
+    border-radius: 5px;
+    padding: 1px 4px;
+  }
+
+  .slot .painel {
+    position: relative;
+  }
+
+  .pular {
+    padding: 0 6px;
+    font-size: 10.5px;
+    line-height: 1.5;
+    color: #8b94a3;
+  }
+
+  .pular:hover:not(:disabled) {
+    color: #ff7b72;
+  }
+
+  .atalho.pulada {
+    opacity: 0.4;
   }
 
   .slot.ativo .painel {
