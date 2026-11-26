@@ -90,6 +90,8 @@ pub struct Pagina {
     pub check: u32,
     pub ok: bool,
     pub ntex: u16,
+    /// quantos widgets a página tem (0 = página vazia, fora da lista do aparelho)
+    pub widgets: u16,
     pub gif: u16,
     pub texturas: Vec<Textura>,
     pub coerentes: usize,
@@ -107,6 +109,17 @@ pub struct Resumo {
     pub npages: u16,
     pub paginas: Vec<Pagina>,
     pub problemas: Vec<String>,
+}
+
+impl Resumo {
+    /// Páginas que o aparelho de fato mostra (as vazias, sem widget e com uma
+    /// textura só, ficam de fora — no tema de fábrica são 7 de 11).
+    pub fn paginas_visiveis(&self) -> usize {
+        self.paginas
+            .iter()
+            .filter(|p| p.widgets > 0 || p.texturas.len() > 1)
+            .count()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -217,6 +230,7 @@ pub fn parse(data: &[u8]) -> Result<Resumo, Erro> {
         let Ok(size) = u32le(cfg, o + 4) else { break };
         let Ok(check) = u32le(cfg, o + 8) else { break };
         let ntex = u16le(cfg, o + 14).unwrap_or(0);
+        let widgets = u16le(cfg, o + 22).unwrap_or(0);
         let gif = u16le(cfg, o + 26).unwrap_or(0);
 
         let ini = start as usize + store as usize;
@@ -264,6 +278,7 @@ pub fn parse(data: &[u8]) -> Result<Resumo, Erro> {
             check,
             ok,
             ntex,
+            widgets,
             gif,
             texturas,
             coerentes: bons,

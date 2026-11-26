@@ -13,6 +13,7 @@
     start: number;
     tela: [number, number];
     paginas: number;
+    paginas_visiveis: number;
     texturas: number;
     ok: boolean;
     achados: Achado[];
@@ -70,7 +71,7 @@
   // `diag` recebe um valor só depois do primeiro `analisar()`: dentro de `$derived`
   // o TS estreita o tipo para `null`, por isso o total vem por função.
   function totalPaginas(d: Diagnostico | null, c: Controle) {
-    return d?.paginas || c.paginas || 0;
+    return d?.paginas_visiveis || c.paginas || 0;
   }
   const paginasTotal = $derived(totalPaginas(diag, controle));
   const puladas = $derived(new Set(desativadas));
@@ -411,7 +412,11 @@
       <div class="resumo" class:ruim={!diag.ok}>
         <span>{kb(diag.tamanho)}</span>
         <span>{diag.tela[0]}×{diag.tela[1]}</span>
-        <span>{diag.paginas} páginas</span>
+        <span>
+          {diag.paginas_visiveis} páginas{diag.paginas !== diag.paginas_visiveis
+            ? ` (${diag.paginas} no arquivo)`
+            : ""}
+        </span>
         <span>{diag.texturas} texturas</span>
         <strong>{diag.ok ? "válido" : "com problema"}</strong>
       </div>

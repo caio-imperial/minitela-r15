@@ -67,6 +67,8 @@ pub struct DiagnosticoView {
     pub start: u32,
     pub tela: [u16; 2],
     pub paginas: usize,
+    /// páginas que o aparelho mostra (as vazias do arquivo ficam de fora)
+    pub paginas_visiveis: usize,
     pub texturas: usize,
     pub ok: bool,
     pub achados: Vec<AchadoView>,
@@ -107,6 +109,7 @@ pub fn diagnostico(caminho: String) -> Result<DiagnosticoView, String> {
         start: resumo.start,
         tela: [resumo.w, resumo.h],
         paginas: resumo.paginas.len(),
+        paginas_visiveis: resumo.paginas_visiveis(),
         texturas: resumo.paginas.iter().map(|p| p.texturas.len()).sum(),
         ok: resumo.problemas.is_empty(),
         achados,
@@ -813,6 +816,18 @@ pub fn patch_imagem(
 #[cfg(test)]
 mod tests {
     use crate::acf::inspect;
+    /// O tema de fábrica tem 11 páginas no arquivo, mas só 7 aparecem no aparelho.
+    #[test]
+    fn paginas_visiveis_do_tema_de_fabrica() {
+        let Some(base) = tema_de_fabrica() else {
+            return;
+        };
+        let dados = std::fs::read(base).expect("base");
+        let r = inspect::parse(&dados).expect("parse");
+        assert_eq!(r.paginas.len(), 11);
+        assert_eq!(r.paginas_visiveis(), 7);
+    }
+
     /// Prévia do tema de fábrica (pula se o pacote não estiver instalado).
     #[test]
     fn preview_do_tema_de_fabrica() {
