@@ -29,12 +29,34 @@ pub const REGISTRADORES: [u16; 26] = [
     2002, 2005, 2006, 2025, 2026, 2027, 2030, 2031, 2032,
 ];
 
-fn confere(reg: u16) -> Result<(), Erro> {
-    if REGISTRADORES.contains(&reg) {
+/// Registradores que este projeto declara como **texto** (`D0`).
+pub const TEXTO: [u16; 13] = [
+    1082, 1083, 1085, 1090, 1119, 1124, 1140, 1141, 2006, 2027, 2030, 2031, 2032,
+];
+
+/// Registradores que este projeto declara como **número**.
+pub const NUMERO: [u16; 13] = [
+    2, 7, 65, 1110, 1115, 1120, 1150, 2000, 2001, 2002, 2005, 2025, 2026,
+];
+
+fn confere(reg: u16, texto: bool) -> Result<(), Erro> {
+    if !REGISTRADORES.contains(&reg) {
+        return Err(Erro::Recusado(format!(
+            "registrador {reg} nao existe neste tema (ver docs/referencia/tags.md)"
+        )));
+    }
+    // mandar número num registrador de texto (ou o contrário) já deixou a tela muda
+    let ok = if texto {
+        !NUMERO.contains(&reg)
+    } else {
+        !TEXTO.contains(&reg)
+    };
+    if ok {
         Ok(())
     } else {
         Err(Erro::Recusado(format!(
-            "registrador {reg} nao existe neste tema (ver docs/referencia/tags.md)"
+            "registrador {reg} e do tipo {} neste tema",
+            if texto { "número" } else { "texto" }
         )))
     }
 }
@@ -260,7 +282,7 @@ impl Porta {
 
     pub fn set_registradores(&mut self, pares: &[(u16, u32)]) -> Result<(), Erro> {
         for (reg, _) in pares {
-            confere(*reg)?;
+            confere(*reg, false)?;
         }
         let mut content = vec![(0b1000 << 4) | ((pares.len() as u8 - 1) & 0x0F)];
         for (reg, val) in pares {
@@ -272,7 +294,7 @@ impl Porta {
 
     /// Escreve uma tag de texto (`0x0090` com cabeçalho `0xD0`).
     pub fn set_texto(&mut self, reg: u16, texto: &str) -> Result<(), Erro> {
-        confere(reg)?;
+        confere(reg, true)?;
         let bytes = texto.as_bytes();
         let mut content = Vec::with_capacity(5 + bytes.len());
         content.push(0xD0);
@@ -550,13 +572,21 @@ mod tests {
 
     #[test]
     fn registrador_desconhecido_e_recusado() {
-        assert!(confere(1081).is_err(), "1081 nao existe no tema");
+        assert!(confere(1081, false).is_err(), "1081 nao existe no tema");
         assert!(
-            confere(1084).is_err(),
+            confere(1084, true).is_err(),
             "1084 (wifi_sinal) nao existe no tema"
         );
-        assert!(confere(1082).is_ok(), "bateria");
-        assert!(confere(2006).is_ok(), "relogio");
+        assert!(confere(1082, true).is_ok(), "bateria e texto");
+        assert!(confere(2006, true).is_ok(), "relogio e texto");
+    }
+
+    #[test]
+    fn tipo_do_registrador_e_respeitado() {
+        assert!(confere(1082, false).is_err(), "bateria nao aceita numero");
+        assert!(confere(7, true).is_err(), "brilho nao aceita texto");
+        assert!(confere(7, false).is_ok(), "brilho e numero");
+        assert!(confere(1083, false).is_err(), "wifi nao aceita numero");
     }
 
     #[test]

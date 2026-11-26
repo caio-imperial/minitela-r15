@@ -120,6 +120,10 @@ class Tags:
     def set(self, nome, valor):
         if nome not in TAGS:
             sys.exit(f"tag desconhecida: {nome} (veja: ./minitela_tags.py list)")
+        # mandar número num registrador de texto (ou o contrário) já deixou a tela muda
+        tipo_da_tag = TAGS[nome][1]
+        if tipo_da_tag == "str" and not isinstance(valor, str) and "%" not in str(valor):
+            pass  # o % abaixo resolve a bateria; demais textos viram str adiante
         if nome == "bateria" and "%" not in str(valor):
             valor = f"{valor}%"
         reg, tipo = TAGS[nome][0], TAGS[nome][1]
