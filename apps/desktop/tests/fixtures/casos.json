@@ -1,0 +1,144 @@
+{
+  "gerado_por": "apps/desktop/tests/gerar_fixtures.py",
+  "ffmpeg": "ffmpeg version 5.1.9-0+deb12u1 Copyright (c) 2000-2026 the FFmpeg developers",
+  "observacao": "os .acf nao sao versionados; regenere com o pacote minitela instalado. md5 do gif pode mudar entre versoes de ffmpeg — use tamanho/paginas/checks como contrato.",
+  "casos": {
+    "estatico_192": {
+      "imagem_md5": "49165dc5dcc5581f800ccd50157f8974",
+      "tamanho": 851976,
+      "md5": "d8c45566078c80f3b77838184962bd76",
+      "start": 819200,
+      "paginas": 11,
+      "texturas": 98,
+      "checks": [
+        2728388520,
+        2521703780,
+        406920966,
+        750748511,
+        3496887330,
+        3496977442,
+        3496510498,
+        1605520007,
+        1599252122,
+        1599252122,
+        1599252122
+      ],
+      "problemas": [],
+      "tela": [
+        240,
+        240
+      ]
+    },
+    "estatico_240": {
+      "imagem_md5": "dac3eaadea1cc08fe41c0646120bda12",
+      "tamanho": 884744,
+      "md5": "1d4ce9c523dc5335a5455bcb2d080521",
+      "start": 851968,
+      "paginas": 11,
+      "texturas": 98,
+      "checks": [
+        2728388520,
+        2521703780,
+        406920966,
+        750748511,
+        3520344610,
+        3496969250,
+        3496518690,
+        1605520007,
+        1599252122,
+        1599252122,
+        1599252122
+      ],
+      "problemas": [],
+      "tela": [
+        240,
+        240
+      ]
+    },
+    "gif_8": {
+      "imagem_md5": "5a2d6a65ba5f59b84da3a1e485f02249",
+      "tamanho": 1114120,
+      "md5": "427c89166ba1075930c4b0116ba9b92e",
+      "start": 1081344,
+      "paginas": 11,
+      "texturas": 98,
+      "checks": [
+        2728388520,
+        2521703780,
+        406920966,
+        750748511,
+        3496129570,
+        3496887330,
+        3497042978,
+        1605520007,
+        1599252122,
+        1599252122,
+        1599252122
+      ],
+      "problemas": [],
+      "tela": [
+        240,
+        240
+      ]
+    },
+    "fix": {
+      "danificado_md5": "47a7d13a3eedc42b7925615971ab1e64",
+      "consertado_md5": "7160cde1a5acf49ad3087c5d695ea2fd",
+      "mudancas": [
+        "pg3: CheckCode 0x2cbf835f -> 0x2cbf83a0"
+      ],
+      "checks_antes": [
+        2728388520,
+        2521703780,
+        406920966,
+        750748511,
+        3496887330,
+        3496977442,
+        3496510498,
+        1605520007,
+        1599252122,
+        1599252122,
+        1599252122
+      ],
+      "checks_depois": [
+        2728388520,
+        2521703780,
+        406920966,
+        750748576,
+        3496887330,
+        3496977442,
+        3496510498,
+        1605520007,
+        1599252122,
+        1599252122,
+        1599252122
+      ]
+    },
+    "fabrica": {
+      "arquivo": "/usr/share/minitela/resources/ACF/Texture.acf",
+      "md5": "ca495de19166516833a329a2251a9dde",
+      "tamanho": 851976,
+      "start": 819200,
+      "paginas": 11,
+      "texturas": 98,
+      "checks": [
+        2728388520,
+        2521703780,
+        406920966,
+        750748511,
+        3496887330,
+        3496977442,
+        3496510498,
+        1605520007,
+        1599252122,
+        1599252122,
+        1599252122
+      ],
+      "problemas": [],
+      "tela": [
+        240,
+        240
+      ]
+    }
+  }
+}

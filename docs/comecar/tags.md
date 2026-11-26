@@ -22,10 +22,22 @@ a tela onde é desenhada. Algumas não têm tela (`pagina`, `brilho`, controles)
 | todas | `relogio` |
 | WhatsApp | `notif_de`, `notif_texto` |
 | Notas | `nota` |
-| Monitor | `bateria`, `bateria_tipo`, `wifi_ssid`, `bt_nome` |
+| Monitor | `bateria` (texto `"100%"`), `bateria_tipo` (nível da barra), `wifi_ssid`, `bt_nome` |
 | **Clima** | `cidade`, `temp_agora`, `temp_prev1`, `temp_prev2` — **seis campos**, a mais generosa |
 
 Rode `./minitela_tags.py list` para a lista completa com ids.
+
+## Dois detalhes que só aparecem na tela
+
+- **bateria**: o texto (`1082`) é **string** — `"100%"`; mandar número apaga a
+  porcentagem. A **barra** é outro registrador (`bateria_tipo`, 1150) e desenha
+  `nível + 1` pauzinhos (`0 → 1`, `3 → 4`).
+- **ícones do clima** (`clima1_tipo`/`2`/`3`): `0` sol, `1` sol entre nuvens, `2` nuvem,
+  `3` chuva, `4` lua, `5` lua entre nuvens, `6` nuvem com neve. Não existem 7 nem 8, e
+  não há ícone de trovoada.
+
+Nunca mande número num registrador de texto (nem o contrário): o firmware não confere
+tipo nem faixa e a tela pode ficar muda — já aconteceu duas vezes aqui.
 
 ## O app oficial briga com você
 

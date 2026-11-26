@@ -46,10 +46,31 @@ desenha, não a lista maior do `tagUtils.js` do SDK.
 
 | tag | id | tipo |
 |---|---|---|
-| `bateria` | 1082 | num |
-| `bateria_tipo` | 1150 | num |
+| `bateria` | 1082 | str (`"100%"`) |
+| `bateria_tipo` | 1150 | num — nível da barra (0–3 → 1–4 paus) |
 | `wifi_ssid` | 1083 | str |
 | `bt_nome` | 1085 | str |
+
+!!! note "Bateria é texto com o sinal de %"
+    O widget do Monitor lê `bateria` (1082) como **string**: `"100%"`. Mandar número
+    mexeu no ícone e **apagou o texto** — foi assim que a porcentagem sumiu quando o
+    app assumiu o controle. O ícone acompanha o texto.
+
+    Frames capturados do app oficial (stdout dele, `D0` = texto):
+
+    ```
+    D0 4 3A 0 4 "100%"          bateria (1082)
+    D0 4 3B 0 7 "1310-5G"       wifi_ssid (1083)
+    D0 4 3D 0 C "Desconectado"  bt_nome (1085)
+    D0 7 D6 0 B "25/11 22:14"   relogio (2006)
+    ```
+
+    A **barra do ícone é outro registrador**: `bateria_tipo` (1150) é o nível, e o widget
+    desenha `nível + 1` pauzinhos — medido na tela: `0 → 1`, `1 → 2`, `3 → 4`. Sem essa
+    tag a barra fica em 1 para sempre (inclusive em 100%). O app manda o nível calculado
+    da carga real: `min(max(ceil(pct/25), 1), 4) - 1` (0–25% = 1 pau, 76–100% = 4).
+
+    Este tema **não tem** tag de CPU.
 
 ## Clima — a tela mais generosa
 
@@ -61,11 +82,28 @@ Seis campos de texto: é onde dá para mostrar dados próprios com mais espaço.
 | `temp_agora` | 2030 | str |
 | `temp_prev1` | 2031 | str |
 | `temp_prev2` | 2032 | str |
-| `clima1_tipo` | 1110 | num |
-| `clima2_tipo` | 1115 | num |
+| `clima1_tipo` | 1110 | num — ícone do dia 1 |
+| `clima2_tipo` | 1115 | num — ícone do dia 2 |
 | `clima2_desc` | 1119 | str |
-| `clima3_tipo` | 1120 | num |
+| `clima3_tipo` | 1120 | num — ícone do dia 3 |
 | `clima3_desc` | 1124 | str |
+
+## Ícones do clima
+
+Medidos na tela, um valor por vez (`clima1_tipo`):
+
+| valor | ícone |
+|---|---|
+| 0 | sol |
+| 1 | sol entre nuvens |
+| 2 | nuvem |
+| 3 | chuva |
+| 4 | lua |
+| 5 | lua entre nuvens |
+| 6 | nuvem com neve |
+
+`7` e `8` não existem. Não há ícone de trovoada: o app manda `3` (chuva). O mapa dos
+códigos WMO do Open-Meteo está em `apps/desktop/src-tauri/src/clima.rs` (`icone()`).
 
 ## Como escrever
 

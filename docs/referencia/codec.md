@@ -61,13 +61,19 @@ blocos de cores não colineares — onde o fabricante usa o **modo 1**.
 Os bits baixos do bloco escolhem o decodificador (`stc_rgba_dec`, em `stc.cpp:706`).
 Não é "modo 0 ou 1" — é o número de bits 1 no começo:
 
-| bits iniciais | sub-formato | implementado aqui |
-|---|---|---|
-| `0` | uma partição (o que geramos) | **sim** |
-| `01` | duas partições | não |
-| `011` | duas partições, dois planos | não |
-| `0111` | uma partição, dois planos | não |
-| `01111…` | três partições | não |
+| bits iniciais | sub-formato | no app (Rust) | no Python |
+|---|---|---|---|
+| `0` | uma partição (o que geramos) | **sim** | **sim** |
+| `01` | duas partições | **sim** | não |
+| `011` | duas partições, dois planos | não | não |
+| `0111` | uma partição, dois planos | **sim** | não |
+| `01111…` | três partições | não | não |
+
+Os três implementados no app cobrem **99,3%** dos blocos do tema de fábrica (61,5% de
+`0111`, 30,9% de `0`, 6,9% de `01`); restam `011` (0,3%) e `01111` (0,4%). O porte foi
+validado contra o próprio `stc.cpp` do SDK compilado como oráculo:
+`apps/desktop/tests/gerar_fixtures_stc.py` gera 120 blocos (40 de cada modo, com os pixels
+esperados) e o teste `decodificador_bate_com_o_simulador_do_sdk` compara pixel a pixel.
 
 Os sub-formatos de duas/três partições têm mais cabeçalho, um `seed` de 10 bits que escolhe
 a partição de cada pixel (`select_partition`), alfa de 6 bits e uma segunda tabela de pesos.
@@ -86,8 +92,8 @@ Consequências:
 
 - **gerar** não precisa de nada disso: o sub-formato de uma partição representa qualquer
   bloco, com menos fidelidade nas cores não colineares;
-- **decodificar** arquivos oficiais exige os outros quatro — é a limitação conhecida do
-  `acf_codec.py`, e a próxima melhoria do codec.
+- **decodificar** arquivos oficiais exige os outros quatro. O `acf_codec.py` só tem o modo
+  0 (é o que gera); o app Tauri já decodifica `01` e `0111`, e faltam `011` e `01111`.
 
 Um detalhe que ajuda quem for implementar: o deslocamento dos campos é relativo ao **bit 0
 do bloco**, enquanto o nosso stream começa no bit 1 — por isso todo offset do `stc.cpp`

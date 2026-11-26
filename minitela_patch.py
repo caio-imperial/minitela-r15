@@ -79,7 +79,7 @@ def main():
                     help=f".acf que o firmware já aceita (padrão: {TEMPLATE_PADRAO})")
     ap.add_argument("--out", default=None, help="arquivo de saída")
     ap.add_argument("--send", action="store_true", help="grava na minitela ao terminar")
-    ap.add_argument("--page", type=int, default=None, help="página a exibir depois")
+    ap.add_argument("--page", type=int, default=None, help="página a exibir depois (1-based: as três imagens são 5, 6 e 7)")
     ap.add_argument("--tela-cheia", action="store_true",
                     help="usa a resolução da tela (240x240) em vez do tamanho do slot "
                          "(ajusta escalonador e tile boxes do registro)")

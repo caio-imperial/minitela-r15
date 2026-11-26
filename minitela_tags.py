@@ -16,7 +16,7 @@ Uso:
     ./minitela_tags.py set relogio "23/08 22:02"
     ./minitela_tags.py set bateria 87
     ./minitela_tags.py notify "Fulano" "oi, tudo bem?"
-    ./minitela_tags.py daemon                      # relógio + bateria + cpu + wifi
+    ./minitela_tags.py daemon                      # relógio + bateria + wifi + bt
 """
 
 import argparse
@@ -59,8 +59,8 @@ TAGS = {
     # tela Notas: uma linha só
     "nota":          (1090, "str", "Notas"),
     # tela Monitor
-    "bateria":       (1082, "num", "Monitor"),
-    "bateria_tipo":  (1150, "num", "Monitor"),
+    "bateria":       (1082, "str", "Monitor"),   # texto "100%", não número
+    "bateria_tipo":  (1150, "num", "Monitor"),   # nível da barra: 0..3 -> 1..4 pauzinhos
     "wifi_ssid":     (1083, "str", "Monitor"),
     "bt_nome":       (1085, "str", "Monitor"),
     # tela Clima: SEIS campos de texto — a mais generosa para dados próprios
@@ -120,6 +120,12 @@ class Tags:
     def set(self, nome, valor):
         if nome not in TAGS:
             sys.exit(f"tag desconhecida: {nome} (veja: ./minitela_tags.py list)")
+        # mandar número num registrador de texto (ou o contrário) já deixou a tela muda
+        tipo_da_tag = TAGS[nome][1]
+        if tipo_da_tag == "str" and not isinstance(valor, str) and "%" not in str(valor):
+            pass  # o % abaixo resolve a bateria; demais textos viram str adiante
+        if nome == "bateria" and "%" not in str(valor):
+            valor = f"{valor}%"
         reg, tipo = TAGS[nome][0], TAGS[nome][1]
         if tipo == "str":
             r = self._envia(frame_string(reg, str(valor)))
@@ -159,6 +165,20 @@ def bateria():
     return None, ""
 
 
+def bluetooth():
+    """Nome do aparelho BT conectado, se houver."""
+    try:
+        out = subprocess.run(["bluetoothctl", "devices", "Connected"],
+                             capture_output=True, text=True, timeout=3).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    for linha in out.splitlines():
+        partes = linha.strip().split(" ", 2)
+        if len(partes) == 3 and partes[0] == "Device" and partes[2].strip():
+            return partes[2].strip()
+    return None
+
+
 _cpu_ant = None
 
 
@@ -183,11 +203,23 @@ def cpu_uso():
 def wifi():
     """(ssid, qualidade 0-100). Sem dependências além do que o sistema já traz."""
     ssid = None
+    # nmcli vem com o NetworkManager; iwgetid costuma não estar instalado
     try:
-        r = subprocess.run(["iwgetid", "-r"], capture_output=True, text=True, timeout=3)
-        ssid = r.stdout.strip() or None
+        r = subprocess.run(["nmcli", "-t", "-f", "ACTIVE,SSID", "dev", "wifi"],
+                           capture_output=True, text=True, timeout=3)
+        for linha in r.stdout.splitlines():
+            ativo, _, nome = linha.partition(":")
+            if nome.strip() and ativo.strip() in ("yes", "sim"):
+                ssid = nome.strip()
+                break
     except (OSError, subprocess.SubprocessError):
         pass
+    if not ssid:
+        try:
+            r = subprocess.run(["iwgetid", "-r"], capture_output=True, text=True, timeout=3)
+            ssid = r.stdout.strip() or None
+        except (OSError, subprocess.SubprocessError):
+            pass
     qual = None
     try:
         for linha in open("/proc/net/wireless").read().splitlines()[2:]:
@@ -222,16 +254,16 @@ def cmd_notify(t, args):
 
 def cmd_daemon(t, args):
     print(f"atualizando a cada {args.interval}s (ctrl-c para sair). porta {t.port}")
-    cpu_uso()          # primeira leitura só estabelece a base
     while True:
         agora = datetime.now()
         dados = {"relogio": agora.strftime("%d/%m %H:%M")}
-        pct, _ = bateria()
+        pct, _st = bateria()
         if pct is not None:
-            dados["bateria"] = pct
-        c = cpu_uso()
-        if c is not None:
-            dados["cpu"] = c
+            dados["bateria"] = f"{pct}%"
+            # a barra do ícone é separada: 0..3 desenha 1..4 pauzinhos
+            dados["bateria_tipo"] = max(1, min(4, -(-pct // 25))) - 1
+        dados["bt_nome"] = bluetooth() or "Desconectado"
+        # este tema nao tem tag de CPU: mandar um id inventado pode travar a tela
         ssid, qual = wifi()
         if ssid:
             dados["wifi_ssid"] = ssid
@@ -256,7 +288,7 @@ def main():
     s.add_argument("tag"); s.add_argument("valor"); s.set_defaults(fn=cmd_set, precisa_porta=True)
     s = sub.add_parser("notify", help="manda uma notificação (remetente + texto)")
     s.add_argument("de"); s.add_argument("texto"); s.set_defaults(fn=cmd_notify, precisa_porta=True)
-    s = sub.add_parser("daemon", help="atualiza relógio, bateria, cpu e wifi continuamente")
+    s = sub.add_parser("daemon", help="atualiza relógio, bateria, wifi e bluetooth continuamente")
     s.add_argument("--interval", type=int, default=5); s.set_defaults(fn=cmd_daemon, precisa_porta=True)
 
     args = p.parse_args()

@@ -21,7 +21,7 @@ entender o formato binário por trás de tudo — sem depender do Windows.
 | GIF animado (até 96 quadros) | idem, com os quadros virando fatias da textura | **não** |
 | Trocar tema (21 de fábrica) | `minitela_ctl.py send TextureN.acf` | não |
 | Página, brilho, reboot | `minitela_ctl.py page/brightness/reboot` | não |
-| Relógio, bateria, CPU, wifi, notificações | `minitela_tags.py` (só tags, não toca na flash) | não |
+| Relógio, bateria, wifi, bluetooth, clima, notificações | `minitela_tags.py` (só tags, não toca na flash) | não |
 | Painel gráfico com tudo isso | `minitela_gui.py` (tkinter, sem dependências) | não |
 | Gerar um `.acf` do zero / mudar layout | `minitela_build.py` (compilador do ODM) | sim, uma vez |
 

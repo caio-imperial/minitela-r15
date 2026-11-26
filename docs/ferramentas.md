@@ -11,7 +11,7 @@ do repositório — ou ser instaladas com `pipx install .`, que cria o comando `
 |---|---|---|
 | **`minitela_patch.py`** | troca imagens e GIF num `.acf` que já funciona; valida antes de gravar; `--tela-cheia` grava 240×240 (ajusta escalonador e tile boxes) | `./minitela_patch.py --template base.acf --out novo.acf foto.jpg --send` |
 | **`minitela_ctl.py`** | protocolo AHMI puro: gravar, página, brilho, info, monitor | `./minitela_ctl.py info` |
-| **`minitela_tags.py`** | relógio, bateria, CPU, wifi, notificações (sem tocar na flash) | `./minitela_tags.py daemon` |
+| **`minitela_tags.py`** | relógio, bateria, wifi, bluetooth, clima, notificações (sem tocar na flash) | `./minitela_tags.py daemon` |
 | **`minitela_gui.py`** | painel tkinter com tudo isso | `./minitela_gui.py` |
 | **`minitela_build.py`** | imagem → projeto → compilador do ODM → `.acf` (wine) | `./minitela_build.py build foto.jpg` |
 | **`minitela_recover.py`** | regrava o tema de fábrica quando a tela trava | `./minitela_recover.py` |

@@ -20,7 +20,7 @@ números em tempo real. Com isso dá para fazer, sem tocar no firmware:
 
 | ideia | como |
 |---|---|
-| **Dashboard de sistema** | daemon de tags (CPU, bateria, wifi, temperatura) — o `minitela_tags.py daemon` já é um esqueleto |
+| **Dashboard de sistema** | daemon de tags (bateria, wifi, temperatura) — o `minitela_tags.py daemon` já é um esqueleto |
 | **Clima** | API → `cidade`, `temp_agora`, `temp_prev1/2` (a tela mais generosa) |
 | **Notificações** | `notify` com remetente e texto; um bridge lendo o barramento do desktop |
 | **Mídia** | nome, posição, play/pause nas tags de mídia do projeto original |

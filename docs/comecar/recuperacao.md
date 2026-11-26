@@ -18,6 +18,12 @@ tocados.
 Na maioria dos casos um **reboot de verdade** devolve a tela. Não é `authorized 0/1` no
 sysfs — o módulo continua alimentado; tem que ser corte real de energia.
 
+!!! note "Não existe corte de energia por software neste notebook"
+    `sudo uhubctl` responde `No compatible devices detected!` — nenhum hub da
+    máquina expõe *per-port power switching*. `authorized=0/1` no sysfs não corta
+    alimentação e `usbreset` é reset de barramento, não de energia. Reiniciar a tela
+    é tirar o cabo (ou reiniciar o notebook).
+
 Se a tela voltar, siga a vida normalmente. O `status 0x10` com `fileId` zerado é o estado
 normal depois do boot, até o app começar a conversar.
 
