@@ -506,6 +506,7 @@ fn descarta(sessao: Sessao) {
 
 fn solta() {
     para_ticker();
+    TECLA_RODANDO.store(false, std::sync::atomic::Ordering::SeqCst);
     if let Ok(mut g) = trava()
         && let Some(s) = g.take()
     {
@@ -581,6 +582,7 @@ pub fn conectar(paginas: Option<u16>) -> Result<ControleView, String> {
     let v = vista(g.as_ref());
     drop(g);
     inicia_ticker();
+    inicia_tecla();
     Ok(v)
 }
 
@@ -606,16 +608,78 @@ pub fn devolver_ao_app() -> ControleView {
     controle_estado()
 }
 
-/// Troca a página exibida. **1-based**, como o firmware conta: a página 1 é a
-/// primeira do `.acf` e as três imagens costumam ser 5, 6 e 7.
+/// páginas que a interface marcou como "pular" (a tecla do notebook respeita)
+static PULADAS: std::sync::Mutex<Vec<u16>> = std::sync::Mutex::new(Vec::new());
+static PAGINA_ATUAL: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(1);
+static TECLA_RODANDO: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 #[tauri::command]
-pub fn pagina(n: u32) -> Result<(), String> {
+pub fn desativadas(paginas: Vec<u16>) {
+    if let Ok(mut g) = PULADAS.lock() {
+        *g = paginas;
+    }
+}
+
+fn proxima_pagina(atual: u32, total: u32, puladas: &[u16]) -> u32 {
+    let mut p = atual;
+    for _ in 0..total {
+        p = if p >= total { 1 } else { p + 1 };
+        if !puladas.contains(&(p as u16)) {
+            return p;
+        }
+    }
+    atual
+}
+
+fn troca_pagina(n: u32) -> Result<(), String> {
     let mut g = sessao(None)?;
     let s = g.as_mut().ok_or("sem conexao com a tela")?;
     if s.paginas > 0 && (n == 0 || n > s.paginas as u32) {
         return Err(format!("pagina {n} fora da faixa 1..{}", s.paginas));
     }
-    s.porta.pagina(n).map_err(texto)
+    s.porta.pagina(n).map_err(texto)?;
+    PAGINA_ATUAL.store(n, std::sync::atomic::Ordering::SeqCst);
+    Ok(())
+}
+
+/// Troca a página exibida. **1-based**, como o firmware conta: a página 1 é a
+/// primeira do `.acf` e as três imagens costumam ser 5, 6 e 7.
+#[tauri::command]
+pub fn pagina(n: u32) -> Result<(), String> {
+    troca_pagina(n)
+}
+
+/// Escuta a tecla "mini tela" do notebook (KEY_PROG1) enquanto o app está no controle.
+///
+/// As threads de leitura são abertas **uma vez** e ficam consumindo os eventos: abrir
+/// outra a cada conexão faria a mesma tecla valer por dois.
+fn inicia_tecla() {
+    use std::sync::atomic::Ordering;
+    static UMA_VEZ: std::sync::Once = std::sync::Once::new();
+    TECLA_RODANDO.store(true, Ordering::SeqCst);
+    UMA_VEZ.call_once(|| {
+        std::thread::spawn(|| {
+            crate::tecla::escuta(
+                || true,
+                || {
+                    if !TECLA_RODANDO.load(Ordering::SeqCst) {
+                        return;
+                    }
+                    let atual = PAGINA_ATUAL.load(Ordering::SeqCst);
+                    let total = trava()
+                        .ok()
+                        .and_then(|g| g.as_ref().map(|s| s.paginas as u32))
+                        .unwrap_or(0);
+                    if total == 0 {
+                        return;
+                    }
+                    let puladas = PULADAS.lock().map(|g| g.clone()).unwrap_or_default();
+                    let alvo = proxima_pagina(atual, total, &puladas);
+                    let _ = troca_pagina(alvo);
+                },
+            );
+        });
+    });
 }
 
 /// Brilho do backlight (0-100).
@@ -1097,6 +1161,18 @@ mod tests {
             "{} | bateria {:?} | carregando {:?} | wifi {:?} | {} tags",
             v.relogio, v.bateria, v.carregando, v.wifi, v.enviadas
         );
+    }
+
+    #[test]
+    fn proxima_pagina_pula_as_desativadas() {
+        // 1 -> 2 -> 3 (4 desativada) -> 5 (6 desativada) -> 7 -> 1
+        let puladas = [4u16, 6];
+        assert_eq!(super::proxima_pagina(1, 7, &puladas), 2);
+        assert_eq!(super::proxima_pagina(3, 7, &puladas), 5);
+        assert_eq!(super::proxima_pagina(5, 7, &puladas), 7);
+        assert_eq!(super::proxima_pagina(7, 7, &puladas), 1);
+        // tudo desativado: fica onde está
+        assert_eq!(super::proxima_pagina(2, 3, &[1, 2, 3]), 2);
     }
 
     /// Busca a previsao e manda as tags: so precisa da tela conectada.

@@ -382,6 +382,12 @@
 
   onMount(carregar);
 
+  // a tecla "mini tela" do notebook troca de página no backend: ele precisa saber
+  // quais páginas a interface desativou
+  $effect(() => {
+    invoke("desativadas", { paginas: desativadas }).catch(() => {});
+  });
+
   // as tags são mandadas pelo backend a cada 15 s enquanto o app está no controle;
   // aqui só lemos a última linha para mostrar o que foi para a tela
   $effect(() => {

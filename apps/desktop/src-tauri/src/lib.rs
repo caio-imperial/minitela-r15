@@ -9,6 +9,7 @@ pub mod clima;
 mod commands;
 pub mod device;
 pub mod sysinfo;
+pub mod tecla;
 
 use serde::Serialize;
 use std::fs;
@@ -164,6 +165,7 @@ pub fn run() {
             commands::devolver_ao_app,
             commands::pagina,
             commands::brilho,
+            commands::desativadas,
             commands::parar_app,
             commands::tags_uma_vez,
             commands::tags_estado,
