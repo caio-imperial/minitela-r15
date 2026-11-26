@@ -12,6 +12,31 @@ que ela precisa é um `.exe` de Windows.
 > (guia de uso, referência do protocolo e do formato `.acf`, e os cadernos de engenharia
 > reversa). Fonte em [`docs/`](docs/), gerada com MkDocs.
 
+## App desktop (Tauri) — branch `tauri`
+
+Existe também um app de desktop em Rust + Svelte, **sem depender de Python**, que faz o
+mesmo que as ferramentas daqui e algumas coisas que elas não fazem:
+
+- escolhe os **três slots** (páginas 5/6/7) com miniatura, recorte arrastando, zoom e
+  "conter", gerando um `.acf` validado antes de escrever;
+- grava na tela em ~5 s e **reabre a serial** sozinho depois da reenumeração do USB;
+- controla **página e brilho**, escuta a **tecla "mini tela"** do teclado e mantém
+  relógio, bateria (texto + barra), wifi e bluetooth atualizados;
+- busca o **clima** na Open-Meteo (cidade configurada) e desenha os três dias com ícone;
+- mantém **perfis**: cada perfil é um "save" com o `.acf`, as miniaturas decodificadas e
+  as imagens originais, em `~/.local/share/minitela/perfis/<id>/`. Ao assumir o controle o
+  app compara o md5 que o firmware guardou (`0x0085`) com o do perfil ativo e regrava se
+  for outro.
+
+```bash
+cd apps/desktop
+npm install
+npm run tauri dev        # ou: npm run tauri build (gera .deb/.AppImage)
+```
+
+O Python continua sendo a referência e o oráculo dos testes; o app fica na branch `tauri`
+até a decisão de merge. Detalhes em [`apps/desktop/README.md`](apps/desktop/README.md).
+
 ## Colocando uma imagem sua na minitela
 
 Instalação em um comando (sem clonar):
@@ -166,7 +191,8 @@ existe no pacote (só vem `zip64/`). O `setup` cria o prefixo `~/.wine-mt64` soz
 | arquivo | o que faz |
 |---|---|
 | `minitela_ctl.py` | protocolo AHMI em stdlib pura (termios, sem pyserial): envio, página, brilho, status |
-| `minitela_tags.py` | manda relógio, bateria, cpu, wifi, clima e notificações em tempo real (sem tocar na flash) |
+| `minitela_tags.py` | manda relógio, bateria, wifi, bluetooth, clima e notificações em tempo real (sem tocar na flash) |
+| `apps/desktop/` | app Tauri (Rust + Svelte) equivalente, com perfis — ver [`apps/desktop/README.md`](apps/desktop/README.md) |
 | `minitela_build.py` | imagem → GIF 240x240 → projeto → compilador → `.acf` → grava |
 | `minitela_recover.py` | recupera a minitela se uma gravação ruim travar o firmware |
 | `acf_codec.py` | codec nativo do formato de textura (encode/decode) + checksum |
