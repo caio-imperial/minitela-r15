@@ -98,8 +98,16 @@ o oráculo dos testes** do app:
 | `minitela_recover.py` | recupera a tela se uma gravação ruim travar o firmware |
 | `minitela_build.py` | build pelo compilador do ODM (precisa de `wine`, opcional) |
 
-Instalação e uso completos no site, em
-[Requisitos e instalação](https://caio-imperial.github.io/minitela-r15/comecar/instalacao/).
+O guia completo está no site, dividido por tarefa:
+
+| assunto | página |
+|---|---|
+| instalar (`pipx`), requisitos, `wine` opcional | [Requisitos e instalação](https://caio-imperial.github.io/minitela-r15/comecar/instalacao/) |
+| enviar imagem ou GIF (com ou sem `wine`) | [Enviar uma imagem](https://caio-imperial.github.io/minitela-r15/comecar/imagem/) · [GIF animado](https://caio-imperial.github.io/minitela-r15/comecar/gif/) |
+| relógio, bateria, clima, notificações | [Tags em tempo real](https://caio-imperial.github.io/minitela-r15/comecar/tags/) |
+| painel tkinter | [Painel gráfico](https://caio-imperial.github.io/minitela-r15/comecar/painel/) |
+| tela travada | [Recuperar a tela](https://caio-imperial.github.io/minitela-r15/comecar/recuperacao/) |
+| referência de cada script | [Ferramentas](https://caio-imperial.github.io/minitela-r15/ferramentas/) |
 
 ## Se algo der errado
 
