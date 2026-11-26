@@ -12,15 +12,12 @@ duas coisas: backend em Rust e front em Svelte, com bundler que gera `.deb` / `.
 
 ## Estado
 
-Hoje o app faz três coisas:
+Hoje o app faz isto:
 
-1. **ambiente** — o equivalente ao `minitela doctor`, em Rust:
-
-- python3 / ffmpeg / wine no `PATH`
-- `/dev/ttyACM*`
-- app oficial rodando (varre `/proc/*/comm`)
-- temas de fábrica em `/usr/share/minitela/resources/ACF`
-- template em `~/.local/share/minitela-custom/out/minitela.acf`
+1. **ambiente** — o equivalente ao `minitela doctor`, em Rust, só com o que o app usa:
+   `ffmpeg`, `/dev/ttyACM*`, app oficial rodando (varre `/proc/*/comm`), temas de fábrica,
+   template 240×240, `nmcli` (wifi) e `bluetoothctl` (bluetooth). Python e wine ficaram na
+   fase anterior — o app não chama nenhum dos dois.
 
 2. **leitura/validação de `.acf`** — abre um arquivo e mostra tamanho, tela, páginas,
    texturas e o diagnóstico campo a campo (`CheckCode` por página, magic, versão);
@@ -28,18 +25,30 @@ Hoje o app faz três coisas:
    deixa escolher imagem e **enquadramento por slot** (arrastar para recortar, zoom de
    1× a 3×, ou "conter" com barras), e gera um `.acf` novo com todas as trocas de uma vez,
    validando antes de escrever; a gravação já exibe a página do primeiro slot editado;
-4. **tags em tempo real** — relógio, bateria, CPU e wifi, um round avulso ou um daemon de
-   5 s (`sysinfo.rs` lê `/sys`, `/proc` e `iwgetid`; envio sem exigir ACK, como o Python);
+4. **tags em tempo real** — com a sessão aberta, o app manda a cada 15 s: relógio,
+   **bateria em texto** (`"100%"`, reg 1082) + **nível da barra** (1150, 0–3 → 1–4
+   pauzinhos), wifi (`nmcli`, 1083) e bluetooth (`bluetoothctl`, 1085). Sem ACK, como o
+   Python. Só manda registrador que existe no tema e no tipo certo (`REGISTRADORES`,
+   `TEXTO`, `NUMERO` em `device.rs`): id fora da lista ou número num registrador de texto
+   já deixou a tela muda;
 5. **prévia da textura** — decodifica o slot e devolve PNG para a interface (antes e
    depois de gerar). Em arquivos oficiais aparecem artefatos: só o sub-formato de uma
    partição está implementado (issue #2);
 6. **controle da tela** — assume a serial (para o app oficial se preciso), mantém a
-   conexão com este app e troca página, brilho e as tags; "devolver ao app oficial"
-   solta a porta e religa o app da Positivo. Num tty travado o `close()` prende a thread
-   no kernel (estado D), então o descarte da porta acontece fora do lock;
+   conexão com este app e troca página (lista com as 7 páginas reais — o `.acf` tem 11,
+   mas 4 são vazias), brilho e as tags; "devolver ao app oficial" solta a porta e religa
+   o app da Positivo. Num tty travado o `close()` prende a thread no kernel (estado D),
+   então o descarte da porta acontece fora do lock. A **tecla "mini tela"** do notebook
+   (`KEY_PROG1`) é lida dos `/dev/input/event*` e avança a página, pulando as desativadas;
 7. **gravar na tela** — protocolo AHMI sobre a serial em Rust (`termios` puro via `nix`,
    sem `serialport`/`libudev`): handshake, troca para modo download, envio por páginas,
-   fim e troca de página. Medido no hardware: **4,7 s** para o tema de fábrica.
+   fim e troca de página. Medido no hardware: **4,7 s** para o tema de fábrica. GIF já
+   vai como fatias (8 quadros 240×240 gravados e vistos rodando); a velocidade é a do
+   `GifInterval` do tema;
+8. **clima** — Open-Meteo sem chave, com a cidade configurada na interface: geocodifica,
+   pega 3 dias (mín/máx e ícone) e manda `cidade` (2027), faixas (2030–2032), rótulos
+   (1119/1124) e ícones (1110/1115/1120). Os ícones do tema foram medidos um a um na
+   tela: 0 sol, 1 sol entre nuvens, 2 nuvem, 3 chuva, 4 lua, 5 lua entre nuvens, 6 neve.
 
 O código do porte está em `src-tauri/src/acf/` (`codec.rs`, `inspect.rs`, `patch.rs`) e em
 `src-tauri/src/device.rs`, validados contra os fixtures gerados pelo Python e no hardware.
