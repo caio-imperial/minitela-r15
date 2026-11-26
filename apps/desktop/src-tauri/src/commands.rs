@@ -1056,7 +1056,7 @@ mod tests {
 
         if let Ok(caminho) = std::env::var("MINITELA_ACF") {
             let dados = std::fs::read(&caminho).expect("ler acf");
-            let porta = super::grava_bloqueante(dados, Some(4)).expect("gravar");
+            let porta = super::grava_bloqueante(dados, Some(5)).expect("gravar");
             eprintln!("gravado em {porta}");
         }
 
