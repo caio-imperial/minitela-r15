@@ -563,6 +563,27 @@
       </span>
     </div>
 
+      <div class="perfis">
+        <span class="rotulo">perfil</span>
+        <select value={perfis.ativo} onchange={(e) => usarPerfil(e.currentTarget.value)}>
+          {#each perfis.lista as p (p.id)}
+            <option value={p.id}>
+              {p.nome}{p.atualizado ? ` · ${p.atualizado}` : ""}
+            </option>
+          {/each}
+        </select>
+        <input
+          type="text"
+          placeholder="novo perfil"
+          bind:value={novoNome}
+          onkeydown={(e) => e.key === "Enter" && criarPerfil()}
+        />
+        <button onclick={criarPerfil} disabled={!novoNome.trim()}>criar</button>
+        {#if perfis.ativo !== "fabrica"}
+          <button onclick={apagarPerfilAtivo}>apagar</button>
+        {/if}
+      </div>
+
     {#if !controle.conectado}
       <p class="dica">
         assumir o controle para o app oficial (se estiver aberto) e mantém a serial com este
@@ -607,27 +628,6 @@
       </div>
 
       {#if fabricaMsg}<p class="dica">{fabricaMsg}</p>{/if}
-      <div class="perfis">
-        <span class="rotulo">perfil</span>
-        <select value={perfis.ativo} onchange={(e) => usarPerfil(e.currentTarget.value)}>
-          {#each perfis.lista as p (p.id)}
-            <option value={p.id}>
-              {p.nome}{p.atualizado ? ` · ${p.atualizado}` : ""}
-            </option>
-          {/each}
-        </select>
-        <input
-          type="text"
-          placeholder="novo perfil"
-          bind:value={novoNome}
-          onkeydown={(e) => e.key === "Enter" && criarPerfil()}
-        />
-        <button onclick={criarPerfil} disabled={!novoNome.trim()}>criar</button>
-        {#if perfis.ativo !== "fabrica"}
-          <button onclick={apagarPerfilAtivo}>apagar</button>
-        {/if}
-      </div>
-
       <p class="dica">
         tema na tela: <strong>{controle.tema}</strong> · relógio, bateria e wifi:
         {estadoTags ?? "atualizando…"}
@@ -1115,6 +1115,18 @@
     color: #e6e9ef;
     padding: 5px 8px;
     font-size: 12.5px;
+  }
+
+  /* mesmo caso do seletor de páginas: sem appearance o WebKitGTK usa o tema do GTK */
+  .perfis select {
+    appearance: none;
+    -webkit-appearance: none;
+    color-scheme: dark;
+    background-color: #121722;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%23cfd6e2'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 24px;
   }
 
   .perfis input {
