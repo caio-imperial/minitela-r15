@@ -82,11 +82,28 @@ Seis campos de texto: é onde dá para mostrar dados próprios com mais espaço.
 | `temp_agora` | 2030 | str |
 | `temp_prev1` | 2031 | str |
 | `temp_prev2` | 2032 | str |
-| `clima1_tipo` | 1110 | num |
-| `clima2_tipo` | 1115 | num |
+| `clima1_tipo` | 1110 | num — ícone do dia 1 |
+| `clima2_tipo` | 1115 | num — ícone do dia 2 |
 | `clima2_desc` | 1119 | str |
-| `clima3_tipo` | 1120 | num |
+| `clima3_tipo` | 1120 | num — ícone do dia 3 |
 | `clima3_desc` | 1124 | str |
+
+## Ícones do clima
+
+Medidos na tela, um valor por vez (`clima1_tipo`):
+
+| valor | ícone |
+|---|---|
+| 0 | sol |
+| 1 | sol entre nuvens |
+| 2 | nuvem |
+| 3 | chuva |
+| 4 | lua |
+| 5 | lua entre nuvens |
+| 6 | nuvem com neve |
+
+`7` e `8` não existem. Não há ícone de trovoada: o app manda `3` (chuva). O mapa dos
+códigos WMO do Open-Meteo está em `apps/desktop/src-tauri/src/clima.rs` (`icone()`).
 
 ## Como escrever
 

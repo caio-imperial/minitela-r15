@@ -23,6 +23,9 @@ pub const TAG_CIDADE: u16 = 2027;
 pub const TAG_DIA1: u16 = 2030;
 pub const TAG_DIA2: u16 = 2031;
 pub const TAG_DIA3: u16 = 2032;
+pub const TAG_ICONE1: u16 = 1110;
+pub const TAG_ICONE2: u16 = 1115;
+pub const TAG_ICONE3: u16 = 1120;
 pub const TAG_ROTULO2: u16 = 1119;
 pub const TAG_ROTULO3: u16 = 1124;
 

@@ -21,6 +21,9 @@ pub struct Dia {
     pub rotulo: String,
     /// "20°/30°" (mín/máx)
     pub faixa: String,
+    /// ícone do tema (medido na tela): 0 sol, 1 sol entre nuvens, 2 nuvem,
+    /// 3 chuva, 4 lua, 5 lua entre nuvens, 6 nuvem com neve
+    pub icone: u8,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -51,6 +54,7 @@ struct Diario {
     time: Vec<String>,
     temperature_2m_min: Vec<f64>,
     temperature_2m_max: Vec<f64>,
+    weather_code: Vec<u16>,
 }
 
 fn baixa(url: &str) -> Result<String, String> {
@@ -103,7 +107,8 @@ pub fn busca(cidade: &str) -> Result<Clima, String> {
 
     let prev_url = format!(
         "https://api.open-meteo.com/v1/forecast?latitude={}&longitude={}\
-         &daily=temperature_2m_min,temperature_2m_max&timezone=auto&forecast_days=3",
+         &daily=temperature_2m_min,temperature_2m_max,weather_code\
+         &timezone=auto&forecast_days=3",
         lugar.latitude, lugar.longitude
     );
     let prev: Previsao =
@@ -126,6 +131,7 @@ pub fn busca(cidade: &str) -> Result<Clima, String> {
                 grau(d.temperature_2m_min[i]),
                 grau(d.temperature_2m_max[i])
             ),
+            icone: icone(d.weather_code.get(i).copied().unwrap_or(2)),
         })
         .collect();
 
@@ -133,6 +139,21 @@ pub fn busca(cidade: &str) -> Result<Clima, String> {
         cidade: lugar.name,
         dias,
     })
+}
+
+/// Código WMO do Open-Meteo -> ícone do tema.
+///
+/// Ícones medidos na tela: 0 sol, 1 sol entre nuvens, 2 nuvem, 3 chuva, 4 lua,
+/// 5 lua entre nuvens, 6 nuvem com neve. Não existe ícone de trovoada: cai na chuva.
+pub fn icone(codigo: u16) -> u8 {
+    match codigo {
+        0 => 0,
+        1 | 2 => 1,
+        3 | 45 | 48 => 2,
+        71 | 73 | 75 | 77 | 85 | 86 => 6,
+        // 51..67 chuva/garoa, 80..82 pancadas, 95..99 trovoada
+        _ => 3,
+    }
 }
 
 fn url_escape(texto: &str) -> String {
@@ -169,6 +190,18 @@ mod tests {
         let c = busca("Linhares").expect("buscar");
         eprintln!("{}: {:?}", c.cidade, c.dias);
         assert!(!c.dias.is_empty());
+    }
+
+    #[test]
+    fn codigos_do_tempo_viram_icones_do_tema() {
+        assert_eq!(icone(0), 0, "limpo = sol");
+        assert_eq!(icone(2), 1, "parcialmente nublado = sol entre nuvens");
+        assert_eq!(icone(3), 2, "encoberto = nuvem");
+        assert_eq!(icone(61), 3, "chuva");
+        assert_eq!(icone(80), 3, "pancadas de chuva");
+        assert_eq!(icone(95), 3, "trovoada cai na chuva");
+        assert_eq!(icone(71), 6, "neve");
+        assert_eq!(icone(86), 6, "pancadas de neve");
     }
 
     #[test]

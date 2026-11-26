@@ -325,13 +325,15 @@ pub fn tags_uma_vez() -> Result<TagsView, String> {
             .map_err(texto)?;
         enviadas += 1;
         let dias = [
-            (crate::sysinfo::TAG_DIA1, None),
-            (crate::sysinfo::TAG_DIA2, Some(crate::sysinfo::TAG_ROTULO2)),
-            (crate::sysinfo::TAG_DIA3, Some(crate::sysinfo::TAG_ROTULO3)),
+            (crate::sysinfo::TAG_DIA1, crate::sysinfo::TAG_ICONE1, None),
+            (crate::sysinfo::TAG_DIA2, crate::sysinfo::TAG_ICONE2, Some(crate::sysinfo::TAG_ROTULO2)),
+            (crate::sysinfo::TAG_DIA3, crate::sysinfo::TAG_ICONE3, Some(crate::sysinfo::TAG_ROTULO3)),
         ];
-        for (i, (reg_faixa, reg_rotulo)) in dias.iter().enumerate() {
+        for (i, (reg_faixa, reg_icone, reg_rotulo)) in dias.iter().enumerate() {
             if let Some(d) = c.dias.get(i) {
                 p.set_texto(*reg_faixa, &d.faixa).map_err(texto)?;
+                p.set_registradores(&[(*reg_icone, d.icone as u32)])
+                    .map_err(texto)?;
                 enviadas += 1;
                 if let Some(r) = reg_rotulo {
                     p.set_texto(*r, &d.rotulo).map_err(texto)?;
