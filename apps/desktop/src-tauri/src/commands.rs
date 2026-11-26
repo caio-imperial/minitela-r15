@@ -303,6 +303,10 @@ pub fn tags_uma_vez() -> Result<TagsView, String> {
         // o widget do Monitor é texto: "100%", não número (o ícone acompanha o texto)
         p.set_texto(crate::sysinfo::TAG_BATERIA, &format!("{pct}%"))
             .map_err(texto)?;
+        // a barra do ícone é o nível (0..3 -> 1..4 pauzinhos), separada do texto
+        let nivel = pct.div_ceil(25).clamp(1, 4) - 1;
+        p.set_registradores(&[(crate::sysinfo::TAG_BATERIA_NIVEL, nivel)])
+            .map_err(texto)?;
         enviadas += 1;
     }
     let bt = crate::sysinfo::bluetooth().unwrap_or_else(|| "Desconectado".to_string());

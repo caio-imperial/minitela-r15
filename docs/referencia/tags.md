@@ -47,7 +47,7 @@ desenha, não a lista maior do `tagUtils.js` do SDK.
 | tag | id | tipo |
 |---|---|---|
 | `bateria` | 1082 | str (`"100%"`) |
-| `bateria_tipo` | 1150 | num |
+| `bateria_tipo` | 1150 | num — nível da barra (0–3 → 1–4 paus) |
 | `wifi_ssid` | 1083 | str |
 | `bt_nome` | 1085 | str |
 
@@ -65,7 +65,12 @@ desenha, não a lista maior do `tagUtils.js` do SDK.
     D0 7 D6 0 B "25/11 22:14"   relogio (2006)
     ```
 
-    O app oficial **não manda** `bateria_tipo` (1150), e este tema **não tem** tag de CPU.
+    A **barra do ícone é outro registrador**: `bateria_tipo` (1150) é o nível, e o widget
+    desenha `nível + 1` pauzinhos — medido na tela: `0 → 1`, `1 → 2`, `3 → 4`. Sem essa
+    tag a barra fica em 1 para sempre (inclusive em 100%). O app manda o nível calculado
+    da carga real: `min(max(ceil(pct/25), 1), 4) - 1` (0–25% = 1 pau, 76–100% = 4).
+
+    Este tema **não tem** tag de CPU.
 
 ## Clima — a tela mais generosa
 

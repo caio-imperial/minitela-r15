@@ -60,7 +60,7 @@ TAGS = {
     "nota":          (1090, "str", "Notas"),
     # tela Monitor
     "bateria":       (1082, "str", "Monitor"),   # texto "100%", não número
-    "bateria_tipo":  (1150, "num", "Monitor"),   # o app oficial não manda; efeito desconhecido
+    "bateria_tipo":  (1150, "num", "Monitor"),   # nível da barra: 0..3 -> 1..4 pauzinhos
     "wifi_ssid":     (1083, "str", "Monitor"),
     "bt_nome":       (1085, "str", "Monitor"),
     # tela Clima: SEIS campos de texto — a mais generosa para dados próprios
@@ -261,6 +261,8 @@ def cmd_daemon(t, args):
         pct, _st = bateria()
         if pct is not None:
             dados["bateria"] = f"{pct}%"
+            # a barra do ícone é separada: 0..3 desenha 1..4 pauzinhos
+            dados["bateria_tipo"] = max(1, min(4, -(-pct // 25))) - 1
         dados["bt_nome"] = bluetooth() or "Desconectado"
         c = cpu_uso()
         if c is not None:

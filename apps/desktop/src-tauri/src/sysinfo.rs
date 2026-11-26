@@ -13,6 +13,8 @@ use std::time::Instant;
 //   2006 -> texto "25/11 22:14"  |  7 -> número (brilho)
 // 1150 (bateria_tipo) o app oficial NAO manda.
 pub const TAG_BATERIA: u16 = 1082;
+/// nível da barra do ícone: 0..3 desenha 1..4 pauzinhos (medido na tela)
+pub const TAG_BATERIA_NIVEL: u16 = 1150;
 pub const TAG_WIFI_SSID: u16 = 1083;
 pub const TAG_BT_NOME: u16 = 1085;
 pub const TAG_RELOGIO: u16 = 2006;
