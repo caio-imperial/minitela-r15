@@ -1,236 +1,119 @@
 # Minitela do Positivo Vision R15M no Linux
 
-Ferramentas para usar a **minitela** (tela secundária de 1,54", 240x240) do notebook
-Positivo Vision R15M no Linux: enviar imagens suas, trocar de tema, controlar página e
-brilho — e a documentação da engenharia reversa que tornou isso possível.
+App de desktop — **Rust + Svelte (Tauri)** — para usar a **minitela** (tela secundária de
+1,54", 240×240) do notebook Positivo Vision R15M no Linux: colocar **suas** imagens e GIFs
+nos três slots, controlar página e brilho, e manter as telas de sistema (relógio, bateria,
+wifi, bluetooth e clima) atualizadas.
 
-O app que vem no Policop só deixa escolher entre 21 temas prontos. A opção de carregar
-imagem própria existe na interface, mas não funciona no Linux — o compilador de textura
-que ela precisa é um `.exe` de Windows.
+O app que vem no notebook (Policop/Policorp) só oferece temas prontos, e a opção de
+imagem própria não funciona no Linux — o compilador de textura que ela usa é um `.exe` de
+Windows. Este projeto decifrou o protocolo e o formato de textura para fazer isso nativo.
 
-> 📖 **Documentação completa**: <https://caio-imperial.github.io/minitela-r15/>
-> (guia de uso, referência do protocolo e do formato `.acf`, e os cadernos de engenharia
-> reversa). Fonte em [`docs/`](docs/), gerada com MkDocs.
+> 📖 **Documentação**: <https://caio-imperial.github.io/minitela-r15/> — guia de uso,
+> referência do protocolo e do `.acf`, e os cadernos de engenharia reversa (fonte em
+> [`docs/`](docs/)).
 
-## App desktop (Tauri) — branch `tauri`
+## O que o app faz
 
-Existe também um app de desktop em Rust + Svelte, **sem depender de Python**, que faz o
-mesmo que as ferramentas daqui e algumas coisas que elas não fazem:
+- **Três slots** (as imagens do tema, páginas 5/6/7): escolher imagem, arrastar para
+  recortar, zoom de 1× a 3×, "conter" com barras, ou tela cheia 240×240. Gera um `.acf`
+  novo com as trocas de uma vez e **valida antes de escrever**.
+- **GIF animado**: até 96 quadros; a velocidade é a do tema.
+- **Gravar na tela**: protocolo AHMI direto na serial, ~5 s para um tema de 1,5 MB;
+  reabre a porta sozinho depois que o firmware reenumera o USB.
+- **Controle**: páginas (as 7 que o aparelho mostra), brilho, e a **tecla "mini tela"** do
+  teclado passa a funcionar com o app no controle (pula as páginas desativadas).
+- **Telas de sistema**: relógio, bateria (texto + barra), wifi e bluetooth, atualizados a
+  cada 15 s.
+- **Clima**: Open-Meteo sem chave, com a cidade que você configurar — três dias com
+  mín/máx e ícone (sol, nuvens, chuva, lua, neve).
+- **Perfis**: cada perfil é um "save" — o `.acf` que vai para a tela, as miniaturas
+  decodificadas e uma cópia das imagens originais. Ao assumir o controle, o app compara o
+  md5 que o firmware guardou com o do perfil ativo e regrava se a tela estiver com outro.
 
-- escolhe os **três slots** (páginas 5/6/7) com miniatura, recorte arrastando, zoom e
-  "conter", gerando um `.acf` validado antes de escrever;
-- grava na tela em ~5 s e **reabre a serial** sozinho depois da reenumeração do USB;
-- controla **página e brilho**, escuta a **tecla "mini tela"** do teclado e mantém
-  relógio, bateria (texto + barra), wifi e bluetooth atualizados;
-- busca o **clima** na Open-Meteo (cidade configurada) e desenha os três dias com ícone;
-- mantém **perfis**: cada perfil é um "save" com o `.acf`, as miniaturas decodificadas e
-  as imagens originais, em `~/.local/share/minitela/perfis/<id>/`. Ao assumir o controle o
-  app compara o md5 que o firmware guardou (`0x0085`) com o do perfil ativo e regrava se
-  for outro.
+Detalhes de implementação, dependências e decisões em
+[`apps/desktop/README.md`](apps/desktop/README.md).
+
+## Como rodar
+
+Dependências (Ubuntu/Debian):
+
+```bash
+sudo apt install ffmpeg libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev \
+                 libayatana-appindicator3-dev patchelf libxdo-dev libssl-dev
+```
 
 ```bash
 cd apps/desktop
 npm install
-npm run tauri dev        # ou: npm run tauri build (gera .deb/.AppImage)
+npm run tauri dev      # desenvolvimento
+npm run tauri build    # .deb/.AppImage em src-tauri/target/release/bundle
 ```
 
-O Python continua sendo a referência e o oráculo dos testes; o app fica na branch `tauri`
-até a decisão de merge. Detalhes em [`apps/desktop/README.md`](apps/desktop/README.md).
+O CI compila em `ubuntu-22.04` de propósito: o AppImage gerado em `ubuntu-latest` não abre
+em Debian 12 (`GLIBC_2.38 not found`).
 
-## Colocando uma imagem sua na minitela
-
-Instalação em um comando (sem clonar):
-
-```bash
-pipx install "https://github.com/caio-imperial/minitela-r15/releases/latest/download/minitela_r15-0.1.0-py3-none-any.whl"
-minitela doctor       # checa python, ffmpeg, tela, app oficial
-```
-
-(Com o repo clonado, `pipx install .` faz o mesmo.)
-
-Depois, tudo por um comando só: `minitela patch`, `minitela tags`, `minitela gui`,
-`minitela inspect`, `minitela doctor`.
-
-Uma vez só, para montar o ambiente:
-
-```bash
-./minitela_build.py setup
-```
-
-Depois, para cada imagem:
-
-```bash
-./minitela_build.py build ~/minha_foto.jpg --send
-```
-
-Isso corta a imagem no centro para 240x240, compila o `.acf` (~6 s), para o app oficial,
-grava na minitela (~4 s) e devolve o controle. **Reabra o app pelo botão dedicado do
-teclado** e vá até a tela **Imagens** — sua foto está lá.
-
-Se a tela de Imagens não aparecer ao passar pelo botão, ela pode estar desabilitada:
-abra o app e ligue "Imagens" na lista de telas (ou
-`gsettings set org.policorp.minitela saved-screens "[true,true,true,true,true,true,true]"`).
-
-Dá para trocar as três imagens da tela de uma vez — as setas `<` `>` navegam entre elas:
-
-```bash
-./minitela_build.py build foto1.jpg foto2.png foto3.jpg --send
-```
-
-Aceita JPG, PNG, GIF — qualquer formato que o ffmpeg leia. Sem `--send`, ele só gera o
-arquivo e mostra o comando para gravar depois.
-
-### Sem wine (depois de ter um template)
-
-O `build` compila o `.acf` com o compilador do ODM sob wine. Mas, uma vez que exista um
-`.acf` que o firmware aceita (o "template"), trocar as imagens não precisa de compilador
-nenhum: as texturas ficam antes da config e não entram nos checksums de página.
-
-```bash
-./minitela_patch.py --template ~/.local/share/minitela-custom/out/minitela.acf \
-                    --out novo.acf foto1.jpg foto2.png --send
-```
-
-Ele converte cada imagem para o formato de bloco do chip (STC, 4x4), escreve nos offsets
-da tabela de texturas, recalcula o checksum do header e valida com `acf_inspect.py`
-antes de gravar. Testado no hardware: a imagem aparece na tela.
-
-Aceita **GIF animado**: os quadros viram fatias de uma mesma textura (`acf_anim.py`), o
-`GifSliceNum` do widget é ajustado e o arquivo cresce `N × 57.600 B` — até 96 quadros.
-O resultado é validado do mesmo jeito antes de gravar.
-
-```bash
-./minitela_patch.py --template base.acf --out animado.acf meu.gif --send
-```
-
-O template continua sendo um artefato de build (um por versão de firmware/screen).
-
-Para voltar às imagens de fábrica:
-
-```bash
-./minitela_ctl.py send /usr/share/minitela/resources/ACF/Texture.acf -y
-```
-
-## Informação em tempo real (relógio, bateria, clima, notificações)
-
-Isto **não mexe na flash**: são *tags* (variáveis) que o firmware já sabe desenhar. Manda
-o valor, a tela atualiza na hora. Risco zero — dá para testar à vontade.
-
-```bash
-./minitela_tags.py list                          # 40 tags mapeadas
-./minitela_tags.py set relogio "23/08 23:54"
-./minitela_tags.py set bateria 87
-./minitela_tags.py set cidade "Linhares"
-./minitela_tags.py notify "Fulano" "oi, tudo bem?"
-./minitela_tags.py daemon                        # relógio + bateria + cpu + wifi, a cada 5s
-```
-
-Há tags para três lembretes, três notificações, cinco dias de previsão, mídia (nome,
-posição, play/pause), bateria, wifi e Bluetooth. **Não há tag de CPU neste tema** — a
-lista de tags do projeto não tem esse registrador.
-
-**Importante:** o app oficial reescreve todas as tags a cada poucos segundos com os dados
-dele — as suas somem quase na hora. Para valer, pare o app (`pkill -x minitela`); um
-daemon próprio precisa *substituir* o app, não conviver com ele.
-
-Formato dos frames, conferido contra capturas do app oficial:
+## Perfis: o que fica no disco
 
 ```
-texto:  AH | ctrl | 0090 | 0xD0 | regId(2,BE) | tamanho(2,BE) | UTF-8 | crc | MI
-número: AH | ctrl | 0090 | 0x8N | [regId(2,BE) valor(4,BE)] x (N+1)  | crc | MI
+~/.local/share/minitela/perfis/meu-tema/
+├── perfil.json      metadados + caminhos relativos (nome, datas, base, página, slots)
+├── tema.acf         o que a tela recebe
+├── thumbs/          miniatura decodificada do próprio .acf (o que o aparelho desenha)
+└── originais/       cópia do arquivo escolhido, para reeditar recorte/zoom depois
 ```
 
-Os ids de bateria, wifi, notificações e lembretes vêm do `tagList` do projeto (o mesmo
-que o app oficial usa).
-Os de relógio (2006), cidade (2027) e temperatura (2030–2032) não estão no SDK — foram
-capturados dos frames que o app da Positivo manda de verdade.
+O perfil **de fábrica** não tem pasta: aponta para o `Texture.acf` instalado pela Positivo.
 
-## Controlando a minitela direto
+## Como funciona (resumo)
 
-Sem depender de nada além da stdlib do Python:
+A minitela **não é um monitor** do X/Wayland. É um módulo com firmware próprio (**GC9002**,
+projeto feito no IDE AHMI da GraphiChina) pendurado no USB como porta serial
+(`/dev/ttyACM*`, `0324:0324`). O host manda valores de variáveis (tags); para mudar o
+visual, regrava a textura inteira na flash (`0x08100000`).
 
-```bash
-./minitela_ctl.py info               # handshake e status (só leitura)
-./minitela_ctl.py send Texture7.acf  # grava um tema
-./minitela_ctl.py page 5             # troca a página exibida
-./minitela_ctl.py brightness 100
-./minitela_ctl.py monitor            # dump dos frames do protocolo
-```
+- protocolo `AH` … `MI` sobre CDC-ACM; o app usa `termios` puro (via `nix`), sem
+  `serialport`/`libudev`;
+- o firmware valida `magic`, versão e o **`CheckCode` de cada página** — se divergir, entra
+  em laço infinito e o USB fica mudo;
+- o `.acf` guarda a textura em blocos STC de 16 bytes. O app **gera** com o sub-formato de
+  uma partição e **decodifica** 99,3% dos blocos dos temas oficiais (`0`, `01`, `0111`);
+- a página é **1-based** na API do firmware, e o `.acf` de fábrica tem 11 páginas das quais
+  7 aparecem.
 
-O app oficial segura a porta serial: as ferramentas avisam e pedem `pkill -x minitela`
-antes. Para religá-lo depois, cuidado com duas armadilhas — ele deixa o socket
-`/tmp/minitela_socket` órfão, e detecta instância única com
-`pgrep -f /usr/share/minitela/minitela`, que casa com o seu próprio comando de shell se
-você digitar o caminho inteiro. O que funciona:
+O formato de bloco, o checksum e o mapa do arquivo estão em
+[`docs/referencia/`](docs/referencia/) e nos cadernos de RE de [`docs/`](docs/).
 
-```bash
-rm -f /tmp/minitela_socket
-cd /tmp && D=/usr/share/mini"tela" && setsid env DISPLAY=:0 GDK_BACKEND=x11 "$D/minitela" &
-```
+## Ferramentas Python (referência)
 
-(ou simplesmente reabrir pelo botão dedicado do teclado)
-
-## Requisitos
-
-- notebook Positivo Vision R15M com o pacote `minitela` instalado (o Policop já traz);
-- `ffmpeg`;
-- `wine` — **opcional**: só o compilador de textura usa. Necessário apenas para criar o
-  template do zero (`minitela_build.py`) ou mudar o layout pelo projeto; trocar imagens,
-  inclusive GIF animado, é nativo (`minitela_patch.py`):
-
-```bash
-sudo dpkg --add-architecture i386 && sudo apt update
-sudo apt install wine wine32:i386 wine64
-```
-
-`wine64` é obrigatório: num prefixo win32 o compilador procura `zip32\7z.exe`, que não
-existe no pacote (só vem `zip64/`). O `setup` cria o prefixo `~/.wine-mt64` sozinho.
-
-## Os arquivos
+O repositório mantém as ferramentas originais que abriram o caminho — são a **referência e
+o oráculo dos testes** do app:
 
 | arquivo | o que faz |
 |---|---|
-| `minitela_ctl.py` | protocolo AHMI em stdlib pura (termios, sem pyserial): envio, página, brilho, status |
-| `minitela_tags.py` | manda relógio, bateria, wifi, bluetooth, clima e notificações em tempo real (sem tocar na flash) |
-| `apps/desktop/` | app Tauri (Rust + Svelte) equivalente, com perfis — ver [`apps/desktop/README.md`](apps/desktop/README.md) |
-| `minitela_build.py` | imagem → GIF 240x240 → projeto → compilador → `.acf` → grava |
-| `minitela_recover.py` | recupera a minitela se uma gravação ruim travar o firmware |
-| `acf_codec.py` | codec nativo do formato de textura (encode/decode) + checksum |
-| `acf_inspect.py` | lê/valida um `.acf` com o mapa do firmware (páginas, checksums, tabela de texturas) |
-| `minitela_patch.py` | troca as 3 imagens de um `.acf` que já funciona, sem recompilar (dispensa o wine) |
-| `lab/lab_acf.py`, `lab/exp_bloco.py` | bancada de engenharia reversa (imagens sintéticas + diff das saídas) |
-| `lab/patch_acf.py` | obsoleto — o `minitela_patch.py` faz o mesmo com o mapa correto |
-| [`docs/RE-acf.md`](docs/RE-acf.md) | o caderno da engenharia reversa: protocolo, formato, provas |
+| `minitela_ctl.py` | protocolo AHMI em stdlib pura: envio, página, brilho, status |
+| `minitela_tags.py` | relógio, bateria, wifi, bluetooth, clima e notificações |
+| `minitela_patch.py` | troca as imagens de um `.acf` que já funciona, sem recompilar |
+| `acf_codec.py`, `acf_inspect.py`, `acf_anim.py` | codec, validação e montagem de GIF |
+| `minitela_recover.py` | recupera a tela se uma gravação ruim travar o firmware |
+| `minitela_build.py` | build pelo compilador do ODM (precisa de `wine`, opcional) |
 
-## Como a coisa funciona
-
-A minitela **não é um monitor** do X/Wayland. É um módulo com firmware próprio
-(**GC9002**, projeto feito no IDE AHMI da GraphiChina) pendurado no USB como porta serial
-(`/dev/ttyACM*`, `0324:0324`). O host manda valores de variáveis; para mudar o visual,
-regrava a textura inteira na flash (`0x08100000`).
-
-O protocolo é `AH` … `MI` com CRC (que o firmware ignora), e o `.acf` é o pacote de
-textura compilada. Detalhes, incluindo o formato de bloco decifrado e o algoritmo do
-checksum, estão em [docs/RE-acf.md](docs/RE-acf.md).
-
-Velocidade real: um tema de 1,5 MB grava em ~4 s — os 115200 baud são fictícios, o
-transporte é USB.
+Instalação e uso completos no site, em
+[Requisitos e instalação](https://caio-imperial.github.io/minitela-r15/comecar/instalacao/).
 
 ## Se algo der errado
 
 Gravar um `.acf` que o firmware não consegue renderizar trava o render: a tela congela e o
-dispositivo para de responder (o app oficial também deixa de abrir, porque bloqueia
-esperando resposta). É recuperável — só a região de textura é escrita, bootloader e
-calibração não são tocados:
+dispositivo para de responder. É recuperável — só a região de textura é escrita.
 
-1. arme a recuperação para rodar no login, com um `.desktop` em `~/.config/autostart/`:
-   `Exec=/bin/bash -c "sleep 3; /caminho/minitela_recover.py --timeout 900 > /tmp/minitela-recover.log 2>&1"`
-2. reinicie o notebook (é preciso corte real de energia — `authorized 0/1` no sysfs não
-   basta, o módulo continua alimentado);
-3. o script pega o dispositivo na janela do boot e regrava o tema de fábrica.
+1. **tire e recoloque o cabo** da minitela (nesta máquina não há corte de energia por
+   software: `uhubctl` não encontra hub controlável, e `authorized=0/1` no sysfs não corta
+   alimentação);
+2. com a tela respondendo, use **"tema de fábrica"** no app;
+3. sem o app, `./minitela_ctl.py send /usr/share/minitela/resources/ACF/Texture.acf -y`.
 
-Para voltar ao original a qualquer momento:
-`./minitela_ctl.py send /usr/share/minitela/resources/ACF/Texture.acf`
+Se o USB não enumerar mais, a recuperação é por UART na janela do boot — ver
+[`docs/comecar/recuperacao.md`](docs/comecar/recuperacao.md).
 
 ## Créditos
 
@@ -244,4 +127,8 @@ as saídas.
 
 Isto mexe na flash de um dispositivo. Funciona no meu R15M com Policop; não há garantia
 nenhuma. As regiões críticas (bootloader, cpu1, calibração, hwconfig) são bloqueadas por
-padrão no `minitela_ctl.py` — não remova essa trava sem saber o que está fazendo.
+padrão — não remova essa trava sem saber o que está fazendo.
+
+Nada de material do fabricante é redistribuído aqui: o SDK, os datasheets, os binários de
+firmware e o app da Policorp ficam fora do repositório. Código sob MIT; textos da
+documentação sob CC BY-SA 4.0.
