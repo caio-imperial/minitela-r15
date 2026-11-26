@@ -199,11 +199,23 @@ def cpu_uso():
 def wifi():
     """(ssid, qualidade 0-100). Sem dependências além do que o sistema já traz."""
     ssid = None
+    # nmcli vem com o NetworkManager; iwgetid costuma não estar instalado
     try:
-        r = subprocess.run(["iwgetid", "-r"], capture_output=True, text=True, timeout=3)
-        ssid = r.stdout.strip() or None
+        r = subprocess.run(["nmcli", "-t", "-f", "ACTIVE,SSID", "dev", "wifi"],
+                           capture_output=True, text=True, timeout=3)
+        for linha in r.stdout.splitlines():
+            ativo, _, nome = linha.partition(":")
+            if nome.strip() and ativo.strip() in ("yes", "sim"):
+                ssid = nome.strip()
+                break
     except (OSError, subprocess.SubprocessError):
         pass
+    if not ssid:
+        try:
+            r = subprocess.run(["iwgetid", "-r"], capture_output=True, text=True, timeout=3)
+            ssid = r.stdout.strip() or None
+        except (OSError, subprocess.SubprocessError):
+            pass
     qual = None
     try:
         for linha in open("/proc/net/wireless").read().splitlines()[2:]:

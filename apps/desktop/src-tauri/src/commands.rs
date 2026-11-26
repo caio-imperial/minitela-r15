@@ -278,7 +278,7 @@ pub struct TagsView {
     pub bateria: Option<u32>,
     /// 1 = carregando/cheia, 0 = descarregando, 2 = desconhecido
     pub carregando: Option<u8>,
-    pub wifi: Option<String>,
+    pub wifi: String,
     pub enviadas: usize,
 }
 
@@ -293,7 +293,7 @@ pub fn tags_uma_vez() -> Result<TagsView, String> {
         Some((pct, e)) => (Some(pct), Some(e)),
         None => (None, None),
     };
-    let (ssid, _sinal) = crate::sysinfo::wifi();
+    let ssid = crate::sysinfo::wifi().unwrap_or_else(|| "Desconectado".into());
 
     let mut enviadas = 0usize;
     p.set_texto(crate::sysinfo::TAG_RELOGIO, &relogio)
@@ -309,11 +309,9 @@ pub fn tags_uma_vez() -> Result<TagsView, String> {
     p.set_texto(crate::sysinfo::TAG_BT_NOME, &bt)
         .map_err(texto)?;
     enviadas += 1;
-    if let Some(nome) = &ssid {
-        p.set_texto(crate::sysinfo::TAG_WIFI_SSID, nome)
-            .map_err(texto)?;
-        enviadas += 1;
-    }
+    p.set_texto(crate::sysinfo::TAG_WIFI_SSID, &ssid)
+        .map_err(texto)?;
+    enviadas += 1;
 
     Ok(TagsView {
         relogio,
@@ -357,15 +355,13 @@ fn toca_tags() {
                 Some(2) => " (sem leitura)",
                 _ => "",
             };
+            let pct = t
+                .bateria
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| "?".into());
             anota_tag(format!(
-                "{} · bateria {}%{}{} · {} tags",
-                t.relogio,
-                t.bateria
-                    .map(|v| v.to_string())
-                    .unwrap_or_else(|| "?".into()),
-                carga,
-                t.wifi.map(|w| format!(" · {w}")).unwrap_or_default(),
-                t.enviadas
+                "{} · bateria {pct}%{carga} · {} · {} tags",
+                t.relogio, t.wifi, t.enviadas
             ))
         }
         Err(e) => anota_tag(format!("{agora} · tags: {e}")),

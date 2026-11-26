@@ -102,28 +102,30 @@ pub fn cpu(col: &Coletor) -> Option<u8> {
 }
 
 /// SSID (`iwgetid`) e sinal (link quality do `/proc/net/wireless`).
-pub fn wifi() -> (Option<String>, Option<u8>) {
-    let ssid = std::process::Command::new("iwgetid")
+/// SSID da rede conectada.
+///
+/// `iwgetid` não vem instalado por padrão; o NetworkManager (`nmcli`) vem. A saída
+/// do nmcli com `-t` é `ATIVO:SSID` no idioma do sistema (`sim:`/`yes:`).
+pub fn wifi() -> Option<String> {
+    let saida = std::process::Command::new("nmcli")
+        .args(["-t", "-f", "ACTIVE,SSID", "dev", "wifi"])
+        .output()
+        .ok()?;
+    for linha in String::from_utf8_lossy(&saida.stdout).lines() {
+        let mut partes = linha.splitn(2, ':');
+        let ativo = partes.next().unwrap_or("").trim();
+        let ssid = partes.next().unwrap_or("").trim();
+        if !ssid.is_empty() && (ativo == "yes" || ativo == "sim") {
+            return Some(ssid.to_string());
+        }
+    }
+    // reserva: se o nmcli não existir, tenta o iwgetid
+    let saida = std::process::Command::new("iwgetid")
         .arg("-r")
         .output()
-        .ok()
-        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-        .filter(|s| !s.is_empty());
-
-    let sinal = std::fs::read_to_string("/proc/net/wireless")
-        .ok()
-        .and_then(|t| {
-            t.lines()
-                .nth(2)
-                .and_then(|l| l.split(':').nth(1))
-                .and_then(|resto| {
-                    resto.split_whitespace().nth(1).and_then(|q| {
-                        let q: f32 = q.trim_end_matches('.').parse().ok()?;
-                        Some((q.clamp(0.0, 100.0)) as u8)
-                    })
-                })
-        });
-    (ssid, sinal)
+        .ok()?;
+    let ssid = String::from_utf8_lossy(&saida.stdout).trim().to_string();
+    (!ssid.is_empty()).then_some(ssid)
 }
 
 pub fn relogio() -> String {
