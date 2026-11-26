@@ -566,6 +566,22 @@ mod tests {
         }
     }
 
+    /// Frame capturado do app oficial (só o CRC dele é 0xE2CB; mandamos 0x0000).
+    #[test]
+    fn frame_da_bateria_bate_com_o_app_oficial() {
+        let official = [
+            0x41, 0x48, 0x00, 0x0B, 0x00, 0x90, 0xD0, 0x04, 0x3A, 0x00, 0x04, b'1', b'0', b'0',
+            b'%', 0xE2, 0xCB, 0x4D, 0x49,
+        ];
+        let nosso = build_frame(
+            SET_REGISTER,
+            &[0xD0, 0x04, 0x3A, 0x00, 0x04, b'1', b'0', b'0', b'%'],
+        );
+        assert_eq!(&nosso[..15], &official[..15], "cabecalho e conteudo");
+        assert_eq!(&nosso[15..17], &[0x00, 0x00], "crc desligado");
+        assert_eq!(nosso[17..], official[17..], "fim do frame");
+    }
+
     #[test]
     fn hex_do_md5() {
         assert_eq!(hex_bytes("00ff10"), vec![0x00, 0xFF, 0x10]);

@@ -46,15 +46,26 @@ desenha, não a lista maior do `tagUtils.js` do SDK.
 
 | tag | id | tipo |
 |---|---|---|
-| `bateria` | 1082 | num |
+| `bateria` | 1082 | str (`"100%"`) |
 | `bateria_tipo` | 1150 | num |
 | `wifi_ssid` | 1083 | str |
 | `bt_nome` | 1085 | str |
 
-!!! note "Bateria é barra, não número"
-    O widget do Monitor desenha pauzinhos (cada um vale ~20%): 42% aparece como dois.
-    O estado de carga vai em `bateria_tipo` — 1 = carregando/cheia, 0 = descarregando,
-    2 = sem leitura. Não existe tag de CPU neste tema.
+!!! note "Bateria é texto com o sinal de %"
+    O widget do Monitor lê `bateria` (1082) como **string**: `"100%"`. Mandar número
+    mexeu no ícone e **apagou o texto** — foi assim que a porcentagem sumiu quando o
+    app assumiu o controle. O ícone acompanha o texto.
+
+    Frames capturados do app oficial (stdout dele, `D0` = texto):
+
+    ```
+    D0 4 3A 0 4 "100%"          bateria (1082)
+    D0 4 3B 0 7 "1310-5G"       wifi_ssid (1083)
+    D0 4 3D 0 C "Desconectado"  bt_nome (1085)
+    D0 7 D6 0 B "25/11 22:14"   relogio (2006)
+    ```
+
+    O app oficial **não manda** `bateria_tipo` (1150), e este tema **não tem** tag de CPU.
 
 ## Clima — a tela mais generosa
 

@@ -59,8 +59,8 @@ TAGS = {
     # tela Notas: uma linha só
     "nota":          (1090, "str", "Notas"),
     # tela Monitor
-    "bateria":       (1082, "num", "Monitor"),
-    "bateria_tipo":  (1150, "num", "Monitor"),
+    "bateria":       (1082, "str", "Monitor"),   # texto "100%", não número
+    "bateria_tipo":  (1150, "num", "Monitor"),   # o app oficial não manda; efeito desconhecido
     "wifi_ssid":     (1083, "str", "Monitor"),
     "bt_nome":       (1085, "str", "Monitor"),
     # tela Clima: SEIS campos de texto — a mais generosa para dados próprios
@@ -120,6 +120,8 @@ class Tags:
     def set(self, nome, valor):
         if nome not in TAGS:
             sys.exit(f"tag desconhecida: {nome} (veja: ./minitela_tags.py list)")
+        if nome == "bateria" and "%" not in str(valor):
+            valor = f"{valor}%"
         reg, tipo = TAGS[nome][0], TAGS[nome][1]
         if tipo == "str":
             r = self._envia(frame_string(reg, str(valor)))
@@ -157,6 +159,20 @@ def bateria():
             except (OSError, ValueError):
                 pass
     return None, ""
+
+
+def bluetooth():
+    """Nome do aparelho BT conectado, se houver."""
+    try:
+        out = subprocess.run(["bluetoothctl", "devices", "Connected"],
+                             capture_output=True, text=True, timeout=3).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    for linha in out.splitlines():
+        partes = linha.strip().split(" ", 2)
+        if len(partes) == 3 and partes[0] == "Device" and partes[2].strip():
+            return partes[2].strip()
+    return None
 
 
 _cpu_ant = None
@@ -226,11 +242,10 @@ def cmd_daemon(t, args):
     while True:
         agora = datetime.now()
         dados = {"relogio": agora.strftime("%d/%m %H:%M")}
-        pct, st = bateria()
+        pct, _st = bateria()
         if pct is not None:
-            dados["bateria"] = pct
-            # 1 = carregando/cheia, 0 = descarregando, 2 = sem leitura
-            dados["bateria_tipo"] = 1 if st in ("Charging", "Full") else (0 if st == "Discharging" else 2)
+            dados["bateria"] = f"{pct}%"
+        dados["bt_nome"] = bluetooth() or "Desconectado"
         c = cpu_uso()
         if c is not None:
             dados["cpu"] = c

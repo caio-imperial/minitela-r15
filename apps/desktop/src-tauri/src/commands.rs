@@ -300,13 +300,15 @@ pub fn tags_uma_vez() -> Result<TagsView, String> {
         .map_err(texto)?;
     enviadas += 1;
     if let Some(pct) = bat {
-        let mut pares = vec![(crate::sysinfo::TAG_BATERIA, pct)];
-        if let Some(e) = estado {
-            pares.push((crate::sysinfo::TAG_BATERIA_TIPO, e as u32));
-        }
-        p.set_registradores(&pares).map_err(texto)?;
+        // o widget do Monitor é texto: "100%", não número (o ícone acompanha o texto)
+        p.set_texto(crate::sysinfo::TAG_BATERIA, &format!("{pct}%"))
+            .map_err(texto)?;
         enviadas += 1;
     }
+    let bt = crate::sysinfo::bluetooth().unwrap_or_else(|| "Desconectado".to_string());
+    p.set_texto(crate::sysinfo::TAG_BT_NOME, &bt)
+        .map_err(texto)?;
+    enviadas += 1;
     if let Some(nome) = &ssid {
         p.set_texto(crate::sysinfo::TAG_WIFI_SSID, nome)
             .map_err(texto)?;

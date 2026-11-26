@@ -8,9 +8,13 @@ use std::time::Instant;
 // Só registradores que existem no tagList deste projeto (`docs/referencia/tags.md`).
 // NÃO invente ids "vizinhos" (1080, 1081, 1084): o firmware não tem destino para eles
 // e já travou a tela mandando 1081. Ids de texto também ficam de fora daqui.
+// evidência dos frames do app oficial (capturados):
+//   1082 -> texto "100%"   |  1083 -> texto "1310-5G"  |  1085 -> texto "Desconectado"
+//   2006 -> texto "25/11 22:14"  |  7 -> número (brilho)
+// 1150 (bateria_tipo) o app oficial NAO manda.
 pub const TAG_BATERIA: u16 = 1082;
 pub const TAG_WIFI_SSID: u16 = 1083;
-pub const TAG_BATERIA_TIPO: u16 = 1150;
+pub const TAG_BT_NOME: u16 = 1085;
 pub const TAG_RELOGIO: u16 = 2006;
 
 /// Amostra de CPU entre duas leituras de `/proc/stat`.
@@ -41,6 +45,29 @@ pub fn bateria() -> Option<(u32, u8)> {
             })
             .unwrap_or(2);
         return Some((capacidade, estado));
+    }
+    None
+}
+
+/// Nome do aparelho Bluetooth conectado, se houver (`bluetoothctl`).
+pub fn bluetooth() -> Option<String> {
+    let saida = std::process::Command::new("bluetoothctl")
+        .args(["devices", "Connected"])
+        .output()
+        .ok()?;
+    let texto = String::from_utf8_lossy(&saida.stdout);
+    for linha in texto.lines() {
+        // "Device AA:BB:CC:DD:EE:FF Nome do aparelho"
+        let mut partes = linha.trim().splitn(3, ' ');
+        if partes.next() != Some("Device") {
+            continue;
+        }
+        partes.next()?; // endereço
+        if let Some(nome) = partes.next()
+            && !nome.trim().is_empty()
+        {
+            return Some(nome.trim().to_string());
+        }
     }
     None
 }
