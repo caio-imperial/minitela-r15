@@ -51,6 +51,11 @@ desenha, não a lista maior do `tagUtils.js` do SDK.
 | `wifi_ssid` | 1083 | str |
 | `bt_nome` | 1085 | str |
 
+!!! note "Bateria é barra, não número"
+    O widget do Monitor desenha pauzinhos (cada um vale ~20%): 42% aparece como dois.
+    O estado de carga vai em `bateria_tipo` — 1 = carregando/cheia, 0 = descarregando,
+    2 = sem leitura. Não existe tag de CPU neste tema.
+
 ## Clima — a tela mais generosa
 
 Seis campos de texto: é onde dá para mostrar dados próprios com mais espaço.

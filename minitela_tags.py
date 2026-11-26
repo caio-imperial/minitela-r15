@@ -226,9 +226,11 @@ def cmd_daemon(t, args):
     while True:
         agora = datetime.now()
         dados = {"relogio": agora.strftime("%d/%m %H:%M")}
-        pct, _ = bateria()
+        pct, st = bateria()
         if pct is not None:
             dados["bateria"] = pct
+            # 1 = carregando/cheia, 0 = descarregando, 2 = sem leitura
+            dados["bateria_tipo"] = 1 if st in ("Charging", "Full") else (0 if st == "Discharging" else 2)
         c = cpu_uso()
         if c is not None:
             dados["cpu"] = c

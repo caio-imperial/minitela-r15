@@ -272,18 +272,12 @@ pub fn abrir_imagem(imagem: String) -> Result<String, String> {
     Ok(format!("data:image/jpeg;base64,{b64}"))
 }
 
-static COLETOR: std::sync::OnceLock<crate::sysinfo::Coletor> = std::sync::OnceLock::new();
-
-fn coletor() -> &'static crate::sysinfo::Coletor {
-    COLETOR.get_or_init(crate::sysinfo::Coletor::default)
-}
-
 #[derive(Serialize)]
 pub struct TagsView {
     pub relogio: String,
     pub bateria: Option<u32>,
+    /// 1 = carregando/cheia, 0 = descarregando, 2 = desconhecido
     pub carregando: Option<u8>,
-    pub cpu: Option<u8>,
     pub wifi: Option<String>,
     pub sinal: Option<u8>,
     pub enviadas: usize,
@@ -300,7 +294,6 @@ pub fn tags_uma_vez() -> Result<TagsView, String> {
         Some((pct, e)) => (Some(pct), Some(e)),
         None => (None, None),
     };
-    let cpu = crate::sysinfo::cpu(coletor());
     let (ssid, sinal) = crate::sysinfo::wifi();
 
     let mut enviadas = 0usize;
@@ -308,13 +301,11 @@ pub fn tags_uma_vez() -> Result<TagsView, String> {
         .map_err(texto)?;
     enviadas += 1;
     if let Some(pct) = bat {
-        p.set_registradores(&[(crate::sysinfo::TAG_BATERIA, pct)])
-            .map_err(texto)?;
-        enviadas += 1;
-    }
-    if let Some(c) = cpu {
-        p.set_registradores(&[(crate::sysinfo::TAG_CPU, c as u32)])
-            .map_err(texto)?;
+        let mut pares = vec![(crate::sysinfo::TAG_BATERIA, pct)];
+        if let Some(e) = estado {
+            pares.push((crate::sysinfo::TAG_BATERIA_TIPO, e as u32));
+        }
+        p.set_registradores(&pares).map_err(texto)?;
         enviadas += 1;
     }
     if let Some(nome) = &ssid {
@@ -332,7 +323,6 @@ pub fn tags_uma_vez() -> Result<TagsView, String> {
         relogio,
         bateria: bat,
         carregando: estado,
-        cpu,
         wifi: ssid,
         sinal,
         enviadas,
@@ -366,16 +356,23 @@ fn toca_tags() {
     }
     let agora = crate::sysinfo::relogio();
     match tags_uma_vez() {
-        Ok(t) => anota_tag(format!(
-            "{} · bateria {}% · cpu {}%{} · {} tags",
-            t.relogio,
-            t.bateria
-                .map(|v| v.to_string())
-                .unwrap_or_else(|| "?".into()),
-            t.cpu.map(|v| v.to_string()).unwrap_or_else(|| "?".into()),
-            t.wifi.map(|w| format!(" · {w}")).unwrap_or_default(),
-            t.enviadas
-        )),
+        Ok(t) => {
+            let carga = match t.carregando {
+                Some(1) => " (carregando)",
+                Some(2) => " (sem leitura)",
+                _ => "",
+            };
+            anota_tag(format!(
+                "{} · bateria {}%{}{} · {} tags",
+                t.relogio,
+                t.bateria
+                    .map(|v| v.to_string())
+                    .unwrap_or_else(|| "?".into()),
+                carga,
+                t.wifi.map(|w| format!(" · {w}")).unwrap_or_default(),
+                t.enviadas
+            ))
+        }
         Err(e) => anota_tag(format!("{agora} · tags: {e}")),
     }
 }
@@ -1039,8 +1036,8 @@ mod tests {
         let v = super::tags_uma_vez().expect("mandar tags");
         assert!(v.enviadas >= 1);
         eprintln!(
-            "{} | bateria {:?} | cpu {:?} | wifi {:?} | {} tags",
-            v.relogio, v.bateria, v.cpu, v.wifi, v.enviadas
+            "{} | bateria {:?} | carregando {:?} | wifi {:?} | {} tags",
+            v.relogio, v.bateria, v.carregando, v.wifi, v.enviadas
         );
     }
 
